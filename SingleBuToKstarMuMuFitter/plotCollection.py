@@ -681,9 +681,9 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    #  p.cfg['binKey'] = "abovePsi2s"
+    p.cfg['binKey'] = "abovePsi2s"
     #  plotter.cfg['switchPlots'].append('simpleSpectrum')
-    #  plotter.cfg['switchPlots'].append('effi')
+    plotter.cfg['switchPlots'].append('effi')
     #  plotter.cfg['switchPlots'].append('angular3D_sigM')
     #  plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
     #  plotter.cfg['switchPlots'].append('angular3D_final')

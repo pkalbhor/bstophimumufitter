@@ -46,8 +46,8 @@ def getWspace(self):
             raise RuntimeError
         wspace = RooWorkspace(wspaceName)
         self.process.sourcemanager.update(wspaceName, wspace)
-    wspace.addClassDeclImportDir(modulePath + '/cpp')
-    wspace.addClassImplImportDir(modulePath + '/cpp')
+    wspace.addClassDeclImportDir(modulePath) #+ '/cpp')
+    wspace.addClassImplImportDir(modulePath) #+ '/cpp')
     return wspace
 
 

@@ -30,11 +30,11 @@ predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollecti
 if __name__ == '__main__':
     #  p.cfg['binKey'] = "belowJpsi"
     #  p.cfg['binKey'] = "betweenPeaks"
-    #  p.cfg['binKey'] = "abovePsi2s"
-    #  p.setSequence(predefined_sequence['fitEfficiency'])
+    p.cfg['binKey'] = "abovePsi2s"
+    p.setSequence(predefined_sequence['fitEfficiency'])
     #  p.setSequence(predefined_sequence['fitBkgCombA'])
     #  p.setSequence(predefined_sequence['fitFinal3D'])
-    p.setSequence(predefined_sequence['stdFit'])
+    #  p.setSequence(predefined_sequence['stdFit'])
     
     #  p.setSequence(predefined_sequence['fitSig2D'])
     #  p.setSequence(predefined_sequence['fitSigMCGEN'])
