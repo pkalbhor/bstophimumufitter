@@ -1,4 +1,4 @@
-# BdToKsrarMuMuV2Fitter
+# BsToPhiMuMuFitter
 
 This fitter package is designed for ![](http://latex.codecogs.com/svg.latex?B_{s}^{0}\rightarrow{\Phi^{0}\mu\mu}) angular analysis with CMS Run2016/17/18 data.
 
