@@ -2,7 +2,7 @@
 
 import os
 import ROOT
-from SingleBuToKstarMuMuFitter.anaSetup import modulePath
+from BsToPhiMuMuFitter.anaSetup import modulePath
 
 for cls in ["EfficiencyFitter.cc", "StdFitter.cc", "RooBtosllModel.cxx"]:
     if os.path.exists(modulePath + '/cpp/' + cls.replace('.', '_') + '.so'):

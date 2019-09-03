@@ -13,18 +13,18 @@ from datetime import datetime
 from subprocess import call
 from copy import deepcopy
 
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins
-import SingleBuToKstarMuMuFitter.StdFitter as StdFitter
+from BsToPhiMuMuFitter.anaSetup import q2bins
+import BsToPhiMuMuFitter.StdFitter as StdFitter
 import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
 
-from SingleBuToKstarMuMuFitter.StdProcess import p
+from BsToPhiMuMuFitter.StdProcess import p
 import ROOT
-import SingleBuToKstarMuMuFitter.cpp
-import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
-import SingleBuToKstarMuMuFitter.toyCollection as toyCollection
-import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
-import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
-import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
+import BsToPhiMuMuFitter.cpp
+import BsToPhiMuMuFitter.dataCollection as dataCollection
+import BsToPhiMuMuFitter.toyCollection as toyCollection
+import BsToPhiMuMuFitter.pdfCollection as pdfCollection
+import BsToPhiMuMuFitter.fitCollection as fitCollection
+import BsToPhiMuMuFitter.plotCollection as plotCollection
 import v2Fitter.Fitter.AbsToyStudier as AbsToyStudier
 
 # Define toyStudier and profilers
@@ -179,7 +179,7 @@ setupBatchTaskBestFit.update({
 
 if __name__ == '__main__':
     # First create all profiling point...
-    task_dir = "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/batchTask_profiledFeldmanCousins"
+    task_dir = "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/BsToPhiMuMuFitter/batchTask_profiledFeldmanCousins"
 
     for iAfbSet in range(150):
         try:

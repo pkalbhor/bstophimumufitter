@@ -23,20 +23,23 @@ def createBinTemplate(name, lowerBd, upperBd):
     }
     return template
 
-q2bins['belowJpsi'] = createBinTemplate("bin1", 1., 8.68)
-q2bins['betweenPeaks'] = createBinTemplate("bin3", 10.09, 12.86)
-q2bins['abovePsi2s'] = createBinTemplate("bin5", 14.18, 19.00)
-# q2bins['summaryLowQ2'] = createBinTemplate("summaryLowQ2", 1., 6.)
+q2bins['belowJpsiA'] = createBinTemplate("bin1A", 1., 2.00)
+q2bins['belowJpsiB'] = createBinTemplate("bin1B", 2.00, 5.00)
+q2bins['belowJpsiC'] = createBinTemplate("bin1C", 5.00, 8.00)
+q2bins['betweenPeaks'] = createBinTemplate("bin3", 11.00, 12.5)
+q2bins['abovePsi2sA'] = createBinTemplate("bin5A", 15.00, 17.00)
+q2bins['abovePsi2sB'] = createBinTemplate("bin5B", 17.00, 19.00)
+q2bins['summaryLowQ2'] = createBinTemplate("summaryLowQ2", 1., 6.)
 q2bins['summary'] = createBinTemplate("bin0", 1., 19.)
-q2bins['summary']['cutString'] = "(Mumumass > 1 && Mumumass < 4.35890) && !(Mumumass > 2.94618 && Mumumass < 3.17648) && !(Mumumass > 3.58608 && Mumumass < 3.76563)"
+q2bins['summary']['cutString'] = "(Mumumass > 1 && Mumumass < 4.35890) && !(Mumumass > 2.828427125 && Mumumass < 3.31662479) && !(Mumumass > 3.535533906 && Mumumass < 3.872983346)"
 
-q2bins['jpsi'] = createBinTemplate("bin2", 8.68, 10.09)
-q2bins['psi2s'] = createBinTemplate("bin4", 12.86, 14.18)
+q2bins['jpsi'] = createBinTemplate("bin2", 8.00, 11.00)
+q2bins['psi2s'] = createBinTemplate("bin4", 12.50, 15.00)
 q2bins['peaks'] = createBinTemplate("peaks", 1., 19.)
-q2bins['peaks']['cutString'] = "(Mumumass > 2.94618 && Mumumass < 3.17648) || (Mumumass > 3.58608 && Mumumass < 3.76563)"
-
+q2bins['peaks']['cutString'] = "(Mumumass > 2.828427125 && Mumumass < 3.31662479) || (Mumumass > 3.535533906 && Mumumass < 3.872983346)"
+#  print(q2bins['belowJpsiA'])
     # SM prediction
-q2bins['belowJpsi']['sm'] = {
+q2bins['belowJpsiA']['sm'] = {
     'afb': {
         'getVal': 0.077,
         'getError': 0.097,
@@ -46,7 +49,27 @@ q2bins['belowJpsi']['sm'] = {
         'getError': 0.306,
     }
 }
-q2bins['abovePsi2s']['sm'] = {
+q2bins['belowJpsiB']['sm'] = {
+    'afb': {
+        'getVal': 0.077,
+        'getError': 0.097,
+    },
+    'fl': {
+        'getVal': 0.673,
+        'getError': 0.306,
+    }
+}
+q2bins['belowJpsiC']['sm'] = {
+    'afb': {
+        'getVal': 0.077,
+        'getError': 0.097,
+    },
+    'fl': {
+        'getVal': 0.673,
+        'getError': 0.306,
+    }
+}
+q2bins['abovePsi2sA']['sm'] = {
     'afb': {
         'getVal': 0.366,
         'getError': 0.030,
@@ -56,6 +79,17 @@ q2bins['abovePsi2s']['sm'] = {
         'getError': 0.035,
     }
 }
+q2bins['abovePsi2sB']['sm'] = {
+    'afb': {
+        'getVal': 0.366,
+        'getError': 0.030,
+    },
+    'fl': {
+        'getVal': 0.346,
+        'getError': 0.035,
+    }
+}
+
 
 # B mass regions
 bMassRegions = {}
@@ -67,11 +101,11 @@ def createBmassTemplate(name, lowerBd, upperBd):
     }
     return template
 
-bMassRegions['Fit'] = createBmassTemplate("Fit", 4.76, 5.80)
-bMassRegions['SR'] = createBmassTemplate("SR", 5.18, 5.38)
-bMassRegions['LSB'] = createBmassTemplate("LSB", 4.76, 5.18)
-bMassRegions['USB'] = createBmassTemplate("USB", 5.38, 5.80)
-bMassRegions['SB'] = createBmassTemplate("SB", 4.76, 5.80)
+bMassRegions['Fit'] = createBmassTemplate("Fit", 4.90, 5.90)
+bMassRegions['SR'] = createBmassTemplate("SR", 5.287, 5.447)
+bMassRegions['LSB'] = createBmassTemplate("LSB", 5.143, 5.223)
+bMassRegions['USB'] = createBmassTemplate("USB", 5.511, 5.591)
+bMassRegions['SB'] = createBmassTemplate("SB", 4.90, 5.90)
 bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['cutString'], bMassRegions['SR']['cutString'])
 
 # systematics
@@ -91,18 +125,21 @@ bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassReg
 
 # Cut strings
 cut_passTrigger = "Triggers >= 1"
-cut_kstarMassWindow = "Kstarmass>0.792 && Kstarmass < 0.992"
+cut_phiWindow = "Phimass>1.01 && Phimass < 1.03"
 cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
-cut_antiRadiation = "abs(Bmass-Mumumass-2.182)>0.09 && abs(Bmass-Mumumass-1.593)>0.03"
-cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
+cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.170 && abs(Bmass-Mumumass-1.681)>0.080"
+cut_Bdt = "Bdt > 0.55"
+# cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
 cuts = [
     cut_passTrigger,
-    cut_kstarMassWindow,
+    cut_phiWindow,
     cut_resonanceRej,
     cut_antiRadiation,
+    cut_Bdt,
 ]
 cuts.append("({0})".format(")&&(".join(cuts)))
-cuts_noResVeto = "({0})&&({1})".format(cut_passTrigger, cut_kstarMassWindow)
+cuts_noResVeto = "({0})&&({1})".format(cut_passTrigger, cut_phiWindow)
 
+# print(cuts[-1]) # Pritam
 # SM prediction
 

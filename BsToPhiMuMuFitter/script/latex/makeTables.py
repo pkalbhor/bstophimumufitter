@@ -9,11 +9,11 @@ import shelve
 from collections import OrderedDict
 
 import ROOT
-import SingleBuToKstarMuMuFitter.cpp
+import BsToPhiMuMuFitter.cpp
 
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath
-from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb
-from SingleBuToKstarMuMuFitter.StdProcess import p
+from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
+from BsToPhiMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb
+from BsToPhiMuMuFitter.StdProcess import p
 
 # For developers:
 #   * Input db is forced to be StdProcess.dbplayer.absInputDir

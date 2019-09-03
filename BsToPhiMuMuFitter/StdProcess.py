@@ -9,10 +9,10 @@ import os
 import ROOT
 ROOT.gROOT.SetBatch(True)
 
-import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
+import BsToPhiMuMuFitter.anaSetup as anaSetup
 from v2Fitter.FlowControl.Process import Process
 from v2Fitter.FlowControl.Logger import VerbosityLevels
-from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
 # Shared global settings
 isDEBUG = True

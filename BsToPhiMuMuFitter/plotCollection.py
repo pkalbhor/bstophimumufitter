@@ -12,19 +12,19 @@ from array import array
 
 import ROOT
 
-import SingleBuToKstarMuMuFitter.cpp
+import BsToPhiMuMuFitter.cpp
 from v2Fitter.FlowControl.Path import Path
 from v2Fitter.Fitter.FitterCore import FitterCore
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath, bMassRegions
-from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, flToUnboundFl, afbToUnboundAfb
+from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath, bMassRegions
+from BsToPhiMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, flToUnboundFl, afbToUnboundAfb
 
-from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
-from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
+from BsToPhiMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Phimass
 
-from SingleBuToKstarMuMuFitter.StdProcess import p, setStyle
-import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
-import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
-import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
+from BsToPhiMuMuFitter.StdProcess import p, setStyle
+import BsToPhiMuMuFitter.dataCollection as dataCollection
+import BsToPhiMuMuFitter.pdfCollection as pdfCollection
+import BsToPhiMuMuFitter.fitCollection as fitCollection
 
 class Plotter(Path):
     """The plotter"""
@@ -92,7 +92,7 @@ class Plotter(Path):
             if p[0] == None:
                 self.logger.logERROR("pdfPlot not found in source manager.")
                 raise RuntimeError
-        args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass))
+        args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
         return p
 
@@ -162,6 +162,8 @@ class Plotter(Path):
     def _runPath(self):
         """"""
         for pltName, pCfg in self.cfg['plots'].items():
+            # print("TTME") #Pritam
+            # print( self.cfg['plots'].items() ) #Pritam
             if pltName not in self.cfg['switchPlots']:
                 continue
             for func in pCfg['func']:
@@ -225,7 +227,7 @@ def plotEfficiency(self, data_name, pdf_name):
     data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
     data_accXrec.Scale(100)
     data_accXrec.SetMinimum(0)
-    data_accXrec.SetMaximum(100 * 0.00015)  # Z axis in percentage
+    #data_accXrec.SetMaximum(100 * 0.00015)  # Z axis in percentage
     data_accXrec.SetTitleOffset(1.6, "X")
     data_accXrec.SetTitleOffset(1.8, "Y")
     data_accXrec.SetTitleOffset(1.8, "Z")
@@ -356,7 +358,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     """ Check carefully the keys in 'dbSetup' """
     if marks is None:
         marks = []
-    binKeys = ['belowJpsi', 'betweenPeaks', 'abovePsi2s']
+    binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summaryLowQ2']
 
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
     xxErr = array('d', map(lambda t: (t[1] - t[0]) / 2, [q2bins[binKey]['q2range'] for binKey in binKeys]))
@@ -496,7 +498,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         yyAfbErrHi = array('d', [0] * len(binKeys))
         yyAfbErrLo = array('d', [0] * len(binKeys))
 
-        for binKeyIdx, binKey in enumerate(['belowJpsi', 'betweenPeaks', 'abovePsi2s']):
+        for binKeyIdx, binKey in enumerate(['belowJpsiA','belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA','abovePsi2sB', 'summaryLowQ2']):
             if binKey != 'betweenPeaks':
                 fl = q2bins[binKey]['sm']['fl']
                 afb = q2bins[binKey]['sm']['afb']
@@ -681,16 +683,19 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    p.cfg['binKey'] = "abovePsi2s"
-    #  plotter.cfg['switchPlots'].append('simpleSpectrum')
-    plotter.cfg['switchPlots'].append('effi')
-    #  plotter.cfg['switchPlots'].append('angular3D_sigM')
-    #  plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
-    #  plotter.cfg['switchPlots'].append('angular3D_final')
-    #  plotter.cfg['switchPlots'].append('angular3D_summary')
-    #  plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+    binKey = ['summaryLowQ2'] #, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
+    for b in binKey:
+        p.cfg['binKey'] = b
+        print (p.cfg)
+        #  plotter.cfg['switchPlots'].append('simpleSpectrum')
+        plotter.cfg['switchPlots'].append('effi')
+        #  plotter.cfg['switchPlots'].append('angular3D_sigM')
+        #  plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
+        #  plotter.cfg['switchPlots'].append('angular3D_final')
+        #  plotter.cfg['switchPlots'].append('angular3D_summary')
+        #  plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
 
-    p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
-    p.beginSeq()
-    p.runSeq()
-    p.endSeq()
+        p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
+        p.beginSeq()
+        p.runSeq()
+        p.endSeq()

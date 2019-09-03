@@ -8,10 +8,10 @@
 import functools
 import math
 import ROOT
-import SingleBuToKstarMuMuFitter.cpp
+import BsToPhiMuMuFitter.cpp
 
 from v2Fitter.Fitter.FitterCore import FitterCore
-from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
 class StdFitter(FitterCore):
     """Implementation to standard fitting procdeure to BuToKstarMuMu angular analysis"""

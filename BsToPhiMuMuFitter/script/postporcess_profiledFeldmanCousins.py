@@ -14,10 +14,10 @@ from argparse import ArgumentParser
 from multiprocessing import Pool
 
 import ROOT
-from SingleBuToKstarMuMuFitter.anaSetup import modulePath, q2bins
-from SingleBuToKstarMuMuFitter.StdProcess import dbplayer
-from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb
-from SingleBuToKstarMuMuFitter.plotCollection import Plotter
+from BsToPhiMuMuFitter.anaSetup import modulePath, q2bins
+from BsToPhiMuMuFitter.StdProcess import dbplayer
+from BsToPhiMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb
+from BsToPhiMuMuFitter.plotCollection import Plotter
 
 targetBinKeys = ["belowJpsi", "betweenPeaks", "abovePsi2s", "summary"]
 targetCoverage = 0.683

@@ -10,7 +10,7 @@ import os
 import site
 
 SITEPKG_PATH = site.USER_SITE
-MODULENAMES = ["v2Fitter","SingleBuToKstarMuMuFitter"]
+MODULENAMES = ["v2Fitter","BsToPhiMuMuFitter"]
 
 for m in MODULENAMES:
     with open("{0}/{1}.pth".format(SITEPKG_PATH, m), "w") as f:

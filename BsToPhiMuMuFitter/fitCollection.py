@@ -7,14 +7,14 @@ from copy import deepcopy
 
 import ROOT
 
-import SingleBuToKstarMuMuFitter.cpp
+import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.FitterCore import FitterCore
-from SingleBuToKstarMuMuFitter.StdFitter import StdFitter, flToUnboundFl, afbToUnboundAfb
-from SingleBuToKstarMuMuFitter.EfficiencyFitter import EfficiencyFitter
+from BsToPhiMuMuFitter.StdFitter import StdFitter, flToUnboundFl, afbToUnboundAfb
+from BsToPhiMuMuFitter.EfficiencyFitter import EfficiencyFitter
 
-from SingleBuToKstarMuMuFitter.StdProcess import p
-import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
-import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
+from BsToPhiMuMuFitter.StdProcess import p
+import BsToPhiMuMuFitter.dataCollection as dataCollection
+import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 
 setupTemplateFitter = StdFitter.templateConfig()
 

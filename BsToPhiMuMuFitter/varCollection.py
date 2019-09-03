@@ -7,25 +7,26 @@
 from ROOT import RooRealVar
 from ROOT import RooArgSet
 
-Bmass = RooRealVar("Bmass","m_{K^{*}#mu#mu} [GeV]", 4.76, 5.80)
+Bmass = RooRealVar("Bmass","m_{K^{*}#mu#mu} [GeV]", 4.9, 5.9)
 CosThetaK = RooRealVar("CosThetaK", "cos#theta_{K}", -1., 1.)
 CosThetaL = RooRealVar("CosThetaL", "cos#theta_{l}", -1., 1.)
 Mumumass = RooRealVar("Mumumass", "m_{#mu#mu} [GeV]", 0., 10.)
 Mumumasserr = RooRealVar("Mumumasserr", "Error of m_{#mu#mu} [GeV]", 0., 10.)
-Kstarmass = RooRealVar("Kstarmass", "m_{K^{*}} [GeV]", 0, 1.5)
-Kshortmass = RooRealVar("Kshortmass", "m_{K_{S}} [GeV]", 0.427, 0.577)
+Phimass = RooRealVar("Phimass", "m_{K^{+} K^{-}} [GeV]", 1.01, 1.03)
+#Kshortmass = RooRealVar("Kshortmass", "m_{K_{S}} [GeV]", 0.427, 0.577)
 Q2 = RooRealVar("Q2", "q^{2} [GeV^{2}]", 0.5, 20.)
 Triggers = RooRealVar("Triggers", "", 0, 100)
+Bdt = RooRealVar("Bdt", "", 0, 1)
 dataArgs = RooArgSet(
     Bmass,
     CosThetaK,
     CosThetaL,
     Mumumass,
     Mumumasserr,
-    Kstarmass,
-    Kshortmass,
+    Phimass,
     Q2,
-    Triggers)
+    Triggers,
+    Bdt)
 
 genCosThetaK = RooRealVar("genCosThetaK", "cos#theta_{K}", -1., 1.)
 genCosThetaL = RooRealVar("genCosThetaL", "cos#theta_{l}", -1., 1.)

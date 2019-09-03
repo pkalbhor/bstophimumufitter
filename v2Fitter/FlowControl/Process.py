@@ -77,6 +77,7 @@ class Process:
     def runSeq(self):
         """Run all path."""
         for p in self._sequence:
+            # print ("Process.py", self._sequence) #Pritam
             self.logger.logDEBUG("Entering Path: {0}".format(p.cfg['name']))
             p.customize()
             p._runPath()

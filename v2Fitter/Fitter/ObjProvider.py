@@ -25,10 +25,15 @@ class ObjProvider(Path):
     def _runPath(self):
         """Get variables from process.sources"""
         for key, builders in self.cfg['obj'].items():
+            print("ObjProvider: ", self.cfg['obj'].items()) #Pritam
             if not key in self.process.sourcemanager.keys():
+                print("HII", self.process.sourcemanager.keys()) #Pritam
                 for builder in builders:
+                    print(builders)
                     builder(self)
+                    print(self.process.sourcemanager.keys())
                     if self.cfg['source'].has_key(key):
+                        print(self.cfg['source'])
                         break
             else:
                 self.logger.logDEBUG("Skipped booked object {0}.".format(key))

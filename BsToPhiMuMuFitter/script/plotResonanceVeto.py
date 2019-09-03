@@ -5,10 +5,10 @@ import os
 import math
 import itertools
 import ROOT
-import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
-from SingleBuToKstarMuMuFitter.StdProcess import setStyle
-import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
-import SingleBuToKstarMuMuFitter.varCollection as varCollection
+import BsToPhiMuMuFitter.anaSetup as anaSetup
+from BsToPhiMuMuFitter.StdProcess import setStyle
+import BsToPhiMuMuFitter.plotCollection as plotCollection
+import BsToPhiMuMuFitter.varCollection as varCollection
 
 
 b_range = anaSetup.bMassRegions['Fit']['range']

@@ -6,15 +6,15 @@ import sys
 from copy import copy, deepcopy
 import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
 
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins
-from SingleBuToKstarMuMuFitter.StdProcess import p
+from BsToPhiMuMuFitter.anaSetup import q2bins
+from BsToPhiMuMuFitter.StdProcess import p
 import ROOT
-import SingleBuToKstarMuMuFitter.cpp
-import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
-import SingleBuToKstarMuMuFitter.toyCollection as toyCollection
-import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
-import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
-import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
+import BsToPhiMuMuFitter.cpp
+import BsToPhiMuMuFitter.dataCollection as dataCollection
+import BsToPhiMuMuFitter.toyCollection as toyCollection
+import BsToPhiMuMuFitter.pdfCollection as pdfCollection
+import BsToPhiMuMuFitter.fitCollection as fitCollection
+import BsToPhiMuMuFitter.plotCollection as plotCollection
 
 # Define Process
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
         ])
         wrappedTask = BatchTaskWrapper(
             "myBatchTask",
-            "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/batchTask_simpleToyValidation",
+            "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/BsToPhiMuMuFitter/batchTask_simpleToyValidation",
             cfg=setupBatchTask)
     elif args.Function_name in ['run_summary', 'submit_summary']:
         plotCollection.plotter.cfg['plots']['angular3D_summary']['kwargs']['drawSM'] = False
@@ -114,7 +114,7 @@ if __name__ == '__main__':
         ])
         wrappedTask = BatchTaskWrapperSummary(
             "myBatchTask",
-            "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/batchTask_simpleToyValidation",
+            "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/BsToPhiMuMuFitter/batchTask_simpleToyValidation",
             cfg=setupBatchTask)
     else:
         raise ValueError("Unknown function name")

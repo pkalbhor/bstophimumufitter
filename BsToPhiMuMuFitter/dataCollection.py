@@ -10,12 +10,12 @@ from array import array
 from copy import copy
 import math
 
-import SingleBuToKstarMuMuFitter.cpp
+import BsToPhiMuMuFitter.cpp
 
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
-from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Kshortmass, dataArgsGEN
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto, cut_kshortWindow, modulePath
+from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN
+from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath
 
 import ROOT
 from ROOT import TChain
@@ -23,13 +23,13 @@ from ROOT import TEfficiency, TH2D
 from ROOT import RooArgList
 from ROOT import RooDataHist
 
-from SingleBuToKstarMuMuFitter.StdProcess import p
+from BsToPhiMuMuFitter.StdProcess import p
 
 CFG = DataReader.templateConfig()
 CFG.update({
     'argset': dataArgs,
     'lumi': -1,  # Keep a record, useful for mixing simulations samples
-    'ifriendIndex': ["Bmass", "Mumumass"],
+    #'ifriendIndex': ["Bmass", "Mumumass"],
 })
 
 # dataReader
@@ -64,20 +64,22 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
 dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/sel_*.root"],
-    'ifriend': ["/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/script/plotMatchCandPreSelector.root"],
+    #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/sel_*.root"],
+    'ifile': ["/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data/Modified_BDT_Modified_sel_BsToPhiMuMu_2016_combine_data_cut0_s0.root"],
+    #'ifriend': ["/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/BsToPhiMuMuFitter/script/plotMatchCandPreSelector.root"],
     'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
     'lumi': 19.98,
 })
 dataReader = DataReader(dataReaderCfg)
-customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'], extraCuts=cut_kshortWindow)
+customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'])
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
 sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/sel_*.root"],
+    #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/sel_*.root"],
+    'ifile': ["/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data/Modified_BDT_Modified_sel_BsToPhiMuMu_combine_MC_2016_mc.lite_cut0.root"],
     'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
     'lumi': 16281.440 + 21097.189,
 })
@@ -108,7 +110,8 @@ def customizeGEN(self):
 sigMCGENReaderCfg = copy(CFG)
 sigMCGENReaderCfg.update({
     'name': "sigMCGENReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/sel_*.root"],
+    #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/sel_*.root"],
+    'ifile': ["/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data/Modified_sel_BsToPhiMuMu_NofilterMC_signal_2016_mc.lite_cut0_s.root"],
     'preloadFile': modulePath + "/data/preload_sigMCGENReader_{binLabel}.root",
     'argset': dataArgsGEN,
 })
@@ -120,11 +123,13 @@ accXEffThetaLBins = array('d', [-1, -0.7, -0.3, 0., 0.3, 0.7, 1.])
 accXEffThetaKBins = array('d', [-1, -0.7, 0., 0.4, 0.8, 1.])
 def buildAccXRecEffiHist(self):
     """Build efficiency histogram for later fitting/plotting"""
-    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_Run2012.root", "UPDATE")
+    print("Now I am Here in buildAccXRecEffiHist")
+    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_Run2016.root", "UPDATE")
 
     # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
     for binKey in q2bins.keys():
+        print("Q2Bins: ", q2bins.keys())#Pritam
         if binKey in ['jpsi', 'psi2s', 'peaks']:
             continue
         h2_accXrec = fin.Get("h2_accXrec_{0}".format(binKey))
@@ -135,9 +140,10 @@ def buildAccXRecEffiHist(self):
             # Fill histograms
             setupEfficiencyBuildProcedure = {}
             setupEfficiencyBuildProcedure['acc'] = {
-                'ifiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*.root", ],
+                #'ifiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*.root", ],
+                'ifiles': ["/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data/Modified_sel_BsToPhiMuMu_NofilterMC_signal_2016_mc.lite_cut0_s.root", ],
                 'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
-                'cutString': "fabs(genMupEta)<2.3 && fabs(genMumEta)<2.3 && genMupPt>2.8 && genMumPt>2.8",
+                'cutString': "fabs(genMupEta)<2.5 && fabs(genMumEta)<2.5 && genMupPt>2.5 && genMumPt>2.5",
                 'fillXY': "genCosThetaK:genCosThetaL"  # Y:X
             }
             setupEfficiencyBuildProcedure['rec'] = {
@@ -146,17 +152,25 @@ def buildAccXRecEffiHist(self):
                 'cutString': "Bmass > 0.5 && ({0})".format(cuts[-1]),
                 'fillXY': "genCosThetaK:genCosThetaL"  # Y:X
             }
+            i=0 #testing events
+            # print(setupEfficiencyBuildProcedure['rec'])
             for h2, label in (h2_acc, 'acc'), (h2_rec, 'rec'):
                 if h2 == None or forceRebuild:
-                    treein = TChain("tree")
+                    print("h2: ", h2, label)
+                    treein = TChain("events")
                     for f in setupEfficiencyBuildProcedure[label]['ifiles']:
                         treein.Add(f)
+                        print(setupEfficiencyBuildProcedure[label]['ifiles'])
 
                     treein.Draw(">>totEvtList", setupEfficiencyBuildProcedure[label]['baseString'])
                     totEvtList = ROOT.gDirectory.Get("totEvtList")
+                    # print("MyEventList:")
+                    # totEvtList.Print() #Pritam
                     treein.SetEventList(totEvtList)
                     treein.Draw(">>accEvtList", setupEfficiencyBuildProcedure[label]['cutString'])
+                    # totEvtList.Print() #Pritam
                     accEvtList = ROOT.gDirectory.Get("accEvtList")
+                    accEvtList.Print()
 
                     h2_total = TH2D("h2_{0}_{1}_total".format(label, binKey), "", len(accXEffThetaLBins) - 1, accXEffThetaLBins, len(accXEffThetaKBins) - 1, accXEffThetaKBins)
                     h2_passed = h2_total.Clone("h2_{0}_{1}_passed".format(label, binKey))

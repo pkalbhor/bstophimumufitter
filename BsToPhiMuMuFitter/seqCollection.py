@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import SingleBuToKstarMuMuFitter.cpp
-import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
-import SingleBuToKstarMuMuFitter.toyCollection as toyCollection
-import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
-import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
+import BsToPhiMuMuFitter.cpp
+import BsToPhiMuMuFitter.dataCollection as dataCollection
+import BsToPhiMuMuFitter.toyCollection as toyCollection
+import BsToPhiMuMuFitter.pdfCollection as pdfCollection
+import BsToPhiMuMuFitter.fitCollection as fitCollection
 
-from SingleBuToKstarMuMuFitter.StdProcess import p
+from BsToPhiMuMuFitter.StdProcess import p
 
 # Standard fitting procedures
 predefined_sequence = {}
@@ -28,18 +28,21 @@ predefined_sequence['fitSig2D'] = [dataCollection.sigMCReader, pdfCollection.std
 predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
 
 if __name__ == '__main__':
-    #  p.cfg['binKey'] = "belowJpsi"
-    #  p.cfg['binKey'] = "betweenPeaks"
-    p.cfg['binKey'] = "abovePsi2s"
-    p.setSequence(predefined_sequence['fitEfficiency'])
-    #  p.setSequence(predefined_sequence['fitBkgCombA'])
-    #  p.setSequence(predefined_sequence['fitFinal3D'])
-    #  p.setSequence(predefined_sequence['stdFit'])
-    
-    #  p.setSequence(predefined_sequence['fitSig2D'])
-    #  p.setSequence(predefined_sequence['fitSigMCGEN'])
-    try:
-        p.beginSeq()
-        p.runSeq()
-    finally:
-        p.endSeq()
+    #  p.cfg['binKey'] = "abovePsi2s"
+    # binKey = ['belowJpsiA', 'belowJpsiB', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
+    binKey = ['summaryLowQ2']
+    for b in binKey:
+        p.cfg['binKey'] = b
+        #  p.setSequence(predefined_sequence['buildEfficiecyHist'])
+        p.setSequence(predefined_sequence['fitEfficiency'])
+        #  p.setSequence(predefined_sequence['fitBkgCombA'])
+        #  p.setSequence(predefined_sequence['fitFinal3D'])
+        #  p.setSequence(predefined_sequence['stdFit'])
+        
+        #  p.setSequence(predefined_sequence['fitSig2D'])
+        #  p.setSequence(predefined_sequence['fitSigMCGEN'])
+        try:
+            p.beginSeq()
+            p.runSeq()
+        finally:
+            p.endSeq()

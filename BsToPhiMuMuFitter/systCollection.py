@@ -12,21 +12,21 @@ import functools
 from copy import deepcopy
 
 import ROOT
-import SingleBuToKstarMuMuFitter.cpp
+import BsToPhiMuMuFitter.cpp
 
 from v2Fitter.Fitter.FitterCore import FitterCore
 from v2Fitter.Fitter.AbsToyStudier import AbsToyStudier
 from v2Fitter.Fitter.DataReader import DataReader
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, cut_kshortWindow
-from SingleBuToKstarMuMuFitter.StdFitter import StdFitter, unboundFlToFl, unboundAfbToAfb
-from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
-from SingleBuToKstarMuMuFitter.plotCollection import Plotter, plotter
+from BsToPhiMuMuFitter.anaSetup import q2bins, cut_kshortWindow
+from BsToPhiMuMuFitter.StdFitter import StdFitter, unboundFlToFl, unboundAfbToAfb
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
+from BsToPhiMuMuFitter.plotCollection import Plotter, plotter
 
-import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
-import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
-import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
+import BsToPhiMuMuFitter.dataCollection as dataCollection
+import BsToPhiMuMuFitter.pdfCollection as pdfCollection
+import BsToPhiMuMuFitter.fitCollection as fitCollection
 
-from SingleBuToKstarMuMuFitter.StdProcess import p
+from BsToPhiMuMuFitter.StdProcess import p
 
 from argparse import ArgumentParser
 

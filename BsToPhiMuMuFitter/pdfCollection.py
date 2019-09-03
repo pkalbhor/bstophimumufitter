@@ -21,18 +21,18 @@ from collections import OrderedDict
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from v2Fitter.Fitter.WspaceReader import WspaceReader
 
-from SingleBuToKstarMuMuFitter.StdProcess import isDEBUG
-from SingleBuToKstarMuMuFitter.anaSetup import modulePath, q2bins
-from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL
-import SingleBuToKstarMuMuFitter.cpp
-import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
+from BsToPhiMuMuFitter.StdProcess import isDEBUG
+from BsToPhiMuMuFitter.anaSetup import modulePath, q2bins
+from BsToPhiMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL
+import BsToPhiMuMuFitter.cpp
+import BsToPhiMuMuFitter.dataCollection as dataCollection
 
 import ROOT
 from ROOT import RooWorkspace
 from ROOT import RooEffProd
 from ROOT import RooKeysPdf
 
-from SingleBuToKstarMuMuFitter.StdProcess import p
+from BsToPhiMuMuFitter.StdProcess import p
 
 def getWspace(self):
     """Read workspace"""
@@ -95,7 +95,7 @@ f_effiSigA_format['DEFAULT'] = ["l{0}[-10,10]".format(i) for i in range(1, 6 + 1
         args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, 7)] + ["k{0}".format(i) for i in range(1, 7)] + ["x{0}".format(i) for i in range(16)]) + "}")]
 
 pdfL = "exp(-0.5*pow((CosThetaL-l1)/l2,2))+l3*exp(-0.5*pow((CosThetaL-l4)/l5,2))+l6*exp(-0.5*pow((CosThetaL-l7)/l8,2))"
-f_effiSigA_format['belowJpsi'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,10]", "l4[-0.8,-1,-0.1]", "l5[0.5,0.1,2]", "l6[0.1,0,10]", "l7[0.8,0.1,1]", "l8[0.2,0.1,2]"] \
+f_effiSigA_format['belowJpsiA'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,10]", "l4[-0.8,-1,-0.1]", "l5[0.5,0.1,2]", "l6[0.1,0,10]", "l7[0.8,0.1,1]", "l8[0.2,0.1,2]"] \
     + ["k{0}[-10,10]".format(i) for i in range(1, 6 + 1)] \
     + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(15 + 1)] \
     + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL," + ', '.join(["l{0}".format(i) for i in range(1, 9)]) + "}")] \
@@ -106,6 +106,30 @@ f_effiSigA_format['belowJpsi'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,1
         pdfK=pdfK,
         xTerm=xTerm,
         args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, 9)] + ["k{0}".format(i) for i in range(1, 7)] + ["x{0}".format(i) for i in range(16)]) + "}")]
+f_effiSigA_format['belowJpsiB'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,10]", "l4[-0.8,-1,-0.1]", "l5[0.5,0.1,2]", "l6[0.1,0,10]", "l7[0.8,0.1,1]", "l8[0.2,0.1,2]"] \
+    + ["k{0}[-10,10]".format(i) for i in range(1, 6 + 1)] \
+    + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(15 + 1)] \
+    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL," + ', '.join(["l{0}".format(i) for i in range(1, 9)]) + "}")] \
+    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, 7)]) + "}")] \
+    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(16)]) + "}")] \
+    + ["expr::effi_sigA('effi_norm*({pdfL})*({pdfK})*(1+hasXTerm*({xTerm}))', {args})".format(
+        pdfL=pdfL,
+        pdfK=pdfK,
+        xTerm=xTerm,
+        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, 9)] + ["k{0}".format(i) for i in range(1, 7)] + ["x{0}".format(i) for i in range(16)]) + "}")]
+
+f_effiSigA_format['summaryLowQ2'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,10]", "l4[-0.8,-1,-0.1]", "l5[0.5,0.1,2]", "l6[0.1,0,10]", "l7[0.8,0.1,1]", "l8[0.2,0.1,2]"] \
+    + ["k{0}[-10,10]".format(i) for i in range(1, 6 + 1)] \
+    + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(15 + 1)] \
+    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL," + ', '.join(["l{0}".format(i) for i in range(1, 9)]) + "}")] \
+    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, 7)]) + "}")] \
+    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(16)]) + "}")] \
+    + ["expr::effi_sigA('effi_norm*({pdfL})*({pdfK})*(1+hasXTerm*({xTerm}))', {args})".format(
+        pdfL=pdfL,
+        pdfK=pdfK,
+        xTerm=xTerm,
+        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, 9)] + ["k{0}".format(i) for i in range(1, 7)] + ["x{0}".format(i) for i in range(16)]) + "}")]
+
 setupBuildEffiSigA = {
     'objName': "effi_sigA",
     'varNames': ["CosThetaK", "CosThetaL"],
@@ -187,7 +211,7 @@ buildBkgCombMAltM = functools.partial(buildGenericObj, **setupBuildBkgCombMAltM)
 
 f_analyticBkgCombA_format = {}
 
-f_analyticBkgCombA_format['belowJpsi'] = [
+f_analyticBkgCombA_format['belowJpsiA'] = [
     "bkgCombL_c1[0.2,0.8]",
     "bkgCombL_c2[0.2, 0.1, 1.0]",
     "bkgCombL_c3[-0.8,-0.2]",
@@ -216,7 +240,17 @@ f_analyticBkgCombA_format['betweenPeaks'] = [
         pdfK="1+bkgCombK_c1*CosThetaK+bkgCombK_c2*pow(CosThetaK,2)+bkgCombK_c3*pow(CosThetaK, 3)+bkgCombK_c4*pow(CosThetaK,4)",
         args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4}")
 ]
-f_analyticBkgCombA_format['abovePsi2s'] = [
+f_analyticBkgCombA_format['abovePsi2sA'] = [
+    "bkgCombL_c1[-3,3]",
+    "bkgCombK_c1[-10,10]",
+    "bkgCombK_c2[-10,10]",
+    "bkgCombK_c3[-10,10]",
+    "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
+        pdfL="1.+bkgCombL_c1*CosThetaL",
+        pdfK="1.+bkgCombK_c1*CosThetaK+bkgCombK_c2*pow(CosThetaK,2)+bkgCombK_c3*pow(CosThetaK, 3)",
+        args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3}")
+]
+f_analyticBkgCombA_format['abovePsi2sB'] = [
     "bkgCombL_c1[-3,3]",
     "bkgCombK_c1[-10,10]",
     "bkgCombK_c2[-10,10]",
@@ -368,8 +402,8 @@ def customizePDFBuilder(self):
 stdPDFBuilder.customize = types.MethodType(customizePDFBuilder, stdPDFBuilder)
 
 if __name__ == '__main__':
-    #  binKey = ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']
-    binKey = ['abovePsi2s']
+    #  binKey = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA','abovePsi2sB', 'summary', 'summaryLowQ2']
+    binKey = ['belowJpsiC']
     for b in binKey:
         p.cfg['binKey'] = b
         p.setSequence([dataCollection.dataReader, stdWspaceReader, stdPDFBuilder])

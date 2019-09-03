@@ -11,7 +11,7 @@ import math
 import ROOT
 from v2Fitter.FlowControl.Service import Service
 from v2Fitter.Fitter.FitterCore import FitterCore
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins
+from BsToPhiMuMuFitter.anaSetup import q2bins
 
 class FitDBPlayer(Service):
     "Play with the database generated with shelve"

@@ -4,11 +4,11 @@
 
 from v2Fitter.Fitter.FitterCore import FitterCore
 
-import SingleBuToKstarMuMuFitter.cpp
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins
-from SingleBuToKstarMuMuFitter.StdProcess import setStyle
-from SingleBuToKstarMuMuFitter.varCollection import CosThetaL, CosThetaK
-from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
+import BsToPhiMuMuFitter.cpp
+from BsToPhiMuMuFitter.anaSetup import q2bins
+from BsToPhiMuMuFitter.StdProcess import setStyle
+from BsToPhiMuMuFitter.varCollection import CosThetaL, CosThetaK
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
 import re
 import itertools

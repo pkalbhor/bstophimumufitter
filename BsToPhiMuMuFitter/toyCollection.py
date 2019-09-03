@@ -7,18 +7,18 @@ from copy import deepcopy
 import functools
 import shelve
 
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath
-from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaL, CosThetaK
+from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
+from BsToPhiMuMuFitter.varCollection import Bmass, CosThetaL, CosThetaK
 
 from v2Fitter.Fitter.ToyGenerator import ToyGenerator
 from v2Fitter.Fitter.FitterCore import FitterCore
-from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
-from SingleBuToKstarMuMuFitter.fitCollection import setupSigAFitter
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
+from BsToPhiMuMuFitter.fitCollection import setupSigAFitter
 
 import ROOT
 
-from SingleBuToKstarMuMuFitter.StdProcess import p
-import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
+from BsToPhiMuMuFitter.StdProcess import p
+import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 
 CFG = deepcopy(ToyGenerator.templateConfig())
 CFG.update({
