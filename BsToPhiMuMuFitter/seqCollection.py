@@ -28,9 +28,8 @@ predefined_sequence['fitSig2D'] = [dataCollection.sigMCReader, pdfCollection.std
 predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
 
 if __name__ == '__main__':
-    #  p.cfg['binKey'] = "abovePsi2s"
-    # binKey = ['belowJpsiA', 'belowJpsiB', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
-    binKey = ['summaryLowQ2']
+    # binKey = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
+    binKey = ['belowJpsiC']
     for b in binKey:
         p.cfg['binKey'] = b
         #  p.setSequence(predefined_sequence['buildEfficiecyHist'])
