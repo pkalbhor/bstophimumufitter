@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 sts=4 fdm=indent fdl=0 fdn=3 ft=python et:
 
-import os
+import os, sys
 import re
 import math
 import types
@@ -358,7 +358,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     """ Check carefully the keys in 'dbSetup' """
     if marks is None:
         marks = []
-    binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summaryLowQ2']
+    binKeys = ['belowJpsiA']#, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summaryLowQ2']
 
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
     xxErr = array('d', map(lambda t: (t[1] - t[0]) / 2, [q2bins[binKey]['q2range'] for binKey in binKeys]))
@@ -441,6 +441,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         yyAfbErrHi = array('d', [0] * len(binKeys))
         yyAfbErrLo = array('d', [0] * len(binKeys))
         for binKeyIdx, binKey in enumerate(binKeys):
+            print(dbPat.format(binLabel=q2bins[binKey]['label']))
             if not os.path.exists(dbPat.format(binLabel=q2bins[binKey]['label'])):
                 self.logger.logERROR("Input db file {0} NOT found. Skip.".format(dbPat.format(binLable=q2bins[binKey]['label'])))
                 continue
@@ -683,17 +684,17 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    binKey = ['belowJpsiA'] #, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
+    binKey =  [sys.argv[1]] #, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
     for b in binKey:
         p.cfg['binKey'] = b
         print (p.cfg)
-        #  plotter.cfg['switchPlots'].append('simpleSpectrum')
-        plotter.cfg['switchPlots'].append('effi')
+        #  plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
+        #  plotter.cfg['switchPlots'].append('effi')            # Efficiency
         #  plotter.cfg['switchPlots'].append('angular3D_sigM')
         #  plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
         #  plotter.cfg['switchPlots'].append('angular3D_final')
         #  plotter.cfg['switchPlots'].append('angular3D_summary')
-        #  plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+        plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
 
         p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
         p.beginSeq()

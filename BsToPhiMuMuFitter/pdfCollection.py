@@ -13,7 +13,7 @@
 # In RooWorkspace.factory(), you MUST replace the calculation between numbers to a single float number, e.g. 2/3 -> 0.666667
 #   It is possible that the parser don't designed to handle RooAddition and RooProduct between RooConstVar
 
-import types
+import types, sys
 import functools
 from copy import copy
 from collections import OrderedDict
@@ -403,7 +403,7 @@ stdPDFBuilder.customize = types.MethodType(customizePDFBuilder, stdPDFBuilder)
 
 if __name__ == '__main__':
     #  binKey = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA','abovePsi2sB', 'summary', 'summaryLowQ2']
-    binKey = ['belowJpsiA']
+    binKey = [sys.argv[1]]
     for b in binKey:
         p.cfg['binKey'] = b
         p.setSequence([dataCollection.dataReader, stdWspaceReader, stdPDFBuilder])
