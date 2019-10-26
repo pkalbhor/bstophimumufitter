@@ -15,7 +15,7 @@ import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN
-from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath
+from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath, dataFilePath, sigMC, UnfilteredMC
 
 import ROOT
 from ROOT import TChain
@@ -65,7 +65,7 @@ dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
     #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/sel_*.root"],
-    'ifile': ["/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data/Modified_BDT_Modified_sel_BsToPhiMuMu_2016_combine_data_cut0_s0.root"],
+    'ifile': [dataFilePath],
     #'ifriend': ["/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/BsToPhiMuMuFitter/script/plotMatchCandPreSelector.root"],
     'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
     'lumi': 19.98,
@@ -79,7 +79,7 @@ sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
     #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/sel_*.root"],
-    'ifile': ["/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data/Modified_BDT_Modified_sel_BsToPhiMuMu_combine_MC_2016_mc.lite_cut0.root"],
+    'ifile': [sigMC],
     'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
     'lumi': 16281.440 + 21097.189,
 })
@@ -111,7 +111,7 @@ sigMCGENReaderCfg = copy(CFG)
 sigMCGENReaderCfg.update({
     'name': "sigMCGENReader",
     #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/sel_*.root"],
-    'ifile': ["/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data/Modified_sel_BsToPhiMuMu_NofilterMC_signal_2016_mc.lite_cut0_s.root"],
+    'ifile': [UnfilteredMC],
     'preloadFile': modulePath + "/data/preload_sigMCGENReader_{binLabel}.root",
     'argset': dataArgsGEN,
 })
@@ -141,7 +141,7 @@ def buildAccXRecEffiHist(self):
             setupEfficiencyBuildProcedure = {}
             setupEfficiencyBuildProcedure['acc'] = {
                 #'ifiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*.root", ],
-                'ifiles': ["/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data/Modified_sel_BsToPhiMuMu_NofilterMC_signal_2016_mc.lite_cut0_s.root", ],
+                'ifiles': [UnfilteredMC],
                 'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
                 'cutString': "fabs(genMupEta)<2.5 && fabs(genMumEta)<2.5 && genMupPt>2.5 && genMumPt>2.5",
                 'fillXY': "genCosThetaK:genCosThetaL"  # Y:X

@@ -683,7 +683,7 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    binKey = ['summaryLowQ2'] #, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
+    binKey = ['belowJpsiA'] #, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
     for b in binKey:
         p.cfg['binKey'] = b
         print (p.cfg)

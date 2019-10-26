@@ -403,7 +403,7 @@ stdPDFBuilder.customize = types.MethodType(customizePDFBuilder, stdPDFBuilder)
 
 if __name__ == '__main__':
     #  binKey = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA','abovePsi2sB', 'summary', 'summaryLowQ2']
-    binKey = ['betweenPeaks']
+    binKey = ['belowJpsiA']
     for b in binKey:
         p.cfg['binKey'] = b
         p.setSequence([dataCollection.dataReader, stdWspaceReader, stdPDFBuilder])

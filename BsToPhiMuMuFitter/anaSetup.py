@@ -11,6 +11,9 @@ from math import sqrt
 
 # Shared global settings
 modulePath = os.path.abspath(os.path.dirname(__file__))
+dataFilePath = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v3/Modified_BDT_Modified_sel_BsToPhiMuMu_2016_combine_data_cut0_s0.root"
+UnfilteredMC = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v3/Modified_sel_BsToPhiMuMu_NofilterMC_signal_2016_mc.lite_nocut.root"
+sigMC = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v3/Modified_BDT_Modified_sel_BsToPhiMuMu_combine_MC_2016_mc.lite_cut0.root"
 
 # q2 bins
 q2bins = {}
@@ -23,7 +26,7 @@ def createBinTemplate(name, lowerBd, upperBd):
     }
     return template
 
-q2bins['belowJpsiA'] = createBinTemplate("bin1A", 1., 2.00)
+q2bins['belowJpsiA'] = createBinTemplate("bin1A", 0.1, 2.00)
 q2bins['belowJpsiB'] = createBinTemplate("bin1B", 2.00, 5.00)
 q2bins['belowJpsiC'] = createBinTemplate("bin1C", 5.00, 8.00)
 q2bins['betweenPeaks'] = createBinTemplate("bin3", 11.00, 12.5)
@@ -127,13 +130,12 @@ bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassReg
 cut_passTrigger = "Triggers >= 1"
 cut_phiWindow = "Phimass>1.01 && Phimass < 1.03"
 cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
-cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.170 && abs(Bmass-Mumumass-1.681)>0.080"
-cut_Bdt = "Bdt > 0.55"
+cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.180 && abs(Bmass-Mumumass-1.681)>0.040"
+cut_Bdt = "Bdt > 0.72"
 # cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
 cuts = [
     cut_passTrigger,
     cut_phiWindow,
-    cut_resonanceRej,
     cut_antiRadiation,
     cut_Bdt,
 ]
