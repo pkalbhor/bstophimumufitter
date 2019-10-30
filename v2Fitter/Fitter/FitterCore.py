@@ -40,7 +40,7 @@ Following functions to be overloaded to customize the full procedure...
                     self.data = self.process.sourcemanager.get(data).Clone()
 
     def _bookMinimizer(self):
-        """Bind a RooMinimizer object to bind to self.minimizer at Runtime"""
+        print("""Bind a RooMinimizer object to bind to self.minimizer at Runtime""")
         if self.pdf.InheritsFrom("RooAbsPdf"):
             self._nll = self.pdf.createNLL(self.data, *(self.cfg.get('createNLLOpt', [])))
         elif self.pdf.InheritsFrom("RooAbsReal"):
@@ -49,6 +49,7 @@ Following functions to be overloaded to customize the full procedure...
             self.logger.logERROR("No clear way to define the FCN value.")
             raise NotImplementedError
         self.minimizer = RooMinimizer(self._nll)
+        print("FitterCore.py Line#52")
 
     def _preFitSteps(self):
         """Abstract: Do something before main fit loop"""

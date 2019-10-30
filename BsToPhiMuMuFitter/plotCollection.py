@@ -71,12 +71,12 @@ class Plotter(Path):
     frameK = CosThetaK.frame()
     frameK.SetMinimum(0)
     frameK.SetTitle("")
-    frameK_binning = 10
+    frameK_binning = 20
 
     frameL = CosThetaL.frame()
     frameL.SetMinimum(0)
     frameL.SetTitle("")
-    frameL_binning = 10
+    frameL_binning = 20
 
     legend = ROOT.TLegend(.75, .70, .95, .90)
     legend.SetFillColor(0)
@@ -110,9 +110,9 @@ class Plotter(Path):
 
     @staticmethod
     def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, scaleYaxis=1.8):
-        """
+        print("""
             Use initXXXPlotCfg to ensure elements in xxxPlots fit the format
-        """
+        """)
         # Major plot
         cloned_frame = frame.emptyClone("cloned_frame")
         marks = [] if marks is None else marks
@@ -188,13 +188,14 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
         [wspace.pdf('model'), (ROOT.RooFit.Components('bkgCombM'),) + plotterCfg_bkgStyle, None, "Background"],
     ]
 
-    pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True))
+    pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True), ROOT.RooFit.PrintLevel(-1))
     Plotter.plotFrameB(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
     self.canvasPrint(pltName)
 types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
 
 def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
     for pIdx, plt in enumerate(dataPlots):
+        print("Test: ", pIdx, plt)#Pritam
         dataPlots[pIdx] = self.initDataPlotCfg(plt)
     for pIdx, plt in enumerate(pdfPlots):
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
@@ -355,11 +356,12 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
 types.MethodType(plotPostfitBLK, None, Plotter)
 
 def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
-    """ Check carefully the keys in 'dbSetup' """
+    print(""" Check carefully the keys in 'dbSetup' """)
     if marks is None:
         marks = []
     binKeys = ['belowJpsiA']#, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summaryLowQ2']
 
+    print("Hi: ", [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
     xxErr = array('d', map(lambda t: (t[1] - t[0]) / 2, [q2bins[binKey]['q2range'] for binKey in binKeys]))
 
@@ -411,8 +413,10 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
     Plotter.legend.Clear()
     for dbsIdx, dbs in enumerate(dbSetup):
+        print("dbSetup", dbSetup)
         title = dbs.get('title', None)
         dbPat = dbs.get('dbPat', self.process.dbplayer.absInputDir + "/fitResults_{binLabel}.db")
+        print("dbPat: ", dbPat)
         argAliasInDB = dbs.get('argAliasInDB', {})
         withSystError = dbs.get('withSystError', False)
         statErrorKey = dbs.get('statErrorKey', 'Minuit')
@@ -443,10 +447,11 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         for binKeyIdx, binKey in enumerate(binKeys):
             print(dbPat.format(binLabel=q2bins[binKey]['label']))
             if not os.path.exists(dbPat.format(binLabel=q2bins[binKey]['label'])):
-                self.logger.logERROR("Input db file {0} NOT found. Skip.".format(dbPat.format(binLable=q2bins[binKey]['label'])))
+                self.logger.logERROR("Input db file {0} NOT found. Skip.".format(dbPat.format(binLabel=q2bins[binKey]['label'])))
                 continue
             try:
                 db = shelve.open(dbPat.format(binLabel=q2bins[binKey]['label']))
+                print("Shelve Open: ", list(db.keys()))
                 unboundFl = db[argAliasInDB.get("unboundFl", "unboundFl")]
                 unboundAfb = db[argAliasInDB.get("unboundAfb", "unboundAfb")]
 
@@ -546,7 +551,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 gr.Draw(opt + " SAME")
     Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
-    self.canvasPrint(pltName + '_afb', False)
+    self.canvasPrint(pltName +'_'+binKey+'_afb', False)
 
     for grIdx, gr in enumerate(grFls):
         gr.SetTitle("")
@@ -562,7 +567,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 gr.Draw(opt + " SAME")
     Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
-    self.canvasPrint(pltName + '_fl', False)
+    self.canvasPrint(pltName +'_'+ binKey + '_fl', False)
 types.MethodType(plotSummaryAfbFl, None, Plotter)
 
 plotterCfg = {
@@ -604,6 +609,15 @@ plotterCfg['plots'] = {
             'pltName': "angular3D_sig2D",
             'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
             'pdfPlots': [["f_sig2D", plotterCfg_sigStyle, fitCollection.setupSig2DFitter['argAliasInDB'], None],
+                        ],
+            'marks': []}
+    },
+    'angular3D_sigA': { #Pritam
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "angular3D_sigA",
+            'dataPlots': [["sigMCGENReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [["f_sigA", plotterCfg_sigStyle, fitCollection.setupSigAFitter['argAliasInDB'], None],
                         ],
             'marks': []}
     },
@@ -688,15 +702,17 @@ if __name__ == '__main__':
     for b in binKey:
         p.cfg['binKey'] = b
         print (p.cfg)
-        #  plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
-        #  plotter.cfg['switchPlots'].append('effi')            # Efficiency
-        #  plotter.cfg['switchPlots'].append('angular3D_sigM')
-        #  plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
-        #  plotter.cfg['switchPlots'].append('angular3D_final')
-        #  plotter.cfg['switchPlots'].append('angular3D_summary')
-        plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+        # plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
+        # plotter.cfg['switchPlots'].append('effi')            # Efficiency
+        # plotter.cfg['switchPlots'].append('angular3D_sigM')
+        # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
+        # plotter.cfg['switchPlots'].append('angular3D_final')
+        # plotter.cfg['switchPlots'].append('angular3D_summary')
+        # plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+        # plotter.cfg['switchPlots'].append('angular3D_sig2D')
+        plotter.cfg['switchPlots'].append('angular3D_sigA')
 
-        p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
+        p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
         p.beginSeq()
         p.runSeq()
         p.endSeq()

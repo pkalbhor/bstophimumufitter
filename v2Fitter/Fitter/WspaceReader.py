@@ -43,7 +43,7 @@ class WspaceReader(Path):
         # Hook to registerd file
         fileName = self.cfg.get('fileName', "")
         if os.path.exists(fileName):
-            self.ifile = self.process.filemanager.open(str(hex(id(self))), fileName, 'READ')
+            self.ifile = self.process.filemanager.open(str(hex(id(self))), fileName, 'READ') #Open Wspace File #Pritam
 
         # Load wspace
         wspaceName = "wspace.{0}".format(self.cfg['wspaceTag'])

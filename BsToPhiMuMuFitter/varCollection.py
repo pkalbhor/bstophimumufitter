@@ -30,7 +30,7 @@ dataArgs = RooArgSet(
 
 genCosThetaK = RooRealVar("genCosThetaK", "cos#theta_{K}", -1., 1.)
 genCosThetaL = RooRealVar("genCosThetaL", "cos#theta_{l}", -1., 1.)
-genQ2 = RooRealVar("genQ2", "q^{2} [GeV^{2}]", 0.5, 20.)
+genQ2 = RooRealVar("genQ2", "q^{2} [GeV^{2}]", 0.1, 20.)
 dataArgsGEN = RooArgSet(
     genQ2,
     genCosThetaK,

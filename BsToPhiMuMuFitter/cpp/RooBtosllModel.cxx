@@ -53,8 +53,11 @@ Double_t RooBtosllModel::evaluate() const
   Double_t fl = 0.5+TMath::ATan(unboundFl)/TMath::Pi() ; // [0.,1.]
   Double_t afb = 1.5*(1.-fl)*TMath::ATan(unboundAfb)/TMath::Pi() ; // [-0.75, 0.75]
   Double_t as = 1.78*TMath::Sqrt(3.*fs*(1.-fs)*fl)*transAs ; // [-(fs+3*fl(1-fs)), fs+3*fs*(1-fs)]
-
-  Double_t result = 0.5625*((0.666667*fs+1.333333*as*CosThetaK)*(1.-pow(CosThetaL,2))+(1.-fs)*(2.*fl*pow(CosThetaK,2)*(1.-pow(CosThetaL,2))+0.5*(1.-fl)*(1.-pow(CosThetaK,2))*(1.+pow(CosThetaL,2))+1.333333*afb*(1.-pow(CosThetaK,2))*CosThetaL)) ;
+  
+  //Double_t afb = (0.5-TMath::ATan(unboundFl)/TMath::Pi())*2*TMath::ATan(unboundAfb)/TMath::Pi(); 
+  Double_t result = (9.0/16.0)*((0.5*(1.0-fl)*(1.0-CosThetaK*CosThetaK)*(1.0+CosThetaL*CosThetaL)) + (2.0*fl*CosThetaK*CosThetaK*(1.0-CosThetaL*CosThetaL)) + (afb*(1.0-CosThetaK*CosThetaK)*CosThetaL)) ;
+  
+  //Double_t result = 0.5625*((0.666667*fs+1.333333*as*CosThetaK)*(1.-pow(CosThetaL,2))+(1.-fs)*(2.*fl*pow(CosThetaK,2)*(1.-pow(CosThetaL,2))+0.5*(1.-fl)*(1.-pow(CosThetaK,2))*(1.+pow(CosThetaL,2))+1.333333*afb*(1.-pow(CosThetaK,2))*CosThetaL)) ;
   // Double_t result = 0.5625*((0.666667*fs+2.666667*transAs*TMath::Sqrt(3.*fs*(1.-fs)*(0.5+TMath::ATan(unboundFl)/TMath::Pi()))*CosThetaK)*(1-pow(CosThetaL,2))+(1-fs)*(2*(0.5+TMath::ATan(unboundFl)/TMath::Pi())*pow(CosThetaK,2)*(1.-pow(CosThetaL,2))+0.5*(0.5-TMath::ATan(unboundFl)/TMath::Pi())*(1.-pow(CosThetaK,2))*(1.+pow(CosThetaL,2))+(2.*(0.5-TMath::ATan(unboundFl)/TMath::Pi())*TMath::ATan(unboundAfb)/TMath::Pi())*(1.-pow(CosThetaK,2))*CosThetaL)) ;
 
   return result;

@@ -39,11 +39,12 @@ class EfficiencyFitter(FitterCore):
         pass
 
     def _preFitSteps(self):
-        """Prefit uncorrelated term"""
+        print("""Prefit uncorrelated term""")
         args = self.pdf.getParameters(self.data)
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
         self.ToggleConstVar(args, isConst=True)
-
+        
+        print ("args: ", args)
         # Disable xTerm correction and fit to 1-D
         args.find('hasXTerm').setVal(0)
 
@@ -54,11 +55,14 @@ class EfficiencyFitter(FitterCore):
         for proj, pdf, var, argPats in [(h_accXrec_fine_ProjectionX, effi_cosl, CosThetaL, [r"^l\d+$"]), (h_accXrec_fine_ProjectionY, effi_cosK, CosThetaK, [r"^k\d+$"])]:
             hdata = ROOT.RooDataHist("hdata", "", ROOT.RooArgList(var), ROOT.RooFit.Import(proj))
             self.ToggleConstVar(args, isConst=False, targetArgs=argPats)
-            pdf.chi2FitTo(hdata, ROOT.RooLinkedList())
+            print("Pritami")
+            pdf.chi2FitTo(hdata, ROOT.RooLinkedList() )
+            
+            print("Pritam")
             self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
 
         args.find('effi_norm').setConstant(False)
-        self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True))
+        self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True), ROOT.RooFit.PrintLevel(-1))
         args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
         args.find('effi_norm').setConstant(True)
 
@@ -73,6 +77,7 @@ class EfficiencyFitter(FitterCore):
         FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, args)
 
     def _runFitSteps(self):
+        print("EfficiencyFitter.py: Line#76 Pritam")
         h2_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
 
         effi_sigA_formula = self.pdf.formula().GetExpFormula().Data()
@@ -91,14 +96,19 @@ class EfficiencyFitter(FitterCore):
         effi_sigA_formula = re.sub(r"CosThetaK", r"y", effi_sigA_formula)
         f2_effi_sigA = ROOT.TF2("f2_effi_sigA", effi_sigA_formula, -1, 1, -1, 1)
 
+        print("EfficiencyFitter.py: Line#94 Pritam")
         fitter = ROOT.EfficiencyFitter()
+        print("EfficiencyFitter.py: Line#96 Pritam")
         minuit = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
         for xIdx in range(nPar):
             minuit.DefineParameter(xIdx, "x{0}".format(xIdx), 0., 1E-4, -1E+1, 1E+1)
+        minuit.SetPrintLevel(-1)
         minuit.Command("MINI")
+        print("EfficiencyFitter.py: Line#100 Pritam")
         minuit.Command("MINI")
+        print("EfficiencyFitter.py: Line#102 Pritam")
         minuit.Command("MINOS")
-
+        print("EfficiencyFitter.py: Line#105 Pritam")
         parVal = ROOT.Double(0)
         parErr = ROOT.Double(0)
         for xIdx in range(nPar):

@@ -1,6 +1,7 @@
 #include "TH2.h"
 #include "TF2.h"
 #include "TMinuit.h"
+#include "RooMsgService.h"
 
 #ifndef EFFICIENCYFITTER_H
 #define EFFICIENCYFITTER_H
@@ -8,6 +9,19 @@
 TH2 *h2_fcn = 0;
 TF2 *f2_fcn = 0;
 int chi2Val = 0;
+void test(){
+RooMsgService::instance().setGlobalKillBelow(RooFit::FATAL);
+RooMsgService::instance().setSilentMode(kTRUE);
+RooMsgService::instance().setStreamStatus(1,false);
+RooMsgService::instance().getStream(1).removeTopic(RooFit::Integration) ;
+RooMsgService::instance().getStream(1).removeTopic(RooFit::Minimization) ;
+RooMsgService::instance().getStream(1).removeTopic(RooFit::Fitting) ;
+RooMsgService::instance().getStream(1).removeTopic(RooFit::NumIntegration) ;
+RooMsgService::instance().getStream(1).removeTopic(RooFit::Optimization) ;
+RooMsgService::instance().getStream(1).removeTopic(RooFit::ObjectHandling) ;
+RooMsgService::instance().getStream(1).removeTopic(RooFit::Eval) ;
+RooMsgService::instance().Print() ;
+}
 
 void fcn_binnedChi2_2D(int &npar, double *gin, double &f, double *par, int iflag)
 {//{{{
@@ -60,6 +74,7 @@ TMinuit* EfficiencyFitter::Init(int nPar, TH2 *h2, TF2 *f2){
     h2_fcn = h2;
     f2_fcn = f2;
     minuit = new TMinuit(nPar);
+    minuit->SetPrintLevel(-1); //Pritam
     minuit->SetFCN(fcn_binnedChi2_2D);
     return minuit;
 }
