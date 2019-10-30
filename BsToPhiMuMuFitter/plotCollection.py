@@ -703,14 +703,14 @@ if __name__ == '__main__':
         p.cfg['binKey'] = b
         print (p.cfg)
         # plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
-        # plotter.cfg['switchPlots'].append('effi')            # Efficiency
+        plotter.cfg['switchPlots'].append('effi')            # Efficiency
         # plotter.cfg['switchPlots'].append('angular3D_sigM')
         # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
         # plotter.cfg['switchPlots'].append('angular3D_final')
         # plotter.cfg['switchPlots'].append('angular3D_summary')
         # plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
         # plotter.cfg['switchPlots'].append('angular3D_sig2D')
-        plotter.cfg['switchPlots'].append('angular3D_sigA')
+        # plotter.cfg['switchPlots'].append('angular3D_sigA')
 
         p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
         p.beginSeq()
