@@ -51,7 +51,7 @@ RooMinuit* StdFitter::Init(RooAbsPdf* pdf, RooDataSet* data){
     std::cout<<"This is Pritam2"<<std::endl;
     nll = pdf->createNLL(*data, this->createNLLOpt);
     minuit = new RooMinuit(*nll);
-    minuit->setPrintLevel(-1); //Pritam
+    minuit->setPrintLevel(3); //Pritam
     return minuit;
 }
 

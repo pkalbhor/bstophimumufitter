@@ -64,7 +64,7 @@ class StdFitter(FitterCore):
             unboundFl.setVal(flToUnboundFl(0.5 * fl))
 
     def _preFitSteps_vetoSmallFs(self):
-        """ fs is usually negligible, set the fraction to 0"""
+        print(""" fs is usually negligible, set the fraction to 0""")
         if "fs" in self.cfg.get('argPattern'):
             fs = self.args.find("fs")
             transAs = self.args.find("transAs")

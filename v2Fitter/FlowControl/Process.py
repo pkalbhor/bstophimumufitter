@@ -40,8 +40,8 @@ class Process:
     def setSequence(self, seq):
         """Define a sequence of path to be run."""
         self._sequence = seq
-        for p in self._sequence:
-            p.hookProcess(self)
+        for seq_obj in self._sequence: # Loops over all the object contained in the sequence
+            seq_obj.hookProcess(self)  # Find hookProcess method in respective Class(of that seq_obj) 
 
     def addService(self, name, obj):
         """Put object to the dictionary of services."""
@@ -75,13 +75,14 @@ class Process:
         self.logger.logINFO("New process initialized with random seed {0}".format(ROOT.gRandom.GetSeed()))
 
     def runSeq(self):
-        """Run all path."""
-        for p in self._sequence:
+        print("""Run all path. Process.runSeq() MainProcess""")
+        print("mainprocess self.cfg", self.cfg)
+        for seq_obj in self._sequence:
             # print ("Process.py", self._sequence) #Pritam
-            self.logger.logDEBUG("Entering Path: {0}".format(p.cfg['name']))
-            p.customize()
-            p._runPath()
-            p._addSource()
+            self.logger.logDEBUG("Entering Path: {0}".format(seq_obj.cfg['name']))
+            seq_obj.customize()
+            seq_obj._runPath()
+            seq_obj._addSource()
             # print(self.sourcemanager)
             # print(self.filemanager)
 

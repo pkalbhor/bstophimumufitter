@@ -62,7 +62,7 @@ class EfficiencyFitter(FitterCore):
             self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
 
         args.find('effi_norm').setConstant(False)
-        self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True), ROOT.RooFit.PrintLevel(-1))
+        self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True)) #, ROOT.RooFit.PrintLevel(-1))
         args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
         args.find('effi_norm').setConstant(True)
 
@@ -102,7 +102,7 @@ class EfficiencyFitter(FitterCore):
         minuit = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
         for xIdx in range(nPar):
             minuit.DefineParameter(xIdx, "x{0}".format(xIdx), 0., 1E-4, -1E+1, 1E+1)
-        minuit.SetPrintLevel(-1)
+        # minuit.SetPrintLevel(-1) #Pritam
         minuit.Command("MINI")
         print("EfficiencyFitter.py: Line#100 Pritam")
         minuit.Command("MINI")

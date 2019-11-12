@@ -52,3 +52,4 @@ class Path():
         """Add shared objects to the source pool."""
         for key, val in self.cfg['source'].items():
             self.process.sourcemanager.update(key, val, addHist=self.name)
+        print("sourcemanager: ", self.process.sourcemanager.keys())

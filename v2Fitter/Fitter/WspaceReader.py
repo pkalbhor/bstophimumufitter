@@ -47,6 +47,7 @@ class WspaceReader(Path):
 
         # Load wspace
         wspaceName = "wspace.{0}".format(self.cfg['wspaceTag'])
+        # print("sourcemanager: ", self.process.sourcemanager.keys())
         if wspaceName in self.process.sourcemanager.keys():
             self.wspace = self.process.sourcemanager.get(wspaceName)
         elif not self.ifile == None:

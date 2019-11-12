@@ -34,7 +34,7 @@ CFG.update({
 
 # dataReader
 def customizeOne(self, targetBMassRegion=None, extraCuts=None):
-    """Define datasets with arguments."""
+    print("""Define datasets with arguments.""")
     if targetBMassRegion is None:
         targetBMassRegion = []
     if not self.process.cfg['binKey'] in q2bins.keys():
@@ -56,7 +56,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
                     )
                 )
             )
-
+        # print("dataset:? ", self.cfg['dataset'])
     # Customize preload TFile
     if self.cfg['preloadFile']:
         self.cfg['preloadFile'] = self.cfg['preloadFile'].format(binLabel=q2bins[self.process.cfg['binKey']]['label'])
@@ -89,7 +89,7 @@ sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
 
 # sigMCGENReader
 def customizeGEN(self):
-    """Define datasets with arguments."""
+    print("""Define datasets with arguments.""")
     if not self.process.cfg['binKey'] in q2bins.keys():
         print("ERROR\t: Bin {0} is not defined.\n".format(self.process.cfg['binKey']))
         raise AttributeError
@@ -233,9 +233,9 @@ def buildAccXRecEffiHist(self):
     # Register the chosen one to sourcemanager
     h2_accXrec = fin.Get("h2_accXrec_{0}".format(self.process.cfg['binKey']))
     self.cfg['source']['effiHistReader.h2_accXrec'] = h2_accXrec
-    self.cfg['source']['effiHistReader.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec))
-    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey']))
-    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(self.process.cfg['binKey']))
+    self.cfg['source']['effiHistReader.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec)) # Effi 2D RooDataHist
+    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey'])) #Effi of CosThetaL
+    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(self.process.cfg['binKey'])) # Effi of CosThetaK
 
 effiHistReader = ObjProvider({
     'name': "effiHistReader",

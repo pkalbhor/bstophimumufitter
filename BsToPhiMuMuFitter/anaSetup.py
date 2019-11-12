@@ -11,8 +11,8 @@ from math import sqrt
 
 # Shared global settings
 modulePath = os.path.abspath(os.path.dirname(__file__))
-dataFilePath = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v3/Modified_BDT_Modified_sel_BsToPhiMuMu_2016_combine_data_cut0_s0.root"
-UnfilteredMC = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v3/Modified_sel_BsToPhiMuMu_NofilterMC_signal_2016_mc.lite_nocut.root"
+dataFilePath = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v4/Modified_sel_BsToPhiMuMu_2016_Rereco07Aug17_data_cut_bdt_s0.root"
+UnfilteredMC = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v4/Modified_sel_BsToPhiMuMu_2016MC_combined_mc.lite_cut_bdt.root"
 sigMC = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v3/Modified_BDT_Modified_sel_BsToPhiMuMu_combine_MC_2016_mc.lite_cut0.root"
 
 # q2 bins
@@ -104,7 +104,7 @@ def createBmassTemplate(name, lowerBd, upperBd):
     }
     return template
 
-bMassRegions['Fit'] = createBmassTemplate("Fit", 4.90, 5.90)
+bMassRegions['Fit'] = createBmassTemplate("Fit", 4.90, 5.45)
 bMassRegions['SR'] = createBmassTemplate("SR", 5.287, 5.447)
 bMassRegions['LSB'] = createBmassTemplate("LSB", 5.143, 5.223)
 bMassRegions['USB'] = createBmassTemplate("USB", 5.511, 5.591)
@@ -131,7 +131,7 @@ cut_passTrigger = "Triggers >= 1"
 cut_phiWindow = "Phimass>1.01 && Phimass < 1.03"
 cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
 cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.180 && abs(Bmass-Mumumass-1.681)>0.040"
-cut_Bdt = "Bdt > 0.72"
+cut_Bdt = "Bdt > 0.09"
 # cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
 cuts = [
     cut_passTrigger,

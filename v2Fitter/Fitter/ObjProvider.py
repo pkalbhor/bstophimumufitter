@@ -26,13 +26,13 @@ class ObjProvider(Path):
         """Get variables from process.sources"""
         for key, builders in self.cfg['obj'].items():
             if not key in self.process.sourcemanager.keys():
-                print("HII", self.process.sourcemanager.keys()) #Pritam
+                #print("sourcemanager", self.process.sourcemanager.keys()) #Pritam
                 for builder in builders:
-                    print(builders)
+                    print("builders:", builders)
                     builder(self)
-                    print("HII", self.process.sourcemanager.keys())
+                    # print("HII", self.process.sourcemanager.keys())
                     if self.cfg['source'].has_key(key):
-                        print("ObjProvider Line#36", self.cfg['source'])
+                        # print("ObjProvider Line#36", self.cfg['source'])
                         break
             else:
                 self.logger.logDEBUG("Skipped booked object {0}.".format(key))

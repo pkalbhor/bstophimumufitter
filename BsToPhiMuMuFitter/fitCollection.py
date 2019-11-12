@@ -21,9 +21,9 @@ setupTemplateFitter = StdFitter.templateConfig()
 setupEffiFitter = deepcopy(EfficiencyFitter.templateConfig())
 setupEffiFitter.update({
     'name': "effiFitter",
-    'data': "effiHistReader.accXrec",
-    'dataX': "effiHistReader.h_accXrec_fine_ProjectionX",
-    'dataY': "effiHistReader.h_accXrec_fine_ProjectionY",
+    'data': "effiHistReader.accXrec", # 2D RooDataHist
+    'dataX': "effiHistReader.h_accXrec_fine_ProjectionX", # TH1D CosThetaL 
+    'dataY': "effiHistReader.h_accXrec_fine_ProjectionY", # TH1D CosThetaK
     'pdf': "effi_sigA",
     'pdfX': "effi_cosl",
     'pdfY': "effi_cosK",
@@ -54,6 +54,7 @@ sigAFitter = StdFitter(setupSigAFitter)
 def sigAFitter_bookPdfData(self):
     self.process.dbplayer.saveSMPrediction()
     StdFitter._bookPdfData(self)
+    print("sel.data(sigAFitter): ", self.data)
     self.data.changeObservableName("genCosThetaK", "CosThetaK")
     self.data.changeObservableName("genCosThetaL", "CosThetaL")
 sigAFitter._bookPdfData = types.MethodType(sigAFitter_bookPdfData, sigAFitter)

@@ -61,9 +61,10 @@ ObjProvider.getWspace = types.MethodType(getWspace, None, ObjProvider)
 def buildGenericObj(self, objName, factoryCmd, varNames):
     """Build with RooWorkspace.factory. See also RooFactoryWSTool.factory"""
     wspace = self.getWspace()
+    # print("WSPACE: ", wspace.Print())
     obj = wspace.obj(objName)
     if obj == None:
-        print("objName: ", objName)
+        # print("objName: ", objName)
         self.logger.logINFO("Build {0} from scratch.".format(objName))
         for v in varNames:
             if wspace.obj(v) == None:
@@ -142,9 +143,9 @@ setupBuildSigM = {
     'objName': "f_sigM",
     'varNames': ["Bmass"],
     'factoryCmd': [
-        "sigMGauss_mean[5.28, 5.25, 5.30]",
-        "RooGaussian::f_sigMGauss1(Bmass, sigMGauss_mean, sigMGauss1_sigma[0.02, 0.01, 0.05])",
-        "RooGaussian::f_sigMGauss2(Bmass, sigMGauss_mean, sigMGauss2_sigma[0.08, 0.05, 0.40])",
+        "sigMGauss_mean[5.28, 4.90, 5.30]",
+        "RooGaussian::f_sigMGauss1(Bmass, sigMGauss_mean, sigMGauss1_sigma[0.02, 0.0001, 0.05])",
+        "RooGaussian::f_sigMGauss2(Bmass, sigMGauss_mean, sigMGauss2_sigma[0.08, 0.0005, 0.40])",
         "SUM::f_sigM(sigM_frac[0.,0.,1.]*f_sigMGauss1, f_sigMGauss2)",
     ],
 }
@@ -378,7 +379,7 @@ stdWspaceReader.customize = types.MethodType(customizeWspaceReader, stdWspaceRea
 CFG_PDFBuilder = ObjProvider.templateConfig()
 stdPDFBuilder = ObjProvider(copy(CFG_PDFBuilder))
 def customizePDFBuilder(self):
-    """Customize pdf for q2 bins"""
+    print("""Customize pdf for q2 bins""")
     setupBuildAnalyticBkgCombA['factoryCmd'] = f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
     setupBuildEffiSigA['factoryCmd'] = f_effiSigA_format.get(self.process.cfg['binKey'], f_effiSigA_format['DEFAULT'])
     buildAnalyticBkgCombA = functools.partial(buildGenericObj, **setupBuildAnalyticBkgCombA)

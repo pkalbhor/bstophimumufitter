@@ -52,7 +52,7 @@ class DataReader(Path):
         return cfg
 
     def createDataSet(self, dname, dcut):
-        """Create named dataset"""
+        print("""Create named dataset Actually""")
         if dname in self.dataset.keys():
             return self.dataset[dname]
         data = RooDataSet(
@@ -65,11 +65,12 @@ class DataReader(Path):
         return data
 
     def createDataSets(self, cfg):
-        """Create named dataset"""
+        print("""Create named dataset""")
         for name, cut in cfg:
             if self.cfg['preloadFile'] and os.path.exists(self.cfg['preloadFile']):
                 file_preload = ROOT.TFile(self.cfg['preloadFile'])
                 data = file_preload.Get(name)
+                # print("TTTT: ", self.argset.Print(), self.cfg['preloadFile'], name, data.Print())
                 if not data == None:
                     self.dataset[name] = data
                 file_preload.Close()
@@ -90,7 +91,8 @@ class DataReader(Path):
         pass
 
     def _addSource(self):
-        """Add dataset and arguments to source pool"""
+        print("""Add dataset and arguments to source pool""")
+        print("source: cfg", self.cfg['source'])
         if self.cfg['preloadFile'] and not os.path.exists(self.cfg['preloadFile']):
             file_preload = ROOT.TFile(self.cfg['preloadFile'], 'RECREATE')
             for dname, d in self.dataset.items():
@@ -107,3 +109,4 @@ class DataReader(Path):
             self.cfg['source'][dname] = d
             self.logger.logINFO("{0} events in {1}.".format(d.sumEntries(), dname))
         super(DataReader, self)._addSource()
+        print("source: cfg", self.cfg['source'])

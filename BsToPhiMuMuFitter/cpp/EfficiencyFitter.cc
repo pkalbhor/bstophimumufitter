@@ -74,7 +74,7 @@ TMinuit* EfficiencyFitter::Init(int nPar, TH2 *h2, TF2 *f2){
     h2_fcn = h2;
     f2_fcn = f2;
     minuit = new TMinuit(nPar);
-    minuit->SetPrintLevel(-1); //Pritam
+    minuit->SetPrintLevel(3); //Pritam
     minuit->SetFCN(fcn_binnedChi2_2D);
     return minuit;
 }

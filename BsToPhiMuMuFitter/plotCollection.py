@@ -64,18 +64,18 @@ class Plotter(Path):
             Plotter.latexCMSExtra()
 
     frameB = Bmass.frame()
-    frameB.SetMinimum(0)
+    #frameB.SetMinimum(0)
     frameB.SetTitle("")
     frameB_binning = 13
 
     frameK = CosThetaK.frame()
-    frameK.SetMinimum(0)
-    frameK.SetTitle("")
+    #frameK.SetMinimum(0)
+    #frameK.SetTitle("")
     frameK_binning = 20
 
     frameL = CosThetaL.frame()
-    frameL.SetMinimum(0)
-    frameL.SetTitle("")
+    #frameL.SetMinimum(0)
+    frameL.SetTitle("Pull")
     frameL_binning = 20
 
     legend = ROOT.TLegend(.75, .70, .95, .90)
@@ -83,7 +83,7 @@ class Plotter(Path):
     legend.SetBorderSize(0)
 
     def initPdfPlotCfg(self, p):
-        """ [Name, plotOnOpt, argAliasInDB, LegendName] """
+        print(""" [Name, plotOnOpt, argAliasInDB, LegendName] """)
         pdfPlotTemplate = ["", plotterCfg_allStyle, None, None]
         p = p + pdfPlotTemplate[len(p):]
         if isinstance(p[0], str):
@@ -94,15 +94,17 @@ class Plotter(Path):
                 raise RuntimeError
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
+        print("dbfile?", self.process.dbplayer.odbfile)
         return p
 
     def initDataPlotCfg(self, p):
-        """ [Name, plotOnOpt, LegendName] """
+        print(""" [Name, plotOnOpt, LegendName] """)
         dataPlotTemplate = ["", plotterCfg_dataStyle, "Data"]
         p = p + dataPlotTemplate[len(p):]
         if isinstance(p[0], str):
             self.logger.logDEBUG("Initialize dataPlot {0}".format(p[0]))
             p[0] = self.process.sourcemanager.get(p[0])
+            print("PPPP", p[0])
             if p[0] == None:
                 self.logger.logERROR("dataPlot not found in source manager.")
                 raise RuntimeError
@@ -118,7 +120,9 @@ class Plotter(Path):
         marks = [] if marks is None else marks
         dataPlots = [] if dataPlots is None else dataPlots
         pdfPlots = [] if pdfPlots is None else pdfPlots
+        print(dataPlots, pdfPlots)
         for pIdx, p in enumerate(dataPlots):
+            print("dataP{0}".format(pIdx))
             p[0].plotOn(cloned_frame,
                         ROOT.RooFit.Name("dataP{0}".format(pIdx)),
                         ROOT.RooFit.Binning(binning),
@@ -195,9 +199,10 @@ types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
 
 def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
     for pIdx, plt in enumerate(dataPlots):
-        print("Test: ", pIdx, plt)#Pritam
+        print("data: ", pIdx, plt)#Pritam
         dataPlots[pIdx] = self.initDataPlotCfg(plt)
     for pIdx, plt in enumerate(pdfPlots):
+        print("pdf: ", pIdx, plt)#Pritam
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
 
     plotFuncs = {
@@ -226,8 +231,8 @@ def plotEfficiency(self, data_name, pdf_name):
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
 
     data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
-    data_accXrec.Scale(100)
-    data_accXrec.SetMinimum(0)
+    #data_accXrec.Scale(100)
+    #data_accXrec.SetMinimum(0)
     #data_accXrec.SetMaximum(100 * 0.00015)  # Z axis in percentage
     data_accXrec.SetTitleOffset(1.6, "X")
     data_accXrec.SetTitleOffset(1.8, "Y")
@@ -246,12 +251,15 @@ def plotEfficiency(self, data_name, pdf_name):
 
     cloned_frameL = Plotter.frameL.emptyClone("cloned_frameL")
     h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX")
+    print("Test: ", h_accXrec_fine_ProjectionX.GetMinimum())
     data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_accXrec_fine_ProjectionX", "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
-    data_accXrec_fine_ProjectionX.plotOn(cloned_frameL, ROOT.RooFit.Rescale(100))
+    data_accXrec_fine_ProjectionX.plotOn(cloned_frameL, ROOT.RooFit.Rescale(100), ROOT.RooFit.MarkerStyle(7))
     pdfL = self.process.sourcemanager.get("effi_cosl")
-    pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill)
+    pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill) 
     cloned_frameL.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
+    # cloned_frameL.SetMinimum( h_accXrec_fine_ProjectionX.GetMinimum()*100)
+    print("Teset2: ", cloned_frameL.GetMinimum(), h_accXrec_fine_ProjectionX.GetMinimum(), h_accXrec_fine_ProjectionX.GetBinError(1))
     cloned_frameL.Draw()
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
@@ -259,20 +267,74 @@ def plotEfficiency(self, data_name, pdf_name):
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     self.canvasPrint(pltName + "_cosl")
 
+    
+    frameA= Plotter.frameL.emptyClone("frameA") #(ROOT.RooFit.Title("Pull Distribution"))
+    frameA.SetTitle("Pull Distribution")
+    hpull = cloned_frameL.pullHist()
+    hpull.SetMarkerStyle(7)
+    frameA.addPlotable(hpull, "P") 
+    frameA.GetYaxis().SetTitle("Pull Distribution")
+    frameA.Draw()
+    Plotter.latexCMSSim()
+    Plotter.latexCMSExtra()
+    self.latexQ2()
+    # self.canvasPrint(pltName + "_cosl_PullHist")
+    frameA1 = Plotter.frameL.emptyClone("frameA1")
+    frameA1.SetTitle("Residual Distribution")
+    hresid = cloned_frameL.residHist()
+    hresid.SetMarkerStyle(7)
+    frameA1.addPlotable(hresid, "P")
+    frameA1.GetYaxis().SetTitle("Residual Distribution")
+    
+    c = ROOT.TCanvas("Residuals","Residuals",1200,400)
+    c.Divide(3)
+    c.cd(1); frameA.Draw()
+    c.cd(2); frameA1.Draw()
+    c.cd(3); cloned_frameL.Draw()
+    c.Print("With_Residuals_CosL_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+    del hpull; del hresid
+
+    Plotter.canvas.cd()
     cloned_frameK = Plotter.frameK.emptyClone("cloned_frameK")
     h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY")
     data_accXrec_fine_ProjectionY = ROOT.RooDataHist("data_accXrec_fine_ProjectionY", "", ROOT.RooArgList(CosThetaK), ROOT.RooFit.Import(h_accXrec_fine_ProjectionY))
-    data_accXrec_fine_ProjectionY.plotOn(cloned_frameK, ROOT.RooFit.Rescale(100))
+    data_accXrec_fine_ProjectionY.plotOn(cloned_frameK, ROOT.RooFit.Rescale(100), ROOT.RooFit.MarkerStyle(7))
     pdfK = self.process.sourcemanager.get("effi_cosK")
-    pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill)
+    pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill)#, ROOT.RooFit.LineWidth(2))
     cloned_frameK.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
+    #cloned_frameK.SetMinimum(cloned_frameK.GetMinimum()+20)
     cloned_frameK.Draw()
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
     self.latexQ2()
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
     self.canvasPrint(pltName + "_cosK")
+
+    frameB= Plotter.frameK.emptyClone("frameB") #(ROOT.RooFit.Title("Pull Distribution"))
+    frameB.SetTitle("Pull Distribution")
+    hpull = cloned_frameK.pullHist()
+    hpull.SetMarkerStyle(7)
+    frameB.addPlotable(hpull, "P") 
+    frameB.GetYaxis().SetTitle("Pull Distribution")
+    frameB.Draw()
+    Plotter.latexCMSSim()
+    Plotter.latexCMSExtra()
+    self.latexQ2()
+    # self.canvasPrint(pltName + "_cosl_PullHist")
+    frameB1 = Plotter.frameK.emptyClone("frameB1")
+    frameB1.SetTitle("Residual Distribution")
+    hresid = cloned_frameK.residHist()
+    hresid.SetMarkerStyle(7)
+    frameB1.addPlotable(hresid, "P")
+    frameB1.GetYaxis().SetTitle("Residual Distribution")
+    
+    c.cd(1); frameB.Draw()
+    c.cd(2); frameB1.Draw()
+    c.cd(3); cloned_frameK.Draw()
+    c.Print("With_Residuals_CosK_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+    del hpull; del hresid
+
 types.MethodType(plotEfficiency, None, Plotter)
 
 def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
@@ -577,7 +639,7 @@ plotterCfg = {
 plotterCfg_dataStyle = ()
 plotterCfg_mcStyle = ()
 plotterCfg_allStyle = (ROOT.RooFit.LineColor(1),)
-plotterCfg_sigStyleNoFill = (ROOT.RooFit.LineColor(4),)
+plotterCfg_sigStyleNoFill = (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineWidth(2))
 plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillColor(4), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines())
 plotterCfg_bkgStyle = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
 plotterCfg['plots'] = {
@@ -713,6 +775,7 @@ if __name__ == '__main__':
         # plotter.cfg['switchPlots'].append('angular3D_sigA')
 
         p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
+        #print(p._sources); exit()
         p.beginSeq()
         p.runSeq()
         p.endSeq()

@@ -96,8 +96,9 @@ class FitDBPlayer(Service):
 
     @staticmethod
     def initFromDB(dbfile, args, aliasDict=None):
-        """Parameter initialization from db file"""
+        print("""Parameter initialization from db file""")
         if not os.path.exists(dbfile):
+            print("dbfile doesnot exist..")
             return
         if aliasDict is None:
             aliasDict = {}

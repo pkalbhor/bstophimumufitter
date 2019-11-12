@@ -27,6 +27,7 @@ Following functions to be overloaded to customize the full procedure...
 
     def _bookPdfData(self):
         self.pdf = self.process.sourcemanager.get(self.cfg['pdf'])
+        #print("PDF", self.process.sourcemanager.get(self.cfg['pdf'])
         if not hasattr(self.cfg['data'], "__iter__"):
             self.data = self.process.sourcemanager.get(self.cfg['data'])
         elif len(self.cfg['data']) <= 1:
@@ -38,6 +39,7 @@ Following functions to be overloaded to customize the full procedure...
                     self.data.append(self.process.sourcemanager.get(data))
                 else:
                     self.data = self.process.sourcemanager.get(data).Clone()
+        print ("PDF DATA: ", self.data, self.pdf)
 
     def _bookMinimizer(self):
         print("""Bind a RooMinimizer object to bind to self.minimizer at Runtime""")
@@ -49,10 +51,11 @@ Following functions to be overloaded to customize the full procedure...
             self.logger.logERROR("No clear way to define the FCN value.")
             raise NotImplementedError
         self.minimizer = RooMinimizer(self._nll)
+        self.minimizer.setVerbose(ROOT.kTRUE)
         print("FitterCore.py Line#52")
 
     def _preFitSteps(self):
-        """Abstract: Do something before main fit loop"""
+        print("""Abstract: Do something before main fit loop""")
         self.args = self.pdf.getParameters(self.data)
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg['argPattern'])
@@ -101,7 +104,8 @@ Following functions to be overloaded to customize the full procedure...
         return cfg
 
     def _runPath(self):
-        """Stardard fitting procedure to be overlaoded."""
+        print("""Stardard fitting procedure to be overlaoded.""")
+        print("self_obj.cfg: ", self.cfg )
         self._bookPdfData()
         self._bookMinimizer()
         self._preFitSteps()
