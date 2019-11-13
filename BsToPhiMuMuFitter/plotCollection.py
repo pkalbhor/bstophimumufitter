@@ -192,7 +192,7 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
         [wspace.pdf('model'), (ROOT.RooFit.Components('bkgCombM'),) + plotterCfg_bkgStyle, None, "Background"],
     ]
 
-    pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True), ROOT.RooFit.PrintLevel(-1))
+    pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True), ROOT.RooFit.PrintLevel(3))
     Plotter.plotFrameB(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
     self.canvasPrint(pltName)
 types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
@@ -771,7 +771,7 @@ if __name__ == '__main__':
         # plotter.cfg['switchPlots'].append('angular3D_final')
         # plotter.cfg['switchPlots'].append('angular3D_summary')
         # plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
-        # plotter.cfg['switchPlots'].append('angular3D_sig2D')
+        plotter.cfg['switchPlots'].append('angular3D_sig2D')
         # plotter.cfg['switchPlots'].append('angular3D_sigA')
 
         p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])

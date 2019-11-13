@@ -20,9 +20,9 @@ public:
 	      RooAbsReal& _CosThetaL,
 	      RooAbsReal& _CosThetaK,
 	      RooAbsReal& _unboundAfb,
-	      RooAbsReal& _unboundFl,
+	      RooAbsReal& _unboundFl/*,
 	      RooAbsReal& _fs,
-	      RooAbsReal& _transAs);
+	      RooAbsReal& _transAs*/);
   RooBtosllModel(const RooBtosllModel& other, const char* name=0) ;
   virtual TObject* clone(const char* newname) const { return new RooBtosllModel(*this,newname); }
   inline virtual ~RooBtosllModel() { }
@@ -33,8 +33,8 @@ protected:
   RooRealProxy CosThetaK ;
   RooRealProxy unboundAfb ;
   RooRealProxy unboundFl ;
-  RooRealProxy fs ;
-  RooRealProxy transAs ;
+  /*RooRealProxy fs ;
+  RooRealProxy transAs ;*/
   
   Double_t evaluate() const ;
 

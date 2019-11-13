@@ -20,16 +20,16 @@ RooBtosllModel::RooBtosllModel(const char *name, const char *title,
                        RooAbsReal& _CosThetaL,
                        RooAbsReal& _CosThetaK,
                        RooAbsReal& _unboundAfb,
-                       RooAbsReal& _unboundFl,
+                       RooAbsReal& _unboundFl/*,
                        RooAbsReal& _fs,
-                       RooAbsReal& _transAs) :
+                       RooAbsReal& _transAs*/) :
   RooAbsPdf(name,title), 
   CosThetaL("CosThetaL","CosThetaL",this,_CosThetaL),
   CosThetaK("CosThetaK","CosThetaK",this,_CosThetaK),
   unboundAfb("unboundAfb","unboundAfb",this,_unboundAfb),
-  unboundFl("unboundFl","unboundFl",this,_unboundFl),
+  unboundFl("unboundFl","unboundFl",this,_unboundFl)/*,
   fs("fs","fs",this,_fs),
-  transAs("transAs","transAs",this,_transAs)
+  transAs("transAs","transAs",this,_transAs)*/
 { 
 } 
 
@@ -39,9 +39,9 @@ RooBtosllModel::RooBtosllModel(const RooBtosllModel& other, const char* name) :
   CosThetaL("CosThetaL",this,other.CosThetaL),
   CosThetaK("CosThetaK",this,other.CosThetaK),
   unboundAfb("unboundAfb",this,other.unboundAfb),
-  unboundFl("unboundFl",this,other.unboundFl),
+  unboundFl("unboundFl",this,other.unboundFl)/*,
   fs("fs",this,other.fs),
-  transAs("transAs",this,other.transAs)
+  transAs("transAs",this,other.transAs)*/
 { 
 } 
 
@@ -52,7 +52,7 @@ Double_t RooBtosllModel::evaluate() const
   // Remark: The tranAs formula in older AN is wrong, unboundFl should be replaced with fl
   Double_t fl = 0.5+TMath::ATan(unboundFl)/TMath::Pi() ; // [0.,1.]
   //Double_t afb = 1.5*(1.-fl)*TMath::ATan(unboundAfb)/TMath::Pi() ; // [-0.75, 0.75]
-  Double_t as = 1.78*TMath::Sqrt(3.*fs*(1.-fs)*fl)*transAs ; // [-(fs+3*fl(1-fs)), fs+3*fs*(1-fs)]
+  //Double_t as = 1.78*TMath::Sqrt(3.*fs*(1.-fs)*fl)*transAs ; // [-(fs+3*fl(1-fs)), fs+3*fs*(1-fs)]
   
   Double_t afb = (0.5-TMath::ATan(unboundFl)/TMath::Pi())*2*TMath::ATan(unboundAfb)/TMath::Pi(); 
   Double_t result = (9.0/16.0)*((0.5*(1.0-fl)*(1.0-CosThetaK*CosThetaK)*(1.0+CosThetaL*CosThetaL)) + (2.0*fl*CosThetaK*CosThetaK*(1.0-CosThetaL*CosThetaL)) + (afb*(1.0-CosThetaK*CosThetaK)*CosThetaL)) ;

@@ -70,6 +70,7 @@ RooFitResult* StdFitter::FitMigrad(){
         std::cout<<"This is Pritam 6i"<<std::endl;
         isMigradConverge = this->minuit->migrad();
         
+        //isMigradConverge->printArgs(std::cout); //Pritam
         std::cout<<"This is Pritam 6f"<<std::endl;
         res = this->minuit->save();
         if (isMigradConverge == 0 && fabs(res->minNll()) < 1e20){

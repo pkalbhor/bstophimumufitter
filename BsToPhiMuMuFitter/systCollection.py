@@ -37,7 +37,7 @@ def func_randEffi(args):
     setupFinalRandEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalRandEffiFitter.update({
         'FitMinos': [False, ()],
-        'argAliasInDB': {'afb': 'afb_randEffi', 'fl': 'fl_randEffi', 'fs': 'fs_randEffi', 'as': 'as_randEffi'},
+        'argAliasInDB': {'afb': 'afb_randEffi', 'fl': 'fl_randEffi'},
         'saveToDB': False,
     })
     finalRandEffiFitter = StdFitter(setupFinalRandEffiFitter)
@@ -184,7 +184,7 @@ def func_altEffi(args):
     """ Typically less than 1% """
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
-        'argAliasInDB': {'afb': 'afb_altEffi', 'fl': 'fl_altEffi', 'fs': 'fs_altEffi', 'as': 'as_altEffi'},
+        'argAliasInDB': {'afb': 'afb_altEffi', 'fl': 'fl_altEffi'},
         'saveToDB': False,
     })
     finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
@@ -246,7 +246,7 @@ def func_altSigM(args):
     """ Not used """
     setupFinalAltSigMFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltSigMFitter.update({
-        'argAliasInDB': {'afb': 'afb_altSigM', 'fl': 'fl_altSigM', 'fs': 'fs_altSigM', 'as': 'as_altSigM'},
+        'argAliasInDB': {'afb': 'afb_altSigM', 'fl': 'fl_altSigM'},
         'saveToDB': False,
     })
     finalAltSigMFitter = StdFitter(setupFinalAltSigMFitter)
@@ -278,7 +278,7 @@ def func_altSP(args):
     """ Set fs to 5% instead of 0% """
     setupFinalAltSPFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltSPFitter.update({
-        'argAliasInDB': {'afb': 'afb_altSP', 'fl': 'fl_altSP', 'fs': 'fs_altSP', 'as': 'as_altSP'},
+        'argAliasInDB': {'afb': 'afb_altSP', 'fl': 'fl_altSP'},
         'saveToDB': False,
     })
     finalAltSPFitter = StdFitter(setupFinalAltSPFitter)
@@ -315,7 +315,7 @@ def func_altBkgCombM(args):
     setupFinalAltBkgCombMFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltBkgCombMFitter.update({
         'pdf': "f_finalAltBkgCombM",
-        'argAliasInDB': {'afb': 'afb_altBkgCombM', 'fl': 'fl_altBkgCombM', 'fs': 'fs_altBkgCombM', 'as': 'as_altBkgCombM'},
+        'argAliasInDB': {'afb': 'afb_altBkgCombM', 'fl': 'fl_altBkgCombM'},
         'saveToDB': False,
     })
     finalAltBkgCombMFitter = StdFitter(setupFinalAltBkgCombMFitter)
@@ -340,7 +340,7 @@ def func_altBkgCombA(args):
     setupFinalAltBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltBkgCombAFitter.update({
         'pdf': "f_finalAltBkgCombA",
-        'argAliasInDB': {'afb': 'afb_altBkgCombA', 'fl': 'fl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA'},
+        'argAliasInDB': {'afb': 'afb_altBkgCombA', 'fl': 'fl_altBkgCombA'},
         'saveToDB': False,
     })
     finalAltBkgCombAFitter = StdFitter(setupFinalAltBkgCombAFitter)

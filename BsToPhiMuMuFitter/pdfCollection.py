@@ -157,15 +157,15 @@ def buildSigA(self):
 
     f_sigA = wspace.pdf("f_sigA")
     if f_sigA == None:
-        wspace.factory("fs[0.00001,0.00001,0.2]")
+        # wspace.factory("fs[0.00001,0.00001,0.2]")
         wspace.factory("unboundFl[0.6978,-1e2,1e2]")
         wspace.factory("unboundAfb[-0.0016,-1e2,1e2]")
-        wspace.factory("transAs[0,-1e5,1e5]")
+        # wspace.factory("transAs[0,-1e5,1e5]")
         wspace.factory("expr::fl('0.5+TMath::ATan(unboundFl)/TMath::Pi()',{unboundFl})")
         wspace.factory("expr::afb('1.5*(1-fl)*TMath::ATan(unboundAfb)/TMath::Pi()',{unboundAfb,fl})")
-        wspace.factory("expr::as('1.78*TMath::Sqrt(3*fs*(1-fs)*fl)*transAs',{fs,fl,transAs})")
-        wspace.factory("EXPR::f_sigA_original('(9.0/16.0)*((0.5*(1.0-fl)*(1.0-CosThetaK*CosThetaK)*(1.0+CosThetaL*CosThetaL)) + (2.0*fl*CosThetaK*CosThetaK*(1.0-CosThetaL*CosThetaL)) + (afb*(1.0-CosThetaK*CosThetaK)*CosThetaL))', {CosThetaK, CosThetaL, fl, afb, fs, as})")
-        f_sigA = ROOT.RooBtosllModel("f_sigA", "", CosThetaL, CosThetaK, wspace.var('unboundAfb'), wspace.var('unboundFl'), wspace.var('fs'), wspace.var('transAs'))
+        # wspace.factory("expr::as('1.78*TMath::Sqrt(3*fs*(1-fs)*fl)*transAs',{fs,fl,transAs})")
+        wspace.factory("EXPR::f_sigA_original('(9.0/16.0)*((0.5*(1.0-fl)*(1.0-CosThetaK*CosThetaK)*(1.0+CosThetaL*CosThetaL)) + (2.0*fl*CosThetaK*CosThetaK*(1.0-CosThetaL*CosThetaL)) + (afb*(1.0-CosThetaK*CosThetaK)*CosThetaL))', {CosThetaK, CosThetaL, fl, afb})")
+        f_sigA = ROOT.RooBtosllModel("f_sigA", "", CosThetaL, CosThetaK, wspace.var('unboundAfb'), wspace.var('unboundFl'))
         getattr(wspace, 'import')(f_sigA)
         wspace.importClassCode(ROOT.RooBtosllModel.Class())
 

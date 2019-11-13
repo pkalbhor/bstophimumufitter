@@ -99,7 +99,7 @@ setupFinalFitter.update({
     'name': "finalFitter",
     'data': "dataReader.Fit",
     'pdf': "f_final",
-    'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'fs', 'transAs', 'nBkgComb', r'bkgCombM_c[\d]+'],
+    'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombM_c[\d]+'],
     'createNLLOpt': [ROOT.RooFit.Extended(True), ],
     'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
     'argAliasInDB': dict(setupSigMFitter['argAliasInDB'].items() + setupSigAFitter['argAliasInDB'].items()),
