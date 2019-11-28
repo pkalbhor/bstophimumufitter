@@ -51,6 +51,18 @@ setupSigAFitter.update({
     'argAliasInDB': {'unboundAfb': 'unboundAfb_GEN', 'unboundFl': 'unboundFl_GEN'},
 })
 sigAFitter = StdFitter(setupSigAFitter)
+
+setupSigGENFitter = deepcopy(setupTemplateFitter) #Pritam
+setupSigGENFitter.update({
+    'name': "sigGENFitter",
+    'data': "sigMCGENReader.Fit",
+    'pdf': "f_sigA_original",
+    'argPattern': ['unboundAfb', 'unboundFl'],
+    'createNLLOpt': [],
+    'argAliasInDB': {'unboundAfb': 'unboundAfb_GEN', 'unboundFl': 'unboundFl_GEN'},
+})
+sigGENFitter = StdFitter(setupSigGENFitter)
+
 def sigAFitter_bookPdfData(self):
     self.process.dbplayer.saveSMPrediction()
     StdFitter._bookPdfData(self)
@@ -64,6 +76,7 @@ setupSig2DFitter.update({
     'name': "sig2DFitter",
     'data': "sigMCReader.Fit",
     'pdf': "f_sig2D",
+    'FitHesse': True,
     'argPattern': ['unboundAfb', 'unboundFl'],
     'createNLLOpt': [],
     'argAliasInDB': {'unboundAfb': 'unboundAfb_RECO', 'unboundFl': 'unboundFl_RECO'},

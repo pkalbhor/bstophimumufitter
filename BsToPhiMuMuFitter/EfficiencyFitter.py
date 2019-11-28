@@ -35,7 +35,7 @@ class EfficiencyFitter(FitterCore):
         return cfg
 
     def _bookMinimizer(self):
-        """Pass complicate fitting control."""
+        print("""Pass complicate fitting control.""")
         pass
 
     def _preFitSteps(self):
@@ -56,13 +56,18 @@ class EfficiencyFitter(FitterCore):
             hdata = ROOT.RooDataHist("hdata", "", ROOT.RooArgList(var), ROOT.RooFit.Import(proj))
             self.ToggleConstVar(args, isConst=False, targetArgs=argPats)
             print("Pritami")
+            print("effNORM!: ",args.find('effi_norm').getVal())
             pdf.chi2FitTo(hdata, ROOT.RooLinkedList() )
             
             print("Pritam")
             self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
 
         args.find('effi_norm').setConstant(False)
+        print("effNORM: ",args.find('effi_norm').getVal())
         self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True)) #, ROOT.RooFit.PrintLevel(-1))
+        print "MyPDF: ",  self.pdf.Print(), self.data.Print()
+
+        print("effNORM: ",args.find('effi_norm').getVal())
         args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
         args.find('effi_norm').setConstant(True)
 

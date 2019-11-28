@@ -11,9 +11,10 @@ from math import sqrt
 
 # Shared global settings
 modulePath = os.path.abspath(os.path.dirname(__file__))
-dataFilePath = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v4/Modified_sel_BsToPhiMuMu_2016_Rereco07Aug17_data_cut_bdt_s0.root"
-UnfilteredMC = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v4/Modified_sel_BsToPhiMuMu_2016MC_combined_mc.lite_cut_bdt.root"
-sigMC = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v3/Modified_BDT_Modified_sel_BsToPhiMuMu_combine_MC_2016_mc.lite_cut0.root"
+dataFilePath = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v5/Modified_sel_BsToPhiMuMu_2016_Rereco07Aug17_Presel_data_cut_bdt_s0.root"
+UnfilteredMC = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v3/Modified_sel_BsToPhiMuMu_NofilterMC_signal_2016_mc.lite_nocut.root"
+sigMC = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v5/Modified_sel_BsToPhiMuMu_2016MC_combined_Presel_mc.lite_cut_bdt.root"
+# sigMC = "/afs/cern.ch/work/p/pkalbhor/BFitter/BPhysicsData/data_v5/Modified_sel_BsToPhiMuMu_OfficialMC_signal_2016_combined_Presel_mc.lite_cut_bdt.root"
 
 # q2 bins
 q2bins = {}

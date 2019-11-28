@@ -51,19 +51,19 @@ RooMinuit* StdFitter::Init(RooAbsPdf* pdf, RooDataSet* data){
     std::cout<<"This is Pritam2"<<std::endl;
     nll = pdf->createNLL(*data, this->createNLLOpt);
     minuit = new RooMinuit(*nll);
-    minuit->setPrintLevel(3); //Pritam
+    //minuit->setPrintLevel(3); //Pritam
     return minuit;
 }
 
 RooMinuit* StdFitter::Init(RooAbsReal* pdf, RooDataHist* data){
-    std::cout<<"This is Pritam"<<std::endl;
+    std::cout<<"CPP-StdFitter Init Begin:::::"<<std::endl;
     nll = pdf->createChi2(*data, this->createNLLOpt);
     minuit = new RooMinuit(*nll);
     return minuit;
 }
 
 RooFitResult* StdFitter::FitMigrad(){
-    std::cout<<"This is Pritam3"<<std::endl;
+    std::cout<<"CPP-StdFitter: FitMigrad"<<std::endl;
     int isMigradConverge{-1};
     RooFitResult *res = 0;
     for (int iL = 0; iL < 10; iL++) {

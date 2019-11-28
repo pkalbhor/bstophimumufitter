@@ -27,7 +27,7 @@ Following functions to be overloaded to customize the full procedure...
 
     def _bookPdfData(self):
         self.pdf = self.process.sourcemanager.get(self.cfg['pdf'])
-        #print("PDF", self.process.sourcemanager.get(self.cfg['pdf'])
+        print "PDF", self.process.sourcemanager.get(self.cfg['pdf'])
         if not hasattr(self.cfg['data'], "__iter__"):
             self.data = self.process.sourcemanager.get(self.cfg['data'])
         elif len(self.cfg['data']) <= 1:
@@ -45,6 +45,7 @@ Following functions to be overloaded to customize the full procedure...
         print("""Bind a RooMinimizer object to bind to self.minimizer at Runtime""")
         if self.pdf.InheritsFrom("RooAbsPdf"):
             self._nll = self.pdf.createNLL(self.data, *(self.cfg.get('createNLLOpt', [])))
+            print("InheritsFrom RooAbsPdf: ", self.pdf)
         elif self.pdf.InheritsFrom("RooAbsReal"):
             self._nll = self.pdf.createChi2(self.data, *(self.cfg.get('createNLLOpt', [])))
         else:

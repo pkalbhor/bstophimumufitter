@@ -28,6 +28,8 @@ predefined_sequence['stdFit'] = [dataCollection.effiHistReader, dataCollection.s
 predefined_sequence['fitSig2D'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sig2DFitter]
 predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
 
+predefined_sequence['fitMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigGENFitter]
+
 if __name__ == '__main__':
     binKey = ['belowJpsiA']#, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
     binKey = [sys.argv[1]]

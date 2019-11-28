@@ -19,7 +19,7 @@ from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath, bMassRegions
 from BsToPhiMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, flToUnboundFl, afbToUnboundAfb
 
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
-from BsToPhiMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Phimass
+from BsToPhiMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Phimass, genCosThetaK, genCosThetaL
 
 from BsToPhiMuMuFitter.StdProcess import p, setStyle
 import BsToPhiMuMuFitter.dataCollection as dataCollection
@@ -77,6 +77,16 @@ class Plotter(Path):
     #frameL.SetMinimum(0)
     frameL.SetTitle("Pull")
     frameL_binning = 20
+
+    frameGenK = genCosThetaK.frame()
+    #frameK.SetMinimum(0)
+    #frameK.SetTitle("")
+    frameGenK_binning = 20
+
+    frameGenL = genCosThetaL.frame()
+    #frameL.SetMinimum(0)
+    frameGenL.SetTitle("Pull")
+    frameGenL_binning = 20
 
     legend = ROOT.TLegend(.75, .70, .95, .90)
     legend.SetFillColor(0)
@@ -153,6 +163,8 @@ class Plotter(Path):
     plotFrameB_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning * 2}))
     plotFrameK_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning * 2}))
     plotFrameL_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning * 2}))
+    plotFrameGenK = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameGenK, 'binning': frameGenK_binning}))
+    plotFrameGenL = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameGenL, 'binning': frameGenL_binning}))
 
     @classmethod
     def templateConfig(cls):
@@ -192,7 +204,8 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
         [wspace.pdf('model'), (ROOT.RooFit.Components('bkgCombM'),) + plotterCfg_bkgStyle, None, "Background"],
     ]
 
-    pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True), ROOT.RooFit.PrintLevel(3))
+    fitter=pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True), ROOT.RooFit.PrintLevel(3), ROOT.RooFit.Save(True))
+    fitter.Print("v")
     Plotter.plotFrameB(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
     self.canvasPrint(pltName)
 types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
@@ -216,6 +229,25 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         self.latexQ2()
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
 types.MethodType(plotSimpleBLK, None, Plotter)
+
+def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Pritam
+    for pIdx, plt in enumerate(dataPlots):
+        print("data: ", pIdx, plt)#Pritam
+        dataPlots[pIdx] = self.initDataPlotCfg(plt)
+    for pIdx, plt in enumerate(pdfPlots):
+        print("pdf: ", pIdx, plt)#Pritam
+        pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
+
+    plotFuncs = {
+        'L': {'func': Plotter.plotFrameGenL, 'tag': "_gencosl"},
+        'K': {'func': Plotter.plotFrameGenK, 'tag': "_gencosK"},
+    }
+
+    for frame in frames:
+        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+        self.latexQ2()
+        self.canvasPrint(pltName + plotFuncs[frame]['tag'])
+types.MethodType(plotSimpleGEN, None, Plotter)
 
 def plotEfficiency(self, data_name, pdf_name):
     pltName = "effi"
@@ -421,7 +453,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     print(""" Check carefully the keys in 'dbSetup' """)
     if marks is None:
         marks = []
-    binKeys = ['belowJpsiA']#, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summaryLowQ2']
+    binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summaryLowQ2']
 
     print("Hi: ", [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
@@ -674,10 +706,10 @@ plotterCfg['plots'] = {
                         ],
             'marks': []}
     },
-    'angular3D_sigA': { #Pritam
-        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+    'angular3D_GEN': { #Pritam
+        'func': [functools.partial(plotSimpleGEN, frames='LK')],
         'kwargs': {
-            'pltName': "angular3D_sigA",
+            'pltName': "angular3D_GEN",
             'dataPlots': [["sigMCGENReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
             'pdfPlots': [["f_sigA", plotterCfg_sigStyle, fitCollection.setupSigAFitter['argAliasInDB'], None],
                         ],
@@ -772,7 +804,7 @@ if __name__ == '__main__':
         # plotter.cfg['switchPlots'].append('angular3D_summary')
         # plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
         plotter.cfg['switchPlots'].append('angular3D_sig2D')
-        # plotter.cfg['switchPlots'].append('angular3D_sigA')
+        # plotter.cfg['switchPlots'].append('angular3D_GEN') #To Produce Gen Level Plots
 
         p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
         #print(p._sources); exit()

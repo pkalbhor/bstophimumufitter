@@ -68,11 +68,11 @@ def buildGenericObj(self, objName, factoryCmd, varNames):
         self.logger.logINFO("Build {0} from scratch.".format(objName))
         for v in varNames:
             if wspace.obj(v) == None:
-                getattr(wspace, 'import')(globals()[v])
+                getattr(wspace, 'import')(globals()[v])  #Import CosThetaK and CosThetaL 
         for cmdIdx, cmd in enumerate(factoryCmd):
             wspace.factory(cmd)
         obj = wspace.obj(objName)
-
+        print("OBJ: ", obj)
     self.cfg['source'][objName] = obj
 
 f_effiSigA_format = {}
@@ -143,7 +143,7 @@ setupBuildSigM = {
     'objName': "f_sigM",
     'varNames': ["Bmass"],
     'factoryCmd': [
-        "sigMGauss_mean[5.28, 4.90, 5.30]",
+        "sigMGauss_mean[5.28, 4.90, 5.45]",
         "RooGaussian::f_sigMGauss1(Bmass, sigMGauss_mean, sigMGauss1_sigma[0.02, 0.0001, 0.05])",
         "RooGaussian::f_sigMGauss2(Bmass, sigMGauss_mean, sigMGauss2_sigma[0.08, 0.0005, 0.40])",
         "SUM::f_sigM(sigM_frac[0.,0.,1.]*f_sigMGauss1, f_sigMGauss2)",
@@ -162,7 +162,7 @@ def buildSigA(self):
         wspace.factory("unboundAfb[-0.0016,-1e2,1e2]")
         # wspace.factory("transAs[0,-1e5,1e5]")
         wspace.factory("expr::fl('0.5+TMath::ATan(unboundFl)/TMath::Pi()',{unboundFl})")
-        wspace.factory("expr::afb('1.5*(1-fl)*TMath::ATan(unboundAfb)/TMath::Pi()',{unboundAfb,fl})")
+        wspace.factory("expr::afb('2.*(1-fl)*TMath::ATan(unboundAfb)/TMath::Pi()',{unboundAfb,fl})")
         # wspace.factory("expr::as('1.78*TMath::Sqrt(3*fs*(1-fs)*fl)*transAs',{fs,fl,transAs})")
         wspace.factory("EXPR::f_sigA_original('(9.0/16.0)*((0.5*(1.0-fl)*(1.0-CosThetaK*CosThetaK)*(1.0+CosThetaL*CosThetaL)) + (2.0*fl*CosThetaK*CosThetaK*(1.0-CosThetaL*CosThetaL)) + (afb*(1.0-CosThetaK*CosThetaK)*CosThetaL))', {CosThetaK, CosThetaL, fl, afb})")
         f_sigA = ROOT.RooBtosllModel("f_sigA", "", CosThetaL, CosThetaK, wspace.var('unboundAfb'), wspace.var('unboundFl'))
@@ -382,6 +382,8 @@ def customizePDFBuilder(self):
     print("""Customize pdf for q2 bins""")
     setupBuildAnalyticBkgCombA['factoryCmd'] = f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
     setupBuildEffiSigA['factoryCmd'] = f_effiSigA_format.get(self.process.cfg['binKey'], f_effiSigA_format['DEFAULT'])
+    for i in setupBuildEffiSigA['factoryCmd']:
+        print("FactoryCMD: ", i)
     buildAnalyticBkgCombA = functools.partial(buildGenericObj, **setupBuildAnalyticBkgCombA)
     buildEffiSigA = functools.partial(buildGenericObj, **setupBuildEffiSigA)
 

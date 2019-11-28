@@ -62,11 +62,12 @@ class DataReader(Path):
             self.argset,
             dcut)
         self.dataset[dname] = data
+        print("ARGSET: ", self.argset, dcut)
         return data
 
-    def createDataSets(self, cfg):
+    def createDataSets(self, dataset):
         print("""Create named dataset""")
-        for name, cut in cfg:
+        for name, cut in dataset:
             if self.cfg['preloadFile'] and os.path.exists(self.cfg['preloadFile']):
                 file_preload = ROOT.TFile(self.cfg['preloadFile'])
                 data = file_preload.Get(name)

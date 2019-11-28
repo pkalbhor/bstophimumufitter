@@ -34,7 +34,7 @@ class StdFitter(FitterCore):
         return cfg
 
     def _bookMinimizer(self):
-        """"""
+        print("""_bookMinimizer from StdFitter""")
         self.fitter = ROOT.StdFitter()
         for opt in self.cfg.get("createNLLOpt", []):
             self.fitter.addNLLOpt(opt)
@@ -91,6 +91,7 @@ class StdFitter(FitterCore):
     def _runFitSteps(self):
         self.FitMigrad()
         if self.cfg.get('FitHesse', False):
+            print("FitHesse: ")
             self.FitHesse()
         if self.cfg.get('FitMinos', [False, ()])[0]:
             self.FitMinos()
@@ -135,10 +136,10 @@ def flToUnboundFl(fl):
     return ROOT.TMath.Tan((fl - 0.5) * ROOT.TMath.Pi())
 
 def unboundAfbToAfb(unboundAfb, fl):
-    return 1.5 * (1 - fl) * ROOT.TMath.ATan(unboundAfb) / ROOT.TMath.Pi()
+    return 2. * (1 - fl) * ROOT.TMath.ATan(unboundAfb) / ROOT.TMath.Pi()
 
 def afbToUnboundAfb(afb, fl):
-    return ROOT.TMath.Tan(afb * ROOT.TMath.Pi() / 1.5 / (1. - fl))
+    return ROOT.TMath.Tan(afb * ROOT.TMath.Pi() / 2. / (1. - fl))
 
 def decorator_bookMinimizer_addGausConstraints(varNames, vals=None, valerrs=None):
     """ For quick adding gaussian constrint to createNLLOpt.

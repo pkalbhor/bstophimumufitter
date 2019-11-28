@@ -102,7 +102,6 @@ def customizeGEN(self):
             re.sub("Mumumass", "sqrt(genQ2)", q2bins[self.process.cfg['binKey']]['cutString'])
         )
     )
-
     # Customize preload TFile
     if self.cfg['preloadFile']:
         self.cfg['preloadFile'] = self.cfg['preloadFile'].format(binLabel=q2bins[self.process.cfg['binKey']]['label'])
@@ -129,7 +128,6 @@ def buildAccXRecEffiHist(self):
     # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
     for binKey in q2bins.keys():
-        print("Q2Bins: ", q2bins.keys())#Pritam
         if binKey in ['jpsi', 'psi2s', 'peaks']:
             continue
         h2_accXrec = fin.Get("h2_accXrec_{0}".format(binKey))
@@ -157,6 +155,9 @@ def buildAccXRecEffiHist(self):
             for h2, label in (h2_acc, 'acc'), (h2_rec, 'rec'):
                 if h2 == None or forceRebuild:
                     print("h2: ", h2, label)
+                    print "BaseSTring: ", setupEfficiencyBuildProcedure[label]['baseString']
+                    print "CutString: ", setupEfficiencyBuildProcedure[label]['cutString']
+
                     treein = TChain("events")
                     for f in setupEfficiencyBuildProcedure[label]['ifiles']:
                         treein.Add(f)
