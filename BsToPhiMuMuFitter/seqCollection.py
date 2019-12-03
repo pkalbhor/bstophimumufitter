@@ -35,7 +35,7 @@ if __name__ == '__main__':
     binKey = [sys.argv[1]]
     for b in binKey:
         p.cfg['binKey'] = b
-        #  p.setSequence(predefined_sequence['buildEfficiecyHist'])
+        # p.setSequence(predefined_sequence['buildEfficiecyHist'])
         # p.setSequence(predefined_sequence['fitEfficiency'])
         # p.setSequence(predefined_sequence['fitBkgCombA'])
         # p.setSequence(predefined_sequence['fitFinal3D'])

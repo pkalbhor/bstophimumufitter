@@ -79,8 +79,11 @@ class DataReader(Path):
         return self.dataset
 
     def _runPath(self):
-        self.ch = TChain("events")
+        self.ch = TChain()
+               
         for f in self.cfg['ifile']:
+            flie=ROOT.TFile.Open(f)
+            self.ch.SetName(flie.GetListOfKeys().At(0).GetName())
             self.ch.Add(f)
         if len(self.cfg['ifriend']) > 0:
             self.friend = TChain("tree")

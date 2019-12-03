@@ -53,4 +53,4 @@ class Path():
         for key, val in self.cfg['source'].items():
             self.process.sourcemanager.update(key, val, addHist=self.name)
 
-        print("sourcemanager: ", self.process.sourcemanager.get('sigMCGENReader.Fit'))
+        print("Sourcemanager Keys: ", self.process.sourcemanager.keys())

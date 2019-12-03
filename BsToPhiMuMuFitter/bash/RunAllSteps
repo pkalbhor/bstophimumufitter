@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#echo "Present Working Directory: $PWD"
+#echo "PYTHONPATH: $PYTHONPATH"
+
+./bash/TotalClean.sh
+echo -e "\n>>>>>>> Started Creating RooWorkSpace <<<<<<<\n"
+./bash/RunpdfCollection.sh
+echo -e "\n>>>>>>> Started Running Fitting Procedure <<<<<<<\n"
+./bash/RunseqCollection.sh
+echo -e "\n>>>>>>> Started Creating Plots <<<<<<<\n"
+./bash/RunplotCollection.sh

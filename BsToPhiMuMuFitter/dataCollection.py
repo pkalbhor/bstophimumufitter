@@ -158,15 +158,18 @@ def buildAccXRecEffiHist(self):
                     print "BaseSTring: ", setupEfficiencyBuildProcedure[label]['baseString']
                     print "CutString: ", setupEfficiencyBuildProcedure[label]['cutString']
 
-                    treein = TChain("events")
+                    treein = TChain()
+
                     for f in setupEfficiencyBuildProcedure[label]['ifiles']:
+                        flie=ROOT.TFile.Open(f)
+                        treein.SetName(flie.GetListOfKeys().At(0).GetName())
                         treein.Add(f)
                         print(setupEfficiencyBuildProcedure[label]['ifiles'])
 
                     treein.Draw(">>totEvtList", setupEfficiencyBuildProcedure[label]['baseString'])
                     totEvtList = ROOT.gDirectory.Get("totEvtList")
                     # print("MyEventList:")
-                    # totEvtList.Print() #Pritam
+                    totEvtList.Print() #Pritam
                     treein.SetEventList(totEvtList)
                     treein.Draw(">>accEvtList", setupEfficiencyBuildProcedure[label]['cutString'])
                     # totEvtList.Print() #Pritam
