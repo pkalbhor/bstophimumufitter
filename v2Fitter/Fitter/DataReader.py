@@ -80,10 +80,13 @@ class DataReader(Path):
 
     def _runPath(self):
         self.ch = TChain()
-               
+
+        print "Name: ", self.cfg['name']
         for f in self.cfg['ifile']:
-            flie=ROOT.TFile.Open(f)
-            self.ch.SetName(flie.GetListOfKeys().At(0).GetName())
+            #s=f.strip(f.split("/")[int(len(f.split("/")))-1]); s=s[:-1]
+            #print "DataReader File: ", s
+            #flie=ROOT.TFile.Open(s)
+            #self.ch.SetName(flie.GetListOfKeys().At(0).GetName())
             self.ch.Add(f)
         if len(self.cfg['ifriend']) > 0:
             self.friend = TChain("tree")

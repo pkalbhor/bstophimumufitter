@@ -26,6 +26,7 @@ import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
 
+print "test1"
 class Plotter(Path):
     """The plotter"""
     setStyle()
@@ -110,7 +111,10 @@ class Plotter(Path):
     def initDataPlotCfg(self, p):
         print(""" [Name, plotOnOpt, LegendName] """)
         dataPlotTemplate = ["", plotterCfg_dataStyle, "Data"]
+        print "p1", p
         p = p + dataPlotTemplate[len(p):]
+        print "p2", p
+
         if isinstance(p[0], str):
             self.logger.logDEBUG("Initialize dataPlot {0}".format(p[0]))
             p[0] = self.process.sourcemanager.get(p[0])

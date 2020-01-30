@@ -15,8 +15,8 @@ import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN
-from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath, dataFilePath, sigMC, UnfilteredMC
-
+from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath#, dataFilePath, sigMC, UnfilteredMC
+from python.datainput import *
 import ROOT
 from ROOT import TChain
 from ROOT import TEfficiency, TH2D
@@ -65,7 +65,7 @@ dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
     #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/sel_*.root"],
-    'ifile': [dataFilePath],
+    'ifile': dataFilePath,
     #'ifriend': ["/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/BsToPhiMuMuFitter/script/plotMatchCandPreSelector.root"],
     'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
     'lumi': 19.98,
@@ -79,7 +79,7 @@ sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
     #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/sel_*.root"],
-    'ifile': [sigMC],
+    'ifile': sigMC,
     'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
     'lumi': 16281.440 + 21097.189,
 })
@@ -110,7 +110,7 @@ sigMCGENReaderCfg = copy(CFG)
 sigMCGENReaderCfg.update({
     'name': "sigMCGENReader",
     #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/sel_*.root"],
-    'ifile': [UnfilteredMC],
+    'ifile': UnfilteredMC,
     'preloadFile': modulePath + "/data/preload_sigMCGENReader_{binLabel}.root",
     'argset': dataArgsGEN,
 })
@@ -139,9 +139,9 @@ def buildAccXRecEffiHist(self):
             setupEfficiencyBuildProcedure = {}
             setupEfficiencyBuildProcedure['acc'] = {
                 #'ifiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*.root", ],
-                'ifiles': [UnfilteredMC],
+                'ifiles': UnfilteredMC,
                 'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
-                'cutString': "fabs(genMupEta)<2.5 && fabs(genMumEta)<2.5 && genMupPt>2.5 && genMumPt>2.5",
+                'cutString': "fabs(genMupEta)<2.2 && fabs(genMumEta)<2.2 && genMupPt>3.5 && genMumPt>3.5", # && KpPt>0.5 && KmPt>0.5 && fabs(KpEta)<2.4 && fabs(KmEta)<2.4",
                 'fillXY': "genCosThetaK:genCosThetaL"  # Y:X
             }
             setupEfficiencyBuildProcedure['rec'] = {
@@ -161,10 +161,10 @@ def buildAccXRecEffiHist(self):
                     treein = TChain()
 
                     for f in setupEfficiencyBuildProcedure[label]['ifiles']:
-                        flie=ROOT.TFile.Open(f)
-                        treein.SetName(flie.GetListOfKeys().At(0).GetName())
+                        #flie=ROOT.TFile.Open(f)
+                        #treein.SetName(flie.GetListOfKeys().At(0).GetName())
                         treein.Add(f)
-                        print(setupEfficiencyBuildProcedure[label]['ifiles'])
+                        print(f)
 
                     treein.Draw(">>totEvtList", setupEfficiencyBuildProcedure[label]['baseString'])
                     totEvtList = ROOT.gDirectory.Get("totEvtList")
@@ -188,7 +188,8 @@ def buildAccXRecEffiHist(self):
 
                     treein.SetEventList(accEvtList)
                     for hist in h2_passed, h2_fine_passed:
-                        treein.Draw("{0}>>{1}".format(setupEfficiencyBuildProcedure[label]['fillXY'], hist.GetName()), "", "goff")
+                        if label=="acc": treein.Draw("{0}>>{1}".format(setupEfficiencyBuildProcedure[label]['fillXY'], hist.GetName()), "", "goff")
+                        if label=="rec": treein.Draw("{0}>>{1}".format("CosThetaK:CosThetaL", hist.GetName()), "", "goff")
 
                     h2_eff = TEfficiency(h2_passed, h2_total)
                     h2_eff_fine = TEfficiency(h2_fine_passed, h2_fine_total)
@@ -249,8 +250,8 @@ effiHistReader = ObjProvider({
 })
 
 if __name__ == '__main__':
-    #  p.setSequence([dataReader])
-    #  p.setSequence([sigMCReader])
+    # p.setSequence([dataReader])
+    # p.setSequence([sigMCReader])
     p.setSequence([effiHistReader])
     p.beginSeq()
     p.runSeq()
