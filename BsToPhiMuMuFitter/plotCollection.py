@@ -807,7 +807,7 @@ if __name__ == '__main__':
         # plotter.cfg['switchPlots'].append('angular3D_final')
         # plotter.cfg['switchPlots'].append('angular3D_summary')
         # plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
-        plotter.cfg['switchPlots'].append('angular3D_sig2D')
+        #plotter.cfg['switchPlots'].append('angular3D_sig2D')
         # plotter.cfg['switchPlots'].append('angular3D_GEN') #To Produce Gen Level Plots
 
         p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])

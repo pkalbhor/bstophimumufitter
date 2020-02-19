@@ -9,4 +9,3 @@ f.ls();
 RooWorkspace *w=(RooWorkspace*)f.Get(m);
 w->Print();
 }
-

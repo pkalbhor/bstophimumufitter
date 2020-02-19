@@ -23,7 +23,7 @@ def createBinTemplate(name, lowerBd, upperBd):
     }
     return template
 
-q2bins['belowJpsiA'] = createBinTemplate("bin1A", 0.1, 2.00)
+q2bins['belowJpsiA'] = createBinTemplate("bin1A", 1.0, 2.00)
 q2bins['belowJpsiB'] = createBinTemplate("bin1B", 2.00, 5.00)
 q2bins['belowJpsiC'] = createBinTemplate("bin1C", 5.00, 8.00)
 q2bins['betweenPeaks'] = createBinTemplate("bin3", 11.00, 12.5)
@@ -128,7 +128,7 @@ cut_passTrigger = "Triggers >= 1"
 cut_phiWindow = "Phimass>1.01 && Phimass < 1.03"
 cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
 cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.180 && abs(Bmass-Mumumass-1.681)>0.040"
-cut_Bdt = "Bdt > 0.09"
+cut_Bdt = "Bdt > 0.03"
 # cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
 cuts = [
     cut_passTrigger,

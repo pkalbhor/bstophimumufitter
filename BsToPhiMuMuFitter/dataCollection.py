@@ -188,8 +188,8 @@ def buildAccXRecEffiHist(self):
 
                     treein.SetEventList(accEvtList)
                     for hist in h2_passed, h2_fine_passed:
-                        if label=="acc": treein.Draw("{0}>>{1}".format(setupEfficiencyBuildProcedure[label]['fillXY'], hist.GetName()), "", "goff")
-                        if label=="rec": treein.Draw("{0}>>{1}".format("CosThetaK:CosThetaL", hist.GetName()), "", "goff")
+                        treein.Draw("{0}>>{1}".format(setupEfficiencyBuildProcedure[label]['fillXY'], hist.GetName()), "", "goff")
+                        #if label=="rec": treein.Draw("{0}>>{1}".format("CosThetaK:CosThetaL", hist.GetName()), "", "goff")
 
                     h2_eff = TEfficiency(h2_passed, h2_total)
                     h2_eff_fine = TEfficiency(h2_fine_passed, h2_fine_total)
