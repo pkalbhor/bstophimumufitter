@@ -199,7 +199,7 @@ def buildAccXRecEffiHist(self):
                 h2_eff.Write("h2_{0}_{1}".format(label, binKey), ROOT.TObject.kOverwrite)           #Binned 2D Eff
                 h2_eff_fine.Write("h2_{0}_fine_{1}".format(label, binKey), ROOT.TObject.kOverwrite) #2D Efficiency Total 
 
-            # Merge acc and rec to accXrec : Converting TEff to TH2D
+            # : Converting TEff to TH2D
             fin.cd()
             for proj in ["ProjectionX", "ProjectionY"]:
                 #h_acc_fine = fin.Get("h_acc_fine_{0}_{1}".format(binKey, proj))

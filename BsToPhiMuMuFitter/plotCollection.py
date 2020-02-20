@@ -48,6 +48,16 @@ class Plotter(Path):
     latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{19.98 fb^{-1} (8 TeV)}"))
     def latexQ2(self, x=0.45, y=0.89):
         Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[self.process.cfg['binKey']]['latexLabel']))
+    def DrawParams(self, pdfPlots):
+        x=0.45; y=0.84
+        args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL)) #N3 Lines by Pritam
+        flDB=unboundFlToFl(args.find('unboundFl').getVal())
+        afbDB=unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
+        #afbDBErr=args.find('unboundAfb').getError()
+
+        Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{F_{{l}} ={0}}}".format(format(flDB, "9.6f")))
+        Plotter.latex.DrawLatexNDC(x, 0.79, r"#scale[0.8]{{A_{{6}} ={0}}}".format(format(afbDB, "9.6f")))
+        
     @staticmethod
     def latexDataMarks(marks):
         if 'sim' in marks:
@@ -231,6 +241,7 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
     for frame in frames:
         plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
         self.latexQ2()
+        self.DrawParams(pdfPlots)
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
 types.MethodType(plotSimpleBLK, None, Plotter)
 
@@ -801,7 +812,7 @@ if __name__ == '__main__':
         p.cfg['binKey'] = b
         print (p.cfg)
         # plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
-        plotter.cfg['switchPlots'].append('effi')            # Efficiency
+        #plotter.cfg['switchPlots'].append('effi')            # Efficiency
         # plotter.cfg['switchPlots'].append('angular3D_sigM')
         # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
         # plotter.cfg['switchPlots'].append('angular3D_final')
