@@ -97,7 +97,7 @@ f_effiSigA_format['DEFAULT'] = ["l{0}[-10,10]".format(i) for i in range(1, 6 + 1
         args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, 7)] + ["k{0}".format(i) for i in range(1, 7)] + ["x{0}".format(i) for i in range(16)]) + "}")]
 
 pdfL = "exp(-0.5*pow((CosThetaL-l1)/l2,2))+l3*exp(-0.5*pow((CosThetaL-l4)/l5,2))+l6*exp(-0.5*pow((CosThetaL-l7)/l8,2))"
-f_effiSigA_format['belowJpsiA'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,10]", "l4[-0.8,-1,-0.1]", "l5[0.5,0.1,2]", "l6[0.1,0,10]", "l7[0.8,0.1,1]", "l8[0.2,0.1,2]"] \
+f_effiSigA_format['belowJpsiA'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,10]", "l4[-0.2,-2.,1.]", "l5[0.5,0.1,2]", "l6[0.1,0,10]", "l7[0.8,0.1,1]", "l8[0.2,0.1,2]"] \
     + ["k{0}[-10,10]".format(i) for i in range(1, 6 + 1)] \
     + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(15 + 1)] \
     + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL," + ', '.join(["l{0}".format(i) for i in range(1, 9)]) + "}")] \

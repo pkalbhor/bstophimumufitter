@@ -118,6 +118,8 @@ sigMCGENReader = DataReader(sigMCGENReaderCfg)
 sigMCGENReader.customize = types.MethodType(customizeGEN, sigMCGENReader)
 
 # effiHistReader
+#accXEffThetaLBins = array('d', [-1., -0.90, -0.80, -0.70, -0.60, -0.50, -0.40, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.])
+#accXEffThetaKBins = array('d', [-1., -0.90, -0.80, -0.70, -0.60, -0.50, -0.40, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.])
 accXEffThetaLBins = array('d', [-1, -0.7, -0.3, 0., 0.3, 0.7, 1.])
 accXEffThetaKBins = array('d', [-1, -0.7, 0., 0.4, 0.8, 1.])
 def buildAccXRecEffiHist(self):
@@ -129,7 +131,7 @@ def buildAccXRecEffiHist(self):
     forceRebuild = False
     for binKey in q2bins.keys():
         print q2bins.keys()
-        if binKey in ['jpsi', 'psi2s', 'peaks', 'summary', 'summaryLowQ2']:
+        if binKey in ['jpsi', 'psi2s', 'peaks', 'summaryLowQ2']:
             continue
         h2_accXrec = fin.Get("h2_accXrec_{0}".format(binKey))
         if h2_accXrec == None or forceRebuild:
@@ -196,7 +198,7 @@ def buildAccXRecEffiHist(self):
                     h_eff = TEfficiency(proj_fine_passed, proj_fine_total)
                     h_eff.Write("h_{0}_fine_{1}_{2}".format(label, binKey, proj), ROOT.TObject.kOverwrite)
 
-                h2_eff.Write("h2_{0}_{1}".format(label, binKey), ROOT.TObject.kOverwrite)           #Binned 2D Eff
+                h2_eff.Write("h2Eff_{0}_{1}".format(label, binKey), ROOT.TObject.kOverwrite)           #Binned 2D Eff
                 h2_eff_fine.Write("h2_{0}_fine_{1}".format(label, binKey), ROOT.TObject.kOverwrite) #2D Efficiency Total 
 
             # : Converting TEff to TH2D
@@ -214,8 +216,8 @@ def buildAccXRecEffiHist(self):
 
             #h2_acc = fin.Get("h2_acc_{0}".format(binKey))
             #h2_rec = fin.Get("h2_rec_{0}".format(binKey))
-            h2_accXrecEff = fin.Get("h2_accXrec_{0}".format(binKey))        #2D Binned Eff
-            h2_accXrec = h2_accXrecEff.GetPassedHistogram().Clone("h2_accXrec_{0}".format(binKey))
+            h2_accXrecEff = fin.Get("h2Eff_accXrec_{0}".format(binKey))        #2D Binned Eff
+            h2_accXrec = h2_accXrecEff.GetPassedHistogram().Clone("h2_accXrec_{0}".format(binKey)); print "Before Converting: ", type(h2_accXrecEff), type(h2_accXrec)
             h2_accXrec.Reset("ICESM")
             for iL, iK in itertools.product(range(1, len(accXEffThetaLBins)), range(1, len(accXEffThetaKBins))):
                 if h2_accXrecEff.GetTotalHistogram().GetBinContent(iL, iK) == 0:
@@ -233,7 +235,7 @@ def buildAccXRecEffiHist(self):
             self.logger.logINFO("Overall efficiency is built.")
 
     # Register the chosen one to sourcemanager
-    h2_accXrec = fin.Get("h2_accXrec_{0}".format(self.process.cfg['binKey']))
+    h2_accXrec = fin.Get("h2_accXrec_{0}".format(self.process.cfg['binKey'])); print "Getting From File: ", type(h2_accXrec), "h2_accXrec_{0}".format(self.process.cfg['binKey'])
     self.cfg['source']['effiHistReader.h2_accXrec'] = h2_accXrec
     self.cfg['source']['effiHistReader.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec)) # Effi 2D RooDataHist
     self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey'])) #Effi of CosThetaL

@@ -26,6 +26,7 @@ import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
 
+
 print "test1"
 class Plotter(Path):
     """The plotter"""
@@ -45,18 +46,26 @@ class Plotter(Path):
     latexCMSToy = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Post-fit Toy}}"))
     latexCMSMix = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Toy + Simu.}}"))
     latexCMSExtra = staticmethod(lambda x=0.19, y=0.85: Plotter.latex.DrawLatexNDC(x, y, "#font[52]{#scale[0.8]{Preliminary}}") if True else None)
-    latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{19.98 fb^{-1} (8 TeV)}"))
+    latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{35.9 fb^{-1} (13 TeV)}"))
     def latexQ2(self, x=0.45, y=0.89):
         Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[self.process.cfg['binKey']]['latexLabel']))
     def DrawParams(self, pdfPlots):
         x=0.45; y=0.84
         args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL)) #N3 Lines by Pritam
-        flDB=unboundFlToFl(args.find('unboundFl').getVal())
-        afbDB=unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
-        #afbDBErr=args.find('unboundAfb').getError()
+        print "Test", type(args) #pdfPlots: RooEffProd
+        #print args.GetChisquare(), args.GetNDF(); exit()
+        unboundFl=args.find('unboundFl').getVal(); unboundFlError=args.find('unboundFl').getError(); print unboundFlError
+        FlError=(unboundFlToFl(unboundFl+unboundFlError)-unboundFlToFl(unboundFl-unboundFlError))/2.
+        flDB=unboundFlToFl(args.find('unboundFl').getVal()); print type(flDB)
+        
+        unboundAfb=args.find('unboundAfb').getVal(); unboundAfbError=args.find('unboundAfb').getError(); print unboundAfbError
+        l1=(unboundAfbToAfb((unboundAfb+unboundAfbError), flDB)-unboundAfbToAfb((unboundAfb-unboundAfbError), flDB))/2.
+        l2=(unboundAfbToAfb(unboundAfb, (flDB+FlError))-unboundAfbToAfb(unboundAfb, (flDB-FlError)))/2.
+        AfbError=math.sqrt((l1*l1)+(l2*l2))                                #Error
+        afbDB=unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB) #Value
 
-        Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{F_{{l}} ={0}}}".format(format(flDB, "9.6f")))
-        Plotter.latex.DrawLatexNDC(x, 0.79, r"#scale[0.8]{{A_{{6}} ={0}}}".format(format(afbDB, "9.6f")))
+        Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{F_{{l}} = {0}\pm {1}}}".format(round(flDB, 5), round(FlError, 5)))
+        Plotter.latex.DrawLatexNDC(x, 0.79, r"#scale[0.8]{{A_{{6}}= {0}\pm {1}}}".format(round(afbDB, 5), round(AfbError, 5)))
         
     @staticmethod
     def latexDataMarks(marks):
@@ -167,7 +176,7 @@ class Plotter(Path):
             if p[3] is not None:
                 Plotter.legend.AddEntry("pdfP{0}".format(pIdx), p[3], "LF")
         Plotter.legend.Draw()
-
+        Plotter.latex.DrawLatexNDC(.45, .74, r"#scale[0.8]{{#chi^{{2}} = {0:.2f}}}".format(cloned_frame.chiSquare()))
         # Some marks
         Plotter.latexDataMarks(marks)
 
@@ -311,7 +320,7 @@ def plotEfficiency(self, data_name, pdf_name):
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
     self.latexQ2()
-    #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
+    Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     self.canvasPrint(pltName + "_cosl")
 
     
@@ -355,7 +364,7 @@ def plotEfficiency(self, data_name, pdf_name):
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
     self.latexQ2()
-    #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
+    Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
     self.canvasPrint(pltName + "_cosK")
 
     frameB= Plotter.frameK.emptyClone("frameB") #(ROOT.RooFit.Title("Pull Distribution"))
@@ -812,7 +821,7 @@ if __name__ == '__main__':
         p.cfg['binKey'] = b
         print (p.cfg)
         # plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
-        #plotter.cfg['switchPlots'].append('effi')            # Efficiency
+        plotter.cfg['switchPlots'].append('effi')            # Efficiency
         # plotter.cfg['switchPlots'].append('angular3D_sigM')
         # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
         # plotter.cfg['switchPlots'].append('angular3D_final')
