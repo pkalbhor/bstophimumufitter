@@ -25,9 +25,8 @@ from BsToPhiMuMuFitter.StdProcess import p, setStyle
 import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
+import pdb
 
-
-print "test1"
 class Plotter(Path):
     """The plotter"""
     setStyle()
@@ -122,6 +121,7 @@ class Plotter(Path):
             if p[0] == None:
                 self.logger.logERROR("pdfPlot not found in source manager.")
                 raise RuntimeError
+
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
         print("dbfile?", self.process.dbplayer.odbfile)
@@ -298,58 +298,34 @@ def plotEfficiency(self, data_name, pdf_name):
     h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(20), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(20)))
     h2_effi_sigA_fine.Scale(100)
     h2_effi_sigA_fine.SetLineColor(2)
-    h2_effi_sigA_fine.Draw("SURF SAME")
+    h2_effi_sigA_fine.Draw("SURF SAME dm(1,10) pa(2,1,1) ci(1,4,8) a(0,0,0)")
     Plotter.latexCMSSim(.08, .93)
     Plotter.latexCMSExtra(.08, .89)
     self.latexQ2(.40, .93)
     self.canvasPrint(pltName + "_2D")
     data_accXrec.Scale(0.01)
-
+    
     cloned_frameL = Plotter.frameL.emptyClone("cloned_frameL")
     h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX")
-    print("Test: ", h_accXrec_fine_ProjectionX.GetMinimum())
     data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_accXrec_fine_ProjectionX", "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
     data_accXrec_fine_ProjectionX.plotOn(cloned_frameL, ROOT.RooFit.Rescale(100), ROOT.RooFit.MarkerStyle(7))
     pdfL = self.process.sourcemanager.get("effi_cosl")
     pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill) 
     cloned_frameL.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
-    # cloned_frameL.SetMinimum( h_accXrec_fine_ProjectionX.GetMinimum()*100)
-    print("Teset2: ", cloned_frameL.GetMinimum(), h_accXrec_fine_ProjectionX.GetMinimum(), h_accXrec_fine_ProjectionX.GetBinError(1))
-    cloned_frameL.Draw()
-    Plotter.latexCMSSim()
-    Plotter.latexCMSExtra()
-    self.latexQ2()
-    Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
-    self.canvasPrint(pltName + "_cosl")
 
-    
-    frameA= Plotter.frameL.emptyClone("frameA") #(ROOT.RooFit.Title("Pull Distribution"))
-    frameA.SetTitle("Pull Distribution")
-    hpull = cloned_frameL.pullHist()
-    hpull.SetMarkerStyle(7)
-    frameA.addPlotable(hpull, "P") 
-    frameA.GetYaxis().SetTitle("Pull Distribution")
-    frameA.Draw()
-    Plotter.latexCMSSim()
-    Plotter.latexCMSExtra()
     self.latexQ2()
-    # self.canvasPrint(pltName + "_cosl_PullHist")
     frameA1 = Plotter.frameL.emptyClone("frameA1")
-    frameA1.SetTitle("Residual Distribution")
     hresid = cloned_frameL.residHist()
-    hresid.SetMarkerStyle(7)
     frameA1.addPlotable(hresid, "P")
-    frameA1.GetYaxis().SetTitle("Residual Distribution")
+    res=ROOT.NewResPlot(cloned_frameL, frameA1); res.Draw(); 
+    res.frame2.GetXaxis().SetTitle(Plotter.frameL.GetXaxis().GetTitle())
+    res.fUpperPad.cd()
+    Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
+    Plotter.latexCMSSim()
+    Plotter.latexCMSExtra()
+    self.canvasPrint(pltName + "_cosl")
     
-    c = ROOT.TCanvas("Residuals","Residuals",1200,400)
-    c.Divide(3)
-    c.cd(1); frameA.Draw()
-    c.cd(2); frameA1.Draw()
-    c.cd(3); cloned_frameL.Draw()
-    c.Print("With_Residuals_CosL_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
-    del hpull; del hresid
-
     Plotter.canvas.cd()
     cloned_frameK = Plotter.frameK.emptyClone("cloned_frameK")
     h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY")
@@ -359,37 +335,18 @@ def plotEfficiency(self, data_name, pdf_name):
     pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill)#, ROOT.RooFit.LineWidth(2))
     cloned_frameK.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
-    #cloned_frameK.SetMinimum(cloned_frameK.GetMinimum()+20)
-    cloned_frameK.Draw()
-    Plotter.latexCMSSim()
-    Plotter.latexCMSExtra()
-    self.latexQ2()
-    Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
-    self.canvasPrint(pltName + "_cosK")
 
-    frameB= Plotter.frameK.emptyClone("frameB") #(ROOT.RooFit.Title("Pull Distribution"))
-    frameB.SetTitle("Pull Distribution")
-    hpull = cloned_frameK.pullHist()
-    hpull.SetMarkerStyle(7)
-    frameB.addPlotable(hpull, "P") 
-    frameB.GetYaxis().SetTitle("Pull Distribution")
-    frameB.Draw()
+    self.latexQ2()
+    frameB1 = Plotter.frameK.emptyClone("frameB1")
+    hresid = cloned_frameL.residHist()
+    frameB1.addPlotable(hresid, "P")
+    res=ROOT.NewResPlot(cloned_frameK, frameB1); res.Draw(); 
+    res.frame2.GetXaxis().SetTitle(Plotter.frameK.GetXaxis().GetTitle())
+    res.fUpperPad.cd()      #Return to Upper Pad
+    Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
-    self.latexQ2()
-    # self.canvasPrint(pltName + "_cosl_PullHist")
-    frameB1 = Plotter.frameK.emptyClone("frameB1")
-    frameB1.SetTitle("Residual Distribution")
-    hresid = cloned_frameK.residHist()
-    hresid.SetMarkerStyle(7)
-    frameB1.addPlotable(hresid, "P")
-    frameB1.GetYaxis().SetTitle("Residual Distribution")
-    
-    c.cd(1); frameB.Draw()
-    c.cd(2); frameB1.Draw()
-    c.cd(3); cloned_frameK.Draw()
-    c.Print("With_Residuals_CosK_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
-    del hpull; del hresid
+    self.canvasPrint(pltName + "_cosK")
 
 types.MethodType(plotEfficiency, None, Plotter)
 
@@ -735,7 +692,7 @@ plotterCfg['plots'] = {
         'kwargs': {
             'pltName': "angular3D_GEN",
             'dataPlots': [["sigMCGENReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_sigA", plotterCfg_sigStyle, fitCollection.setupSigAFitter['argAliasInDB'], None],
+            'pdfPlots': [["f_sigA", plotterCfg_sigStyle, fitCollection.setupSigGENFitter['argAliasInDB'], None],
                         ],
             'marks': []}
     },
@@ -821,14 +778,14 @@ if __name__ == '__main__':
         p.cfg['binKey'] = b
         print (p.cfg)
         # plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
-        plotter.cfg['switchPlots'].append('effi')            # Efficiency
+        #plotter.cfg['switchPlots'].append('effi')            # Efficiency
         # plotter.cfg['switchPlots'].append('angular3D_sigM')
         # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
         # plotter.cfg['switchPlots'].append('angular3D_final')
         # plotter.cfg['switchPlots'].append('angular3D_summary')
-        # plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+        #plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
         plotter.cfg['switchPlots'].append('angular3D_sig2D')
-        # plotter.cfg['switchPlots'].append('angular3D_GEN') #To Produce Gen Level Plots
+        #plotter.cfg['switchPlots'].append('angular3D_GEN') #To Produce Gen Level Plots
 
         p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
         #print(p._sources); exit()

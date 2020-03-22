@@ -33,5 +33,5 @@ for(int i=0; i<n;i++){
     w->ls();
     w->Print();
 }
-
+exit(0);
 }

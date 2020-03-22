@@ -5,8 +5,8 @@
 
 ./bash/TotalClean.sh
 echo -e "\n>>>>>>> Started Creating RooWorkSpace <<<<<<<\n"
-./bash/RunpdfCollection.sh
+./bash/pdfCollection.sh
 echo -e "\n>>>>>>> Started Running Fitting Procedure <<<<<<<\n"
-./bash/RunseqCollection.sh
+./bash/seqCollection.sh
 echo -e "\n>>>>>>> Started Creating Plots <<<<<<<\n"
-./bash/RunplotCollection.sh
+./bash/plotCollection.sh

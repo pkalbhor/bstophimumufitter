@@ -56,7 +56,7 @@ setupSigGENFitter = deepcopy(setupTemplateFitter) #Pritam
 setupSigGENFitter.update({
     'name': "sigGENFitter",
     'data': "sigMCGENReader.Fit",
-    'pdf': "f_sigA_original",
+    'pdf': "f_sigA",
     'argPattern': ['unboundAfb', 'unboundFl'],
     'createNLLOpt': [],
     'argAliasInDB': {'unboundAfb': 'unboundAfb_GEN', 'unboundFl': 'unboundFl_GEN'},

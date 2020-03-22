@@ -10,6 +10,7 @@ import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
 
 from BsToPhiMuMuFitter.StdProcess import p
+import pdb
 
 # Standard fitting procedures
 predefined_sequence = {}
@@ -41,9 +42,9 @@ if __name__ == '__main__':
         # p.setSequence(predefined_sequence['fitFinal3D'])
         # p.setSequence(predefined_sequence['fitSigM'])
         #p.setSequence(predefined_sequence['fitSig2D']) #Fitting MC distributions
-        #p.setSequence(predefined_sequence['fitSigMCGEN'])
+        # p.setSequence(predefined_sequence['fitSigMCGEN'])
         # p.setSequence(predefined_sequence['stdFit'])
-        # p.setSequence(predefined_sequence['fitMCGEN'])
+        #p.setSequence(predefined_sequence['fitMCGEN'])
         try:
             p.beginSeq()
             p.runSeq()
