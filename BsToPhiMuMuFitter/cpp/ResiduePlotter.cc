@@ -101,7 +101,7 @@ void NewResPlot::PostDrawDecoration(){
 	float textsize = fFontSize/(fLowerPad->GetWh()*fLowerPad->GetAbsHNDC());
 	frame2->GetXaxis()->SetLabelSize(textsize);
 	frame2->GetYaxis()->SetLabelSize(textsize);
-	frame2->GetXaxis()->SetTitle("Cos#theta_{l}");
+	frame2->GetXaxis()->SetTitle(frame1->GetXaxis()->GetTitle());
 	frame2->GetXaxis()->SetTitleSize(textsize);
 	frame2->GetXaxis()->SetTickLength(0.08); 
 	frame2->GetYaxis()->SetNdivisions(505);
@@ -115,7 +115,6 @@ void NewResPlot::PostDrawDecoration(){
 	frame1->GetYaxis()->SetLabelSize(textsize);
 	frame1->GetYaxis()->SetTitleSize(textsize);
 	frame1->GetXaxis()->SetLabelOffset(999);
-	frame1->GetXaxis()->SetTitle("");
 }
 
 void NewResPlot::Draw(){

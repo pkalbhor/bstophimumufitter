@@ -131,7 +131,7 @@ def buildAccXRecEffiHist(self):
     forceRebuild = False
     for binKey in q2bins.keys():
         print q2bins.keys()
-        if binKey in ['jpsi', 'psi2s', 'peaks', 'summaryLowQ2']:
+        if binKey in ['jpsi', 'psi2s', 'peaks']:
             continue
         h2_accXrec = fin.Get("h2_accXrec1_{0}".format(binKey))
         if h2_accXrec == None or forceRebuild:
@@ -233,13 +233,13 @@ def buildAccXRecEffiHist(self):
             h2_accXrec1.Write("h2_accXrec1_{0}".format(binKey), ROOT.TObject.kOverwrite)
             self.logger.logINFO("Overall efficiency is built.")
 
-            """h2_accXrecEff = fin.Get("h2Eff_accXrec_{0}".format(binKey))        #2D Binned Eff
-            h2_accXrec = h2_accXrecEff.CreateHistogram()
+            h2_accXrecEff = fin.Get("h2Eff_accXrec_{0}".format(binKey))        #2D Binned Eff: Same as h2_accXrec1_binKey, but using CreateHistogram()
+            h2_accXrec = h2_accXrecEff.CreateHistogram(); h2_accXrec.SetTitle("Created from CreateHistogram() method")
             h2_accXrec.SetXTitle("cos#theta_{l}")
             h2_accXrec.SetYTitle("cos#theta_{K}")
             h2_accXrec.SetZTitle("Overall efficiency")
-            h2_accXrec.Write("h2_accXrec_{0}".format(binKey), ROOT.TObject.kOverwrite)
-            self.logger.logINFO("Overall efficiency is built.")"""
+            h2_accXrec.Write("h2_accXrec_{0}".format(binKey), ROOT.TObject.kOverwrite)  # We are not going to use this as of now
+            self.logger.logINFO("Overall efficiency is built.")
 
     # Register the chosen one to sourcemanager
     h2_accXrec = fin.Get("h2_accXrec1_{0}".format(self.process.cfg['binKey'])); print "Getting From File: ", type(h2_accXrec), "h2_accXrec1_{0}".format(self.process.cfg['binKey'])

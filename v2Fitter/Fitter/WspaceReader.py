@@ -92,7 +92,6 @@ class WspaceReader(Path):
                 readAll(self.wspace.allFunctions())
                 readAll(self.wspace.allPdfs())
                 readAll(self.wspace.allVars())
-                print self.cfg['source']['f_sigA']
 
     def bookEndSeq(self):
         """Book to p.endSeq stack. Assign new order in case of multiple calls."""

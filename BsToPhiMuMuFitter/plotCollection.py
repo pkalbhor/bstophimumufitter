@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 sts=4 fdm=indent fdl=0 fdn=3 ft=python et:
 
-import os, sys
+import os, sys, pdb
 import re
 import math
 import types
@@ -25,7 +25,6 @@ from BsToPhiMuMuFitter.StdProcess import p, setStyle
 import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
-import pdb
 
 class Plotter(Path):
     """The plotter"""
@@ -84,28 +83,16 @@ class Plotter(Path):
 
     frameB = Bmass.frame()
     #frameB.SetMinimum(0)
-    frameB.SetTitle("")
-    frameB_binning = 13
+    frameB_binning = 20
 
     frameK = CosThetaK.frame()
     #frameK.SetMinimum(0)
-    #frameK.SetTitle("")
     frameK_binning = 20
 
     frameL = CosThetaL.frame()
     #frameL.SetMinimum(0)
     frameL.SetTitle("Pull")
     frameL_binning = 20
-
-    frameGenK = genCosThetaK.frame()
-    #frameK.SetMinimum(0)
-    #frameK.SetTitle("")
-    frameGenK_binning = 20
-
-    frameGenL = genCosThetaL.frame()
-    #frameL.SetMinimum(0)
-    frameGenL.SetTitle("Pull")
-    frameGenL_binning = 20
 
     legend = ROOT.TLegend(.75, .70, .95, .90)
     legend.SetFillColor(0)
@@ -121,7 +108,6 @@ class Plotter(Path):
             if p[0] == None:
                 self.logger.logERROR("pdfPlot not found in source manager.")
                 raise RuntimeError
-
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
         print("dbfile?", self.process.dbplayer.odbfile)
@@ -153,7 +139,7 @@ class Plotter(Path):
         marks = [] if marks is None else marks
         dataPlots = [] if dataPlots is None else dataPlots
         pdfPlots = [] if pdfPlots is None else pdfPlots
-        print(dataPlots, pdfPlots)
+
         for pIdx, p in enumerate(dataPlots):
             print("dataP{0}".format(pIdx))
             p[0].plotOn(cloned_frame,
@@ -165,7 +151,7 @@ class Plotter(Path):
                         ROOT.RooFit.Name("pdfP{0}".format(pIdx)),
                         *p[1])
         cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
-        cloned_frame.Draw()
+        DrawWithResidue(plotter, cloned_frame) 
 
         # Legend
         Plotter.legend.Clear()
@@ -186,8 +172,6 @@ class Plotter(Path):
     plotFrameB_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning * 2}))
     plotFrameK_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning * 2}))
     plotFrameL_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning * 2}))
-    plotFrameGenK = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameGenK, 'binning': frameGenK_binning}))
-    plotFrameGenL = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameGenL, 'binning': frameGenL_binning}))
 
     @classmethod
     def templateConfig(cls):
@@ -201,12 +185,11 @@ class Plotter(Path):
     def _runPath(self):
         """"""
         for pltName, pCfg in self.cfg['plots'].items():
-            # print("TTME") #Pritam
-            # print( self.cfg['plots'].items() ) #Pritam
             if pltName not in self.cfg['switchPlots']:
                 continue
             for func in pCfg['func']:
                 func(self, **pCfg['kwargs'])
+                Plotter.canvas.Clear("d")
 
 
 def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
@@ -252,6 +235,8 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         self.latexQ2()
         self.DrawParams(pdfPlots)
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
+        Plotter.canvas.cd()
+
 types.MethodType(plotSimpleBLK, None, Plotter)
 
 def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Pritam
@@ -261,17 +246,32 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
     for pIdx, plt in enumerate(pdfPlots):
         print("pdf: ", pIdx, plt)#Pritam
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
-
+    
+    dataPlots[0][0].changeObservableName("genCosThetaK", "CosThetaK")
+    dataPlots[0][0].changeObservableName("genCosThetaL", "CosThetaL")
+    print dataPlots[0][0].Print()
     plotFuncs = {
-        'L': {'func': Plotter.plotFrameGenL, 'tag': "_gencosl"},
-        'K': {'func': Plotter.plotFrameGenK, 'tag': "_gencosK"},
+        'L': {'func': Plotter.plotFrameL, 'tag': "_gencosl"},
+        'K': {'func': Plotter.plotFrameK, 'tag': "_gencosK"},
     }
 
     for frame in frames:
         plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
         self.latexQ2()
+        self.DrawParams(pdfPlots)
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
+        Plotter.canvas.cd()
 types.MethodType(plotSimpleGEN, None, Plotter)
+
+def DrawWithResidue(self, frame1):
+    Plotter.canvas.cd()
+    frame2 = frame1.emptyClone("frame_for_residue")
+    hresid = frame1.residHist()
+    frame2.addPlotable(hresid, "P")
+    res=ROOT.NewResPlot(frame1, frame2); res.Draw();
+    res.fUpperPad.cd()
+    return res
+types.MethodType(DrawWithResidue, None, Plotter)
 
 def plotEfficiency(self, data_name, pdf_name):
     pltName = "effi"
@@ -287,6 +287,7 @@ def plotEfficiency(self, data_name, pdf_name):
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
 
     data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
+    Plotter.canvas.cd()
     #data_accXrec.Scale(100)
     #data_accXrec.SetMinimum(0)
     #data_accXrec.SetMaximum(100 * 0.00015)  # Z axis in percentage
@@ -301,10 +302,12 @@ def plotEfficiency(self, data_name, pdf_name):
     h2_effi_sigA_fine.Draw("SURF SAME dm(1,10) pa(2,1,1) ci(1,4,8) a(0,0,0)")
     Plotter.latexCMSSim(.08, .93)
     Plotter.latexCMSExtra(.08, .89)
+    #Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     self.latexQ2(.40, .93)
     self.canvasPrint(pltName + "_2D")
     data_accXrec.Scale(0.01)
     
+    #Cos_L Efficiency
     cloned_frameL = Plotter.frameL.emptyClone("cloned_frameL")
     h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX")
     data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_accXrec_fine_ProjectionX", "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
@@ -314,18 +317,14 @@ def plotEfficiency(self, data_name, pdf_name):
     cloned_frameL.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
 
+    DrawWithResidue(self, cloned_frameL)
     self.latexQ2()
-    frameA1 = Plotter.frameL.emptyClone("frameA1")
-    hresid = cloned_frameL.residHist()
-    frameA1.addPlotable(hresid, "P")
-    res=ROOT.NewResPlot(cloned_frameL, frameA1); res.Draw(); 
-    res.frame2.GetXaxis().SetTitle(Plotter.frameL.GetXaxis().GetTitle())
-    res.fUpperPad.cd()
     Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
     self.canvasPrint(pltName + "_cosl")
-    
+   
+    #Cos_K Efficiency 
     Plotter.canvas.cd()
     cloned_frameK = Plotter.frameK.emptyClone("cloned_frameK")
     h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY")
@@ -336,17 +335,13 @@ def plotEfficiency(self, data_name, pdf_name):
     cloned_frameK.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
 
+    DrawWithResidue(self, cloned_frameK)
     self.latexQ2()
-    frameB1 = Plotter.frameK.emptyClone("frameB1")
-    hresid = cloned_frameL.residHist()
-    frameB1.addPlotable(hresid, "P")
-    res=ROOT.NewResPlot(cloned_frameK, frameB1); res.Draw(); 
-    res.frame2.GetXaxis().SetTitle(Plotter.frameK.GetXaxis().GetTitle())
-    res.fUpperPad.cd()      #Return to Upper Pad
     Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
     self.canvasPrint(pltName + "_cosK")
+    Plotter.canvas.cd()
 
 types.MethodType(plotEfficiency, None, Plotter)
 
@@ -434,7 +429,8 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     print(""" Check carefully the keys in 'dbSetup' """)
     if marks is None:
         marks = []
-    binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summaryLowQ2']
+    print self.process.cfg['binKey']
+    binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB'] #, 'summaryLowQ2']
 
     print("Hi: ", [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
@@ -485,7 +481,6 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         'FeldmanCousins': getStatError_FeldmanCousins,
         'Minuit': getStatError_Minuit,
     }
-
     Plotter.legend.Clear()
     for dbsIdx, dbs in enumerate(dbSetup):
         print("dbSetup", dbSetup)
@@ -616,7 +611,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle("q^{2} [GeV^{2}]")
         gr.GetYaxis().SetTitle("A_{FB}")
-        gr.GetYaxis().SetRangeUser(-0.75, 1.5)
+        gr.GetYaxis().SetRangeUser(-0.02, 0.02)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
@@ -626,13 +621,13 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 gr.Draw(opt + " SAME")
     Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
-    self.canvasPrint(pltName +'_'+binKey+'_afb', False)
+    self.canvasPrint(pltName + '_afb', False)
 
     for grIdx, gr in enumerate(grFls):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle("q^{2} [GeV^{2}]")
         gr.GetYaxis().SetTitle("F_{L}")
-        gr.GetYaxis().SetRangeUser(0, 1.5)
+        gr.GetYaxis().SetRangeUser(0.3, 0.90)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
@@ -642,7 +637,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 gr.Draw(opt + " SAME")
     Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
-    self.canvasPrint(pltName +'_'+ binKey + '_fl', False)
+    self.canvasPrint(pltName + '_fl', False)
 types.MethodType(plotSummaryAfbFl, None, Plotter)
 
 plotterCfg = {
@@ -688,7 +683,7 @@ plotterCfg['plots'] = {
             'marks': []}
     },
     'angular3D_GEN': { #Pritam
-        'func': [functools.partial(plotSimpleGEN, frames='LK')],
+        'func': [functools.partial(plotSimpleGEN, frames='LK')],  #plotSimpleGEN #plotSimpleBLK
         'kwargs': {
             'pltName': "angular3D_GEN",
             'dataPlots': [["sigMCGENReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
@@ -762,33 +757,22 @@ plotterCfg['plots'] = {
         },
     },
 }
-#  plotterCfg['switchPlots'].append('simpleSpectrum')
-#  plotterCfg['switchPlots'].append('effi')
-#  plotterCfg['switchPlots'].append('angular3D_sigM')
-#  plotterCfg['switchPlots'].append('angular3D_bkgCombA')
-#  plotterCfg['switchPlots'].append('angular3D_final')
-#  plotterCfg['switchPlots'].append('angular3D_summary')
-#  plotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
-
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    binKey =  [sys.argv[1]] #, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
+    binKey =  [sys.argv[1]]
     for b in binKey:
         p.cfg['binKey'] = b
-        print (p.cfg)
         # plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
-        #plotter.cfg['switchPlots'].append('effi')            # Efficiency
+        plotter.cfg['switchPlots'].append('effi')            # Efficiency
         # plotter.cfg['switchPlots'].append('angular3D_sigM')
         # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
         # plotter.cfg['switchPlots'].append('angular3D_final')
         # plotter.cfg['switchPlots'].append('angular3D_summary')
-        #plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
-        plotter.cfg['switchPlots'].append('angular3D_sig2D')
-        #plotter.cfg['switchPlots'].append('angular3D_GEN') #To Produce Gen Level Plots
-
+        plotter.cfg['switchPlots'].append('angular3D_sig2D')               #To Produce RECO Level Plots
+        plotter.cfg['switchPlots'].append('angular3D_GEN')                 #To Produce Gen Level Plots
+        #plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')    #Summary of Fl and Afb
         p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
-        #print(p._sources); exit()
         p.beginSeq()
         p.runSeq()
         p.endSeq()

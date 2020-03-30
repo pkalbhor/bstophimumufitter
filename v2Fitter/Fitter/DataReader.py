@@ -108,7 +108,7 @@ class DataReader(Path):
 
         if not 'source' in self.cfg.keys():
             self.cfg['source'] = {}
-        self.cfg['source']['{0}.tree'.format(self.name)] = self.ch
+        #self.cfg['source']['{0}.tree'.format(self.name)] = self.ch
         self.cfg['source']['{0}.argset'.format(self.name)] = self.argset
         if len(self.cfg['ifriend']) > 0:
             self.cfg['source']['{0}.friend'.format(self.name)] = self.friend

@@ -1,12 +1,13 @@
 #!/bin/bash
 
-#echo "Present Working Directory: $PWD"
-#echo "PYTHONPATH: $PYTHONPATH"
+GITDIR=$(git rev-parse --show-toplevel)                                                                                                                                                 
 
+cd $GITDIR/BsToPhiMuMuFitter/ 
 ./bash/TotalClean.sh
 echo -e "\n>>>>>>> Started Creating RooWorkSpace <<<<<<<\n"
 ./bash/pdfCollection.sh
 echo -e "\n>>>>>>> Started Running Fitting Procedure <<<<<<<\n"
 ./bash/seqCollection.sh
+cp ./Plots/*.db ./input/selected/
 echo -e "\n>>>>>>> Started Creating Plots <<<<<<<\n"
 ./bash/plotCollection.sh
