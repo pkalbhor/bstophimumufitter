@@ -124,15 +124,16 @@ bMassRegions['altSB_vetoJpsiX'] = createBmassTemplate("altSB_vetoJpsiX", 4.76, 5
 bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB_vetoJpsiX']['cutString'], bMassRegions['altSR_vetoJpsiX']['cutString'])
 
 # Cut strings
-cut_passTrigger = "Triggers >= 1"
+cut_passTrigger = "JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0"
 cut_phiWindow = "Phimass>1.01 && Phimass < 1.03"
 cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
-cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.170 && abs(Bmass-Mumumass-1.681)>0.080"
-cut_Bdt = "Bdt > 0.06"
+cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.180 && abs(Bmass-Mumumass-1.681)>0.080"
+cut_Bdt = "Bdt > 0.09"
 # cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
 cuts = [
     cut_passTrigger,
     cut_phiWindow,
+    cut_resonanceRej,
     cut_antiRadiation,
     cut_Bdt,
 ]

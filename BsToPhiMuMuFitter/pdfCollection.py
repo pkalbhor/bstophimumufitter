@@ -4,7 +4,8 @@
 
 # Description     : Define PDFs
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 19 Mar 2019 12:04 01:26
+#                   Pritam Kalbhor (physics.pritam@gmail.com)
+# Last Modified   : 19 Apr 2020 12:04 01:26
 
 ############
 # WARNINGS #
@@ -13,9 +14,9 @@
 # In RooWorkspace.factory(), you MUST replace the calculation between numbers to a single float number, e.g. 2/3 -> 0.666667
 #   It is possible that the parser don't designed to handle RooAddition and RooProduct between RooConstVar
 
-import types, sys
+import types, sys, pdb
 import functools
-from copy import copy
+from copy import copy, deepcopy
 from collections import OrderedDict
 
 from v2Fitter.Fitter.ObjProvider import ObjProvider
@@ -77,60 +78,74 @@ def buildGenericObj(self, objName, factoryCmd, varNames):
 
 f_effiSigA_format = {}
 
-pdfL = "1+l1*CosThetaL+l2*pow(CosThetaL,2)+l3*pow(CosThetaL,3)+l4*pow(CosThetaL,4)+l5*pow(CosThetaL,5)+l6*pow(CosThetaL,6)"
-pdfK = "1+k1*CosThetaK+k2*pow(CosThetaK,2)+k3*pow(CosThetaK,3)+k4*pow(CosThetaK,4)+k5*pow(CosThetaK,5)+k6*pow(CosThetaK,6)"
+pdfL = "1+l1*CosThetaL+l2*pow(CosThetaL,2)+l3*pow(CosThetaL,3)+l4*pow(CosThetaL,4)+l5*pow(CosThetaL,5)+l6*pow(CosThetaL,6)"; nLo=7
+pdfK = "1+k1*CosThetaK+k2*pow(CosThetaK,2)+k3*pow(CosThetaK,3)+k4*pow(CosThetaK,4)+k5*pow(CosThetaK,5)+k6*pow(CosThetaK,6)"; nK=7
+n=25 #Number of x. LP4*Pol4
 xTerm = "\
-(x0+x1*CosThetaK+x2*(1.5*pow(CosThetaK,2)-0.5)+x3*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))\
-+(x4+x5*CosThetaK+x6*(1.5*pow(CosThetaK,2)-0.5)+x7*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))*pow(CosThetaL,2)\
-+(x8+x9*CosThetaK+x10*(1.5*pow(CosThetaK,2)-0.5)+x11*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))*pow(CosThetaL,3)\
-+(x12+x13*CosThetaK+x14*(1.5*pow(CosThetaK,2)-0.5)+x15*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))*pow(CosThetaL,4)"
-f_effiSigA_format['DEFAULT'] = ["l{0}[-10,10]".format(i) for i in range(1, 6 + 1)] \
-    + ["k{0}[-10,10]".format(i) for i in range(1, 6 + 1)] \
-    + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(15 + 1)] \
-    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL, " + ', '.join(["l{0}".format(i) for i in range(1, 7)]) + "}")] \
-    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK, " + ', '.join(["k{0}".format(i) for i in range(1, 7)]) + "}")] \
-    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(16)]) + "}")] \
-    + ["expr::effi_sigA('effi_norm*({pdfL})*({pdfK})*(1+hasXTerm*({xTerm}))', {args})".format(
-        pdfL=pdfL,
-        pdfK=pdfK,
-        xTerm=xTerm,
-        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, 7)] + ["k{0}".format(i) for i in range(1, 7)] + ["x{0}".format(i) for i in range(16)]) + "}")]
+(x0+x1*CosThetaK+x2*(1.5*pow(CosThetaK,2)-0.5)+x3*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x4*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))\
++(x5+x6*CosThetaK+x7*(1.5*pow(CosThetaK,2)-0.5)+x8*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x9*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*CosThetaL\
++(x10+x11*CosThetaK+x12*(1.5*pow(CosThetaK,2)-0.5)+x13*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x14*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,2)\
++(x15+x16*CosThetaK+x17*(1.5*pow(CosThetaK,2)-0.5)+x18*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x19*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,3)\
++(x20+x21*CosThetaK+x22*(1.5*pow(CosThetaK,2)-0.5)+x23*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x24*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,4)"
 
-pdfL = "exp(-0.5*pow((CosThetaL-l1)/l2,2))+l3*exp(-0.5*pow((CosThetaL-l4)/l5,2))+l6*exp(-0.5*pow((CosThetaL-l7)/l8,2))"
-f_effiSigA_format['belowJpsiA'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,10]", "l4[-0.2,-2.,1.]", "l5[0.5,0.1,2]", "l6[0.1,0,10]", "l7[0.8,0.1,1]", "l8[0.2,0.1,2]"] \
-    + ["k{0}[-10,10]".format(i) for i in range(1, 6 + 1)] \
-    + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(15 + 1)] \
-    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL," + ', '.join(["l{0}".format(i) for i in range(1, 9)]) + "}")] \
-    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, 7)]) + "}")] \
-    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(16)]) + "}")] \
+f_effiSigA_format['DEFAULT'] = ["l{0}[-10,10]".format(i) for i in range(1, nLo)] \
+    + ["k{0}[-10,10]".format(i) for i in range(1, nK)] \
+    + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(n)] \
+    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL, " + ', '.join(["l{0}".format(i) for i in range(1, nLo)]) + "}")] \
+    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK, " + ', '.join(["k{0}".format(i) for i in range(1, nK)]) + "}")] \
+    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(n)]) + "}")] \
     + ["expr::effi_sigA('effi_norm*({pdfL})*({pdfK})*(1+hasXTerm*({xTerm}))', {args})".format(
         pdfL=pdfL,
         pdfK=pdfK,
         xTerm=xTerm,
-        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, 9)] + ["k{0}".format(i) for i in range(1, 7)] + ["x{0}".format(i) for i in range(16)]) + "}")]
-f_effiSigA_format['belowJpsiB'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,10]", "l4[-0.8,-1,-0.1]", "l5[0.5,0.1,2]", "l6[0.1,0,10]", "l7[0.8,0.1,1]", "l8[0.2,0.1,2]"] \
-    + ["k{0}[-10,10]".format(i) for i in range(1, 6 + 1)] \
-    + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(15 + 1)] \
-    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL," + ', '.join(["l{0}".format(i) for i in range(1, 9)]) + "}")] \
-    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, 7)]) + "}")] \
-    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(16)]) + "}")] \
-    + ["expr::effi_sigA('effi_norm*({pdfL})*({pdfK})*(1+hasXTerm*({xTerm}))', {args})".format(
-        pdfL=pdfL,
-        pdfK=pdfK,
-        xTerm=xTerm,
-        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, 9)] + ["k{0}".format(i) for i in range(1, 7)] + ["x{0}".format(i) for i in range(16)]) + "}")]
+        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, nLo)] + ["k{0}".format(i) for i in range(1, nK)] + ["x{0}".format(i) for i in range(n)]) + "}")]
 
-f_effiSigA_format['summaryLowQ2'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,10]", "l4[-0.8,-1,-0.1]", "l5[0.5,0.1,2]", "l6[0.1,0,10]", "l7[0.8,0.1,1]", "l8[0.2,0.1,2]"] \
-    + ["k{0}[-10,10]".format(i) for i in range(1, 6 + 1)] \
-    + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(15 + 1)] \
-    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL," + ', '.join(["l{0}".format(i) for i in range(1, 9)]) + "}")] \
-    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, 7)]) + "}")] \
-    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(16)]) + "}")] \
+pdfL = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2))+l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLc=9
+f_effiSigA_format['belowJpsiA'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(1, nLc/3+1)] \
+    + ["l{0}[0,-.5,.5]".format(3*i-1) for i in range(1, nLc/3+1)] \
+    + ["l{0}[.2,.1,2.]".format(3*i) for i in range(1, nLc/3+1)] \
+    + ["k{0}[-10,10]".format(i) for i in range(1, nK)] \
+    + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(n)] \
+    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL," + ', '.join(["l{0}".format(i) for i in range(1, nLc+1)]) + "}")] \
+    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, nK)]) + "}")] \
+    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(n)]) + "}")] \
     + ["expr::effi_sigA('effi_norm*({pdfL})*({pdfK})*(1+hasXTerm*({xTerm}))', {args})".format(
         pdfL=pdfL,
         pdfK=pdfK,
         xTerm=xTerm,
-        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, 9)] + ["k{0}".format(i) for i in range(1, 7)] + ["x{0}".format(i) for i in range(16)]) + "}")]
+        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, nLc+1)] + ["k{0}".format(i) for i in range(1, nK)] + ["x{0}".format(i) for i in range(n)]) + "}")]
+
+#f_effiSigA_format['belowJpsiB'] = deepcopy(f_effiSigA_format['belowJpsiA'])
+#f_effiSigA_format['summaryLowQ2'] = deepcopy(f_effiSigA_format['belowJpsiA'])
+pdfL = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2))+l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLB=9
+f_effiSigA_format['belowJpsiB'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(1, nLB/3+1)] \
+    + ["l{0}[0,-.5,.5]".format(3*i-1) for i in range(1, nLB/3+1)] \
+    + ["l{0}[.2,.1,2.]".format(3*i) for i in range(1, nLB/3+1)] \
+    + ["k{0}[-10,10]".format(i) for i in range(1, nK)] \
+    + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(n)] \
+    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL," + ', '.join(["l{0}".format(i) for i in range(1, nLB+1)]) + "}")] \
+    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, nK)]) + "}")] \
+    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(n)]) + "}")] \
+    + ["expr::effi_sigA('effi_norm*({pdfL})*({pdfK})*(1+hasXTerm*({xTerm}))', {args})".format(
+        pdfL=pdfL,
+        pdfK=pdfK,
+        xTerm=xTerm,
+        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, nLB+1)] + ["k{0}".format(i) for i in range(1, nK)] + ["x{0}".format(i) for i in range(n)]) + "}")]
+
+pdfL = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2))+l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLB=9
+f_effiSigA_format['summaryLowQ2'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(1, nLB/3+1)] \
+    + ["l{0}[0,-.5,.5]".format(3*i-1) for i in range(1, nLB/3+1)] \
+    + ["l{0}[.2,.1,2.]".format(3*i) for i in range(1, nLB/3+1)] \
+    + ["k{0}[-10,10]".format(i) for i in range(1, nK)] \
+    + ["effi_norm[0,1]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(n)] \
+    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL, args="{CosThetaL," + ', '.join(["l{0}".format(i) for i in range(1, nLB+1)]) + "}")] \
+    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, nK)]) + "}")] \
+    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(n)]) + "}")] \
+    + ["expr::effi_sigA('effi_norm*({pdfL})*({pdfK})*(1+hasXTerm*({xTerm}))', {args})".format(
+        pdfL=pdfL,
+        pdfK=pdfK,
+        xTerm=xTerm,
+        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, nLB+1)] + ["k{0}".format(i) for i in range(1, nK)] + ["x{0}".format(i) for i in range(n)]) + "}")]
 
 setupBuildEffiSigA = {
     'objName': "effi_sigA",
@@ -143,7 +158,7 @@ setupBuildSigM = {
     'objName': "f_sigM",
     'varNames': ["Bmass"],
     'factoryCmd': [
-        "sigMGauss_mean[5.28, 4.90, 5.45]",
+        "sigMGauss_mean[5.38, 4.90, 5.45]",
         "RooGaussian::f_sigMGauss1(Bmass, sigMGauss_mean, sigMGauss1_sigma[0.02, 0.0001, 0.05])",
         "RooGaussian::f_sigMGauss2(Bmass, sigMGauss_mean, sigMGauss2_sigma[0.08, 0.0005, 0.40])",
         "SUM::f_sigM(sigM_frac[0.,0.,1.]*f_sigMGauss1, f_sigMGauss2)",
@@ -410,6 +425,7 @@ if __name__ == '__main__':
     binKey = [sys.argv[1]]
     for b in binKey:
         p.cfg['binKey'] = b
+        p.cfg['subsample']=str(sys.argv[2])
         p.setSequence([dataCollection.dataReader, stdWspaceReader, stdPDFBuilder])
         p.beginSeq()
         p.runSeq()

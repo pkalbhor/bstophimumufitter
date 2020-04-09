@@ -60,7 +60,7 @@ class EfficiencyFitter(FitterCore):
         #self.ToggleConstVar(args, isConst=True, targetArgs=[r"^x\d+$"])
         args.find('effi_norm').setConstant(False)
         self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True)) #, ROOT.RooFit.PrintLevel(-1))
-        print "MyPDF: ",  self.pdf.Print(), self.data.Print()
+        print "Efficiency PDF, DATA: ",  self.pdf.Print(), self.data.Print()
 
         #args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
         args.find('effi_norm').setConstant(True)
@@ -82,12 +82,16 @@ class EfficiencyFitter(FitterCore):
         args_it = args.createIterator()
         arg = args_it.Next()
         nPar = 0
+        Formula=effi_sigA_formula
         while arg:
-            if any(re.match(pat, arg.GetName()) for pat in ["effi_norm", "hasXTerm", r"^l\d+$", r"^k\d+$"]):
-                effi_sigA_formula = re.sub(arg.GetName(), "({0})".format(arg.getVal()), effi_sigA_formula)
+            if any(re.match(pat, arg.GetName()) for pat in ["effi_norm", "hasXTerm", r"^l(\d{1,2})$", r"^k\d+$"]):
+                Formula = Formula.replace(arg.GetName()+"*", "({0})*".format(arg.getVal()))
+                Formula = Formula.replace(arg.GetName()+")", "({0}))".format(arg.getVal()))
+                Formula = Formula.replace(arg.GetName()+",", "({0}),".format(arg.getVal()))
             elif re.match(r"^x\d+$", arg.GetName()):
                 nPar = nPar + 1
             arg = args_it.Next()
+        effi_sigA_formula = Formula
         effi_sigA_formula = re.sub(r"x(\d{1,2})", r"[\1]", effi_sigA_formula)
         effi_sigA_formula = re.sub(r"CosThetaL", r"x", effi_sigA_formula)
         effi_sigA_formula = re.sub(r"CosThetaK", r"y", effi_sigA_formula)
@@ -134,6 +138,7 @@ class EfficiencyFitter(FitterCore):
         latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
         latex.DrawLatexNDC(.08, .89, "#chi^{{2}}={0:.2f}".format(fitter.GetChi2()))
         canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+        print "Eff Chi2: ", type(fitter), fitter.GetChi2()
 
     @staticmethod
     def isPosiDef(formula2D):

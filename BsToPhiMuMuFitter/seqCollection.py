@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import sys
+import sys, os
 import BsToPhiMuMuFitter.cpp
 import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.toyCollection as toyCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
+import BsToPhiMuMuFitter.plotCollection as plotCollection
 
 from BsToPhiMuMuFitter.StdProcess import p
 import pdb
@@ -30,6 +31,9 @@ fitSig2D        = predefined_sequence['fitSig2D'] = [dataCollection.sigMCReader,
 fitSigMCGEN     = predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
 
 predefined_sequence['fitMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigGENFitter]
+createPlots = predefined_sequence['createPlots'] = [plotCollection.myplotter]
+
+subsampleTest = predefined_sequence['subsampleTest'] = [dataCollection.effiHistReader, dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter, fitCollection.sig2DFitter, plotCollection.myplotter]
 
 if __name__ == '__main__':
     FitSequence = [fitSigMCGEN] #[fitEfficiency, fitSig2D, fitSigMCGEN]
@@ -37,6 +41,7 @@ if __name__ == '__main__':
     for sequence in FitSequence:
         for b in binKey:
             p.cfg['binKey'] = b
+            p.cfg['subsample']=str(sys.argv[2])
             p.setSequence(sequence)
             # p.setSequence(predefined_sequence['buildEfficiecyHist'])
             # p.setSequence(predefined_sequence['fitBkgCombA'])
@@ -46,6 +51,8 @@ if __name__ == '__main__':
             # p.setSequence(predefined_sequence['fitMCGEN'])
             try:
                 p.beginSeq()
+                #pdb.set_trace()
                 p.runSeq()
             finally:
                 p.endSeq()
+                os.system("rm ./data/preload*.root")

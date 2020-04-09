@@ -15,8 +15,8 @@ import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN
-from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath#, dataFilePath, sigMC, UnfilteredMC
-from python.datainput import *
+from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath
+from python.datainput import sigMC, dataFilePath, UnfilteredMC, SubSample
 import ROOT
 from ROOT import TChain
 from ROOT import TEfficiency, TH2D
@@ -35,6 +35,8 @@ CFG.update({
 # dataReader
 def customizeOne(self, targetBMassRegion=None, extraCuts=None):
     print("""Define datasets with arguments.""")
+    if SubSample==True:
+        self.cfg['ifile'][0]=self.cfg['ifile'][0].format(Total="50", Part=self.process.cfg['subsample'])
     if targetBMassRegion is None:
         targetBMassRegion = []
     if not self.process.cfg['binKey'] in q2bins.keys():
@@ -122,6 +124,8 @@ sigMCGENReader.customize = types.MethodType(customizeGEN, sigMCGENReader)
 #accXEffThetaKBins = array('d', [-1., -0.90, -0.80, -0.70, -0.60, -0.50, -0.40, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.])
 accXEffThetaLBins = array('d', [-1., -0.8, -0.6, -0.4, -0.2, 0., 0.2, 0.4, 0.6, 0.8, 1.])
 accXEffThetaKBins = array('d', [-1., -0.8, -0.6, -0.4, -0.2, 0., 0.2, 0.4, 0.6, 0.8, 1.])
+#accXEffThetaLBins = array('d', [-1, -0.7, -0.3, 0., 0.3, 0.7, 1.])
+#accXEffThetaKBins = array('d', [-1, -0.7, 0., 0.4, 0.8, 1.])
 def buildAccXRecEffiHist(self):
     """Build efficiency histogram for later fitting/plotting"""
     print("Now I am Here in buildAccXRecEffiHist")
@@ -152,7 +156,7 @@ def buildAccXRecEffiHist(self):
             setupEfficiencyBuildProcedure['rec'] = {
                 'ifiles': sigMCReader.cfg['ifile'],
                 'baseString': "{0}".format(setupEfficiencyBuildProcedure['acc']['baseString']),
-                'cutString': "{2} && {1} && Bmass > 0.5 && ({0})".format(cuts[-1], setupEfficiencyBuildProcedure['acc']['cutString'], setupEfficiencyBuildProcedure['acc']['baseString']),
+                'cutString': "({2}) && ({1}) && (Bmass > 4.7) && ({0})".format(cuts[-1], setupEfficiencyBuildProcedure['acc']['cutString'], setupEfficiencyBuildProcedure['acc']['baseString']),
                 'fillXY': "CosThetaK:CosThetaL"  # Y:X
             }
             i=0 #testing events

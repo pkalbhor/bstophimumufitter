@@ -1,7 +1,12 @@
 #!/bin/bash
 
-for arg in 'belowJpsiA' 'belowJpsiB' 'belowJpsiC' 'betweenPeaks' 'abovePsi2sA' 'abovePsi2sB' 'summaryLowQ2' 'summary'
+#Number of Subsamples N: Put N=1 if to run on BIG Sample 
+N=1 
+for ((irun=0; irun<1; irun++))
 do
-    echo -e "\n>>>>>>> File: seqCollection.py, Where?: Entering Bin $arg <<<<<<<\n"
-    python seqCollection.py $arg
+for arg in 'belowJpsiA' 'belowJpsiB' 'belowJpsiC' 'betweenPeaks' 'abovePsi2sA' 'abovePsi2sB'
+do
+    echo -e "\n>>>>>>> File: seqCollection.py, Where?: Entering Bin $arg $irun <<<<<<<\n"
+    python seqCollection.py $arg $irun
+done
 done
