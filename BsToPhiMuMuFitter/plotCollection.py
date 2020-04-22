@@ -50,8 +50,6 @@ class Plotter(Path):
     def DrawParams(self, pdfPlots):
         x=0.45; y=0.84
         args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL)) #N3 Lines by Pritam
-        print "Test", type(args) #pdfPlots: RooEffProd
-        #print args.GetChisquare(), args.GetNDF(); exit()
         unboundFl=args.find('unboundFl').getVal(); unboundFlError=args.find('unboundFl').getError(); print unboundFlError
         FlError=(unboundFlToFl(unboundFl+unboundFlError)-unboundFlToFl(unboundFl-unboundFlError))/2.
         flDB=unboundFlToFl(args.find('unboundFl').getVal()); print type(flDB)
@@ -83,7 +81,7 @@ class Plotter(Path):
 
     frameB = Bmass.frame()
     #frameB.SetMinimum(0)
-    frameB_binning = 20
+    frameB_binning = 40
 
     frameK = CosThetaK.frame()
     #frameK.SetMinimum(0)
@@ -110,20 +108,16 @@ class Plotter(Path):
                 raise RuntimeError
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
-        print("dbfile?", self.process.dbplayer.odbfile)
         return p
 
     def initDataPlotCfg(self, p):
         print(""" [Name, plotOnOpt, LegendName] """)
         dataPlotTemplate = ["", plotterCfg_dataStyle, "Data"]
-        print "p1", p
         p = p + dataPlotTemplate[len(p):]
-        print "p2", p
 
         if isinstance(p[0], str):
             self.logger.logDEBUG("Initialize dataPlot {0}".format(p[0]))
             p[0] = self.process.sourcemanager.get(p[0])
-            print("PPPP", p[0])
             if p[0] == None:
                 self.logger.logERROR("dataPlot not found in source manager.")
                 raise RuntimeError
@@ -141,7 +135,6 @@ class Plotter(Path):
         pdfPlots = [] if pdfPlots is None else pdfPlots
 
         for pIdx, p in enumerate(dataPlots):
-            print("dataP{0}".format(pIdx))
             p[0].plotOn(cloned_frame,
                         ROOT.RooFit.Name("dataP{0}".format(pIdx)),
                         ROOT.RooFit.Binning(binning),
@@ -218,10 +211,8 @@ types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
 
 def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
     for pIdx, plt in enumerate(dataPlots):
-        print("data: ", pIdx, plt)#Pritam
         dataPlots[pIdx] = self.initDataPlotCfg(plt)
     for pIdx, plt in enumerate(pdfPlots):
-        print("pdf: ", pIdx, plt)#Pritam
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
 
     plotFuncs = {
@@ -241,15 +232,12 @@ types.MethodType(plotSimpleBLK, None, Plotter)
 
 def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Pritam
     for pIdx, plt in enumerate(dataPlots):
-        print("data: ", pIdx, plt)#Pritam
         dataPlots[pIdx] = self.initDataPlotCfg(plt)
     for pIdx, plt in enumerate(pdfPlots):
-        print("pdf: ", pIdx, plt)#Pritam
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
     
     dataPlots[0][0].changeObservableName("genCosThetaK", "CosThetaK")
     dataPlots[0][0].changeObservableName("genCosThetaL", "CosThetaL")
-    print dataPlots[0][0].Print()
     plotFuncs = {
         'L': {'func': Plotter.plotFrameL, 'tag': "_gencosl"},
         'K': {'func': Plotter.plotFrameK, 'tag': "_gencosK"},
@@ -433,7 +421,6 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     print self.process.cfg['binKey']
     binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB'] #, 'summaryLowQ2']
 
-    print("Hi: ", [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
     xxErr = array('d', map(lambda t: (t[1] - t[0]) / 2, [q2bins[binKey]['q2range'] for binKey in binKeys]))
 
@@ -484,10 +471,8 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     }
     Plotter.legend.Clear()
     for dbsIdx, dbs in enumerate(dbSetup):
-        print("dbSetup", dbSetup)
         title = dbs.get('title', None)
         dbPat = dbs.get('dbPat', self.process.dbplayer.absInputDir + "/fitResults_{binLabel}.db")
-        print("dbPat: ", dbPat)
         argAliasInDB = dbs.get('argAliasInDB', {})
         withSystError = dbs.get('withSystError', False)
         statErrorKey = dbs.get('statErrorKey', 'Minuit')
@@ -516,13 +501,11 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         yyAfbErrHi = array('d', [0] * len(binKeys))
         yyAfbErrLo = array('d', [0] * len(binKeys))
         for binKeyIdx, binKey in enumerate(binKeys):
-            print(dbPat.format(binLabel=q2bins[binKey]['label']))
             if not os.path.exists(dbPat.format(binLabel=q2bins[binKey]['label'])):
                 self.logger.logERROR("Input db file {0} NOT found. Skip.".format(dbPat.format(binLabel=q2bins[binKey]['label'])))
                 continue
             try:
                 db = shelve.open(dbPat.format(binLabel=q2bins[binKey]['label']))
-                print("Shelve Open: ", list(db.keys()))
                 unboundFl = db[argAliasInDB.get("unboundFl", "unboundFl")]
                 unboundAfb = db[argAliasInDB.get("unboundAfb", "unboundAfb")]
 
@@ -612,7 +595,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle("q^{2} [GeV^{2}]")
         gr.GetYaxis().SetTitle("A_{6}")
-        gr.GetYaxis().SetRangeUser(-.15, .15) #+-0.02
+        gr.GetYaxis().SetRangeUser(-.005, .005) #+-0.02
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
@@ -640,114 +623,6 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     Plotter.latexDataMarks(marks)
     self.canvasPrint(pltName + '_fl', False)
 types.MethodType(plotSummaryAfbFl, None, Plotter)
-
-def saveAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
-    if marks is None:
-        marks = []
-    binKeys = [self.process.cfg['binKey'],] #, 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB'] #, 'summaryLowQ2']
-
-    xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
-    xxErr = array('d', map(lambda t: (t[1] - t[0]) / 2, [q2bins[binKey]['q2range'] for binKey in binKeys]))
-
-    grFls = []
-    grAfbs = []
-
-    def quadSum(lst):
-        return math.sqrt(sum(map(lambda i: i**2, lst)))
-
-    def getStatError_FeldmanCousins(db):
-        """ FlErrHi, FlErrLo, AfbErrHi, AfbErrLo"""
-        return db['stat_FC_fl']['getErrorHi'], -db['stat_FC_fl']['getErrorLo'], db['stat_FC_afb']['getErrorHi'], -db['stat_FC_afb']['getErrorLo']
-
-    # TODO: Fix the case of one-side-fail, exceed physically allowed region, etc..
-    def getStatError_Minuit(db):
-        """ FlErrHi, FlErrLo, AfbErrHi, AfbErrLo"""
-        unboundFl = db[argAliasInDB.get("unboundFl", "unboundFl")]
-        unboundAfb = db[argAliasInDB.get("unboundAfb", "unboundAfb")]
-
-        fl = unboundFlToFl(unboundFl['getVal'])
-        afb = unboundAfbToAfb(unboundAfb['getVal'], fl)
-
-        yyFlErrHi = unboundFlToFl(unboundFl['getVal'] + unboundFl['getErrorHi']) - fl
-        yyFlErrLo = fl - unboundFlToFl(unboundFl['getVal'] + unboundFl['getErrorLo'])
-        yyAfbErrHi = unboundAfbToAfb(unboundAfb['getVal'] + unboundAfb['getErrorHi'], fl) - afb
-        yyAfbErrLo = afb - unboundAfbToAfb(unboundAfb['getVal'] + unboundAfb['getErrorLo'], fl)
-        return yyFlErrHi, yyFlErrLo, yyAfbErrHi, yyAfbErrLo
-
-    statErrorMethods = {
-        'FeldmanCousins': getStatError_FeldmanCousins,
-        'Minuit': getStatError_Minuit,
-    }
-    Plotter.legend.Clear()
-    for dbsIdx, dbs in enumerate(dbSetup):
-        title = dbs.get('title', None)
-        dbpath=modulePath+"/Plots/fitResults_{binLabel}.db".format(binLabel=q2bins[self.process.cfg['binKey']]['label'])
-        os.system("cp "+dbpath+" "+modulePath+"/input/selected")
-        dbPat = dbs.get('dbPat', self.process.dbplayer.absInputDir + "/fitResults_{binLabel}.db")
-        argAliasInDB = dbs.get('argAliasInDB', {})
-        withSystError = dbs.get('withSystError', False)
-        statErrorKey = dbs.get('statErrorKey', 'Minuit')
-        drawOpt = dbs.get('drawOpt', ["PO"])
-        fillColor = dbs.get('fillColor', 2)
-        fillStyle = dbs.get('fillStyle', 3001)
-        legendOpt = dbs.get('legendOpt', None)
-        dbs.update({
-            'drawOpt': drawOpt,
-            'legendOpt': legendOpt,
-        })
-
-        yyFl = array('d', [0] * len(binKeys))
-        yyFlStatErrHi = array('d', [0] * len(binKeys))
-        yyFlStatErrLo = array('d', [0] * len(binKeys))
-        yyFlSystErrHi = array('d', [0] * len(binKeys))
-        yyFlSystErrLo = array('d', [0] * len(binKeys))
-        yyFlErrHi = array('d', [0] * len(binKeys))
-        yyFlErrLo = array('d', [0] * len(binKeys))
-
-        yyAfb = array('d', [0] * len(binKeys))
-        yyAfbStatErrHi = array('d', [0] * len(binKeys))
-        yyAfbStatErrLo = array('d', [0] * len(binKeys))
-        yyAfbSystErrHi = array('d', [0] * len(binKeys))
-        yyAfbSystErrLo = array('d', [0] * len(binKeys))
-        yyAfbErrHi = array('d', [0] * len(binKeys))
-        yyAfbErrLo = array('d', [0] * len(binKeys))
-        for binKeyIdx, binKey in enumerate(binKeys):
-            print(dbPat.format(binLabel=q2bins[binKey]['label']))
-            if not os.path.exists(dbPat.format(binLabel=q2bins[binKey]['label'])):
-                self.logger.logERROR("Input db file {0} NOT found. Skip.".format(dbPat.format(binLabel=q2bins[binKey]['label'])))
-                continue
-            try:
-                db = shelve.open(dbPat.format(binLabel=q2bins[binKey]['label']))
-                print("Shelve Open: ", list(db.keys()))
-                unboundFl = db[argAliasInDB.get("unboundFl", "unboundFl")]
-                unboundAfb = db[argAliasInDB.get("unboundAfb", "unboundAfb")]
-
-                fl = unboundFlToFl(unboundFl['getVal'])
-                afb = unboundAfbToAfb(unboundAfb['getVal'], fl)
-
-                yyFl[binKeyIdx] = fl
-                yyAfb[binKeyIdx] = afb
-                yyFlStatErrHi[binKeyIdx], yyFlStatErrLo[binKeyIdx],\
-                    yyAfbStatErrHi[binKeyIdx], yyAfbStatErrLo[binKeyIdx] = statErrorMethods.get(statErrorKey, getStatError_Minuit)(db)
-                if withSystError:
-                    yyFlSystErrHi[binKeyIdx], yyFlSystErrLo[binKeyIdx],\
-                        yyAfbSystErrHi[binKeyIdx], yyAfbSystErrLo[binKeyIdx] = calcSystError(db)
-                else:
-                    yyFlSystErrHi[binKeyIdx], yyFlSystErrLo[binKeyIdx],\
-                        yyAfbSystErrHi[binKeyIdx], yyAfbSystErrLo[binKeyIdx] = 0, 0, 0, 0
-                yyFlErrHi[binKeyIdx] = min(quadSum([yyFlStatErrHi[binKeyIdx], yyFlSystErrHi[binKeyIdx]]), 1. - yyFl[binKeyIdx])
-                yyFlErrLo[binKeyIdx] = min(quadSum([yyFlStatErrLo[binKeyIdx], yyFlSystErrLo[binKeyIdx]]), yyFl[binKeyIdx])
-                yyAfbErrHi[binKeyIdx] = min(quadSum([yyAfbStatErrHi[binKeyIdx], yyAfbSystErrHi[binKeyIdx]]), 0.75 - yyAfb[binKeyIdx])
-                yyAfbErrLo[binKeyIdx] = min(quadSum([yyAfbStatErrLo[binKeyIdx], yyAfbSystErrLo[binKeyIdx]]), 0.75 + yyAfb[binKeyIdx])
-            finally:
-                db.close()
-    paramfile = open(modulePath+"/subsamples/FlA6list.dat", "a")
-    paramfile.write("%s\t%s\t%s\t%s\t%s\t%s\n" %(yyFl[0], yyFlErrHi[0], yyFlErrLo[0], yyAfb[0], yyAfbErrHi[0], yyAfbErrLo[0]))
-    paramfile.close()
-    print "Final Values: ",yyFl[0], yyFlErrHi[0], yyFlErrLo[0]," A6: ", yyAfb[0], yyAfbErrHi[0], yyAfbErrLo[0]
-
-
-types.MethodType(saveAfbFl, None, Plotter)
 
 plotterCfg = {
     'name': "plotter",
@@ -865,35 +740,22 @@ plotterCfg['plots'] = {
             'marks': ['sim'],
         },
     },
-    'angular2D_RECO_values': {
-        'func': [saveAfbFl],
-        'kwargs': {
-            'pltName': "angular2D_RECO_values",
-            'dbSetup': [{'title': "RECO",
-                         'argAliasInDB': {'unboundFl': 'unboundFl_RECO', 'unboundAfb': 'unboundAfb_RECO'},
-                         'legendOpt': "LPE",
-                         },
-                        ],
-            'marks': ['sim'],
-        },
-    },
 }
 plotter = Plotter(plotterCfg)
-myplotterCfg=copy.deepcopy(plotterCfg); myplotterCfg['switchPlots'].append('angular2D_RECO_values')
+myplotterCfg=copy.deepcopy(plotterCfg); myplotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
 myplotter = Plotter(myplotterCfg)
 if __name__ == '__main__':
     binKey =  [sys.argv[1]]
     for b in binKey:
         p.cfg['binKey'] = b
-        p.cfg['subsample']=str(sys.argv[2])
         # plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
-        #plotter.cfg['switchPlots'].append('effi')            # Efficiency
+        plotter.cfg['switchPlots'].append('effi')            # Efficiency
         #plotter.cfg['switchPlots'].append('angular3D_sigM')
         # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
-        # plotter.cfg['switchPlots'].append('angular3D_final')
+        #plotter.cfg['switchPlots'].append('angular3D_final')
         # plotter.cfg['switchPlots'].append('angular3D_summary')
-        #plotter.cfg['switchPlots'].append('angular3D_sig2D')               #To Produce RECO Level Plots
-        #plotter.cfg['switchPlots'].append('angular3D_GEN')                 #To Produce Gen Level Plots
+        plotter.cfg['switchPlots'].append('angular3D_sig2D')               #To Produce RECO Level Plots
+        plotter.cfg['switchPlots'].append('angular3D_GEN')                 #To Produce Gen Level Plots
         #plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')    #Summary of Fl and Afb
         #plotter.cfg['switchPlots'].append('angular2D_RECO_values')    #Summary of Fl and Afb
         p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])

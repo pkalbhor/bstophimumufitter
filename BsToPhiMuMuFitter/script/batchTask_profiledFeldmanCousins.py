@@ -179,7 +179,7 @@ setupBatchTaskBestFit.update({
 
 if __name__ == '__main__':
     # First create all profiling point...
-    task_dir = "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/BsToPhiMuMuFitter/batchTask_profiledFeldmanCousins"
+    task_dir = "/afs/cern.ch/work/p/pkalbhor/BtoPhiMuMuFitter_For6Bins/BsToPhiMuMuFitterv6/BsToPhiMuMuFitter/BsToPhiMuMuFitter/batchTask_profiledFeldmanCousins"
 
     for iAfbSet in range(150):
         try:

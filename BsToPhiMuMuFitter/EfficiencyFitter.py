@@ -40,6 +40,7 @@ class EfficiencyFitter(FitterCore):
 
     def _preFitSteps(self):
         print("""Prefit uncorrelated term""")
+        #pdb.set_trace()
         args = self.pdf.getParameters(self.data)
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
         self.ToggleConstVar(args, isConst=True)
@@ -51,10 +52,16 @@ class EfficiencyFitter(FitterCore):
         h_accXrec_fine_ProjectionY = self.process.sourcemanager.get(self.cfg['dataY'])
         effi_cosl = self.process.sourcemanager.get(self.cfg['pdfX'])
         effi_cosK = self.process.sourcemanager.get(self.cfg['pdfY'])
+        pdb.set_trace()
         for proj, pdf, var, argPats in [(h_accXrec_fine_ProjectionX, effi_cosl, CosThetaL, [r"^l\d+$"]), (h_accXrec_fine_ProjectionY, effi_cosK, CosThetaK, [r"^k\d+$"])]:
             hdata = ROOT.RooDataHist("hdata", "", ROOT.RooArgList(var), ROOT.RooFit.Import(proj))
             self.ToggleConstVar(args, isConst=False, targetArgs=argPats)
-            pdf.chi2FitTo(hdata, ROOT.RooLinkedList() )
+            
+            Link=ROOT.RooLinkedList();
+            print type(ROOT.RooFit.Save(1)) 
+            res=pdf.chi2FitTo(hdata, Link); 
+            #print "FitStatus: ", res.status()
+            
             self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
 
         #self.ToggleConstVar(args, isConst=True, targetArgs=[r"^x\d+$"])

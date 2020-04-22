@@ -78,8 +78,8 @@ def buildGenericObj(self, objName, factoryCmd, varNames):
 
 f_effiSigA_format = {}
 
-pdfL = "1+l1*CosThetaL+l2*pow(CosThetaL,2)+l3*pow(CosThetaL,3)+l4*pow(CosThetaL,4)+l5*pow(CosThetaL,5)+l6*pow(CosThetaL,6)"; nLo=7
-pdfK = "1+k1*CosThetaK+k2*pow(CosThetaK,2)+k3*pow(CosThetaK,3)+k4*pow(CosThetaK,4)+k5*pow(CosThetaK,5)+k6*pow(CosThetaK,6)"; nK=7
+pdfL = "1+l1*CosThetaL+l2*pow(CosThetaL,2)+l3*pow(CosThetaL,3)+l4*pow(CosThetaL,4)+l5*pow(CosThetaL,5)+l6*pow(CosThetaL,6)+l7*pow(CosThetaL,7)"; nLo=8
+pdfK = "1+k1*CosThetaK+k2*pow(CosThetaK,2)+k3*pow(CosThetaK,3)+k4*pow(CosThetaK,4)+k5*pow(CosThetaK,5)+k6*pow(CosThetaK,6)+k7*pow(CosThetaK,7)"; nK=8
 n=25 #Number of x. LP4*Pol4
 xTerm = "\
 (x0+x1*CosThetaK+x2*(1.5*pow(CosThetaK,2)-0.5)+x3*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x4*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))\
@@ -115,7 +115,7 @@ f_effiSigA_format['belowJpsiA'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(
         xTerm=xTerm,
         args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, nLc+1)] + ["k{0}".format(i) for i in range(1, nK)] + ["x{0}".format(i) for i in range(n)]) + "}")]
 
-#f_effiSigA_format['belowJpsiB'] = deepcopy(f_effiSigA_format['belowJpsiA'])
+#f_effiSigA_format['belowJpsiC'] = deepcopy(f_effiSigA_format['belowJpsiA'])
 #f_effiSigA_format['summaryLowQ2'] = deepcopy(f_effiSigA_format['belowJpsiA'])
 pdfL = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2))+l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLB=9
 f_effiSigA_format['belowJpsiB'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(1, nLB/3+1)] \
@@ -131,6 +131,7 @@ f_effiSigA_format['belowJpsiB'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(
         pdfK=pdfK,
         xTerm=xTerm,
         args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, nLB+1)] + ["k{0}".format(i) for i in range(1, nK)] + ["x{0}".format(i) for i in range(n)]) + "}")]
+
 
 pdfL = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2))+l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLB=9
 f_effiSigA_format['summaryLowQ2'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(1, nLB/3+1)] \
@@ -385,14 +386,14 @@ CFG_WspaceReader.update({
     'obj': OrderedDict([
     ])  # Empty by default loads all Functions and Pdfs
 })
-stdWspaceReader = WspaceReader(CFG_WspaceReader)
+stdWspaceReader = WspaceReader(CFG_WspaceReader); stdWspaceReader.name="stdWspaceReader"
 def customizeWspaceReader(self):
     self.cfg['fileName'] = "{0}/input/wspace_{1}.root".format(modulePath, q2bins[self.process.cfg['binKey']]['label'])
     self.cfg['wspaceTag'] = sharedWspaceTagString.format(binLabel=q2bins[self.process.cfg['binKey']]['label'])
 stdWspaceReader.customize = types.MethodType(customizeWspaceReader, stdWspaceReader)
 
 CFG_PDFBuilder = ObjProvider.templateConfig()
-stdPDFBuilder = ObjProvider(copy(CFG_PDFBuilder))
+stdPDFBuilder = ObjProvider(copy(CFG_PDFBuilder)); stdPDFBuilder.name="stdPDFBuilder"
 def customizePDFBuilder(self):
     print("""Customize pdf for q2 bins""")
     setupBuildAnalyticBkgCombA['factoryCmd'] = f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
@@ -425,7 +426,6 @@ if __name__ == '__main__':
     binKey = [sys.argv[1]]
     for b in binKey:
         p.cfg['binKey'] = b
-        p.cfg['subsample']=str(sys.argv[2])
         p.setSequence([dataCollection.dataReader, stdWspaceReader, stdPDFBuilder])
         p.beginSeq()
         p.runSeq()

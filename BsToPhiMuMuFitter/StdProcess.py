@@ -5,7 +5,7 @@
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
 
 from __future__ import print_function, division
-import os
+import os, pdb
 import ROOT
 ROOT.gROOT.SetBatch(True)
 
@@ -212,10 +212,10 @@ processCfg = {
     'binKey': 'summary',
 }
 p = Process("myProcess", "Plots", processCfg)
-
-dbplayer = FitDBPlayer(absInputDir=os.path.join(anaSetup.modulePath, "input", "selected"))
-p.addService("dbplayer", dbplayer)
+#pdb.set_trace()
+#dbplayer = FitDBPlayer(absInputDir=os.path.join(anaSetup.modulePath, "input", "selected"))
+#p.addService("dbplayer", dbplayer)
 
 # Developers Area
-if isDEBUG:
-    p.logger.verbosityLevel = VerbosityLevels.DEBUG
+#if isDEBUG:
+#    p.logger.verbosityLevel = VerbosityLevels.DEBUG

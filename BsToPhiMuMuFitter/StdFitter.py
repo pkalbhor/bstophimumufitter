@@ -43,7 +43,7 @@ class StdFitter(FitterCore):
 
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
-        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
+        if not self.name=="sigAFitter": FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
 
@@ -105,6 +105,7 @@ class StdFitter(FitterCore):
                 'nll': migradResult.minNll(),
             }
         }
+        print "Migrad Result: ", self.fitResult
 
     def FitHesse(self):
         """Hesse"""

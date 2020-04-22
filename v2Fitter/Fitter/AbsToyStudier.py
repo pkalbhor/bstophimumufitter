@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import os
+import os, pdb
 
 import abc
 import ROOT
 
 from v2Fitter.FlowControl.Path import Path
+from BsToPhiMuMuFitter.anaSetup import q2bins
 
 class AbsToyStudier(Path):
     """
@@ -68,7 +69,6 @@ Decide the number of entries of this subset.
     def _runSetsLoop(self):
         for iSet in range(self.cfg['nSetOfToys']):
             self._preRunFitSteps(iSet)
-
             self.fitter.hookProcess(self.process)
             self.fitter.customize()
 
@@ -76,6 +76,7 @@ Decide the number of entries of this subset.
 
             self.fitter.pdf = self.process.sourcemanager.get(self.fitter.cfg['pdf'])
             self.fitter.data = self.getSubData().next()
+            self.fitter.data = ROOT.RooDataSet(self.fitter.data.GetName(), self.fitter.data.GetTitle(),self.fitter.data,self.fitter.data.get(),"{0}".format(q2bins[self.fitter.process.cfg['binKey']]['cutString']))  #Added for applying Q2 cut, change line from getSubDataEntries() and from dataCollection.py
             self.fitter._bookMinimizer()
             self.fitter._preFitSteps()
             self.fitter._runFitSteps()

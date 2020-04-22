@@ -35,6 +35,7 @@ setupSigMFitter.update({
     'name': "sigMFitter",
     'data': "sigMCReader.Fit",
     'pdf': "f_sigM",
+    'FitHesse': True,
     'argPattern': ['sigMGauss[12]_sigma', 'sigMGauss_mean', 'sigM_frac'],
     'createNLLOpt': [],
     'argAliasInDB': {'sigMGauss1_sigma': 'sigMGauss1_sigma_RECO', 'sigMGauss2_sigma': 'sigMGauss2_sigma_RECO', 'sigMGauss_mean': 'sigMGauss_mean_RECO', 'sigM_frac': 'sigM_frac_RECO'},
@@ -46,13 +47,14 @@ setupSigAFitter.update({
     'name': "sigAFitter",
     'data': "sigMCGENReader.Fit",
     'pdf': "f_sigA",
+    'FitHesse': True,
     'argPattern': ['unboundAfb', 'unboundFl'],
     'createNLLOpt': [],
     'argAliasInDB': {'unboundAfb': 'unboundAfb_GEN', 'unboundFl': 'unboundFl_GEN'},
 })
 sigAFitter = StdFitter(setupSigAFitter)
 
-setupSigGENFitter = deepcopy(setupTemplateFitter) #Pritam
+setupSigGENFitter = deepcopy(setupTemplateFitter) #Unimplemented
 setupSigGENFitter.update({
     'name': "sigGENFitter",
     'data': "sigMCGENReader.Fit",

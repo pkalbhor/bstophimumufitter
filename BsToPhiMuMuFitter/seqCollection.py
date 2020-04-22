@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import sys, os
+import sys, os, pdb
 import BsToPhiMuMuFitter.cpp
 import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.toyCollection as toyCollection
@@ -11,11 +11,12 @@ import BsToPhiMuMuFitter.fitCollection as fitCollection
 import BsToPhiMuMuFitter.plotCollection as plotCollection
 
 from BsToPhiMuMuFitter.StdProcess import p
-import pdb
+from argparse import ArgumentParser
 
 # Standard fitting procedures
 predefined_sequence = {}
 loadData        = predefined_sequence['loadData'] = [dataCollection.dataReader]
+loadMC          = predefined_sequence['loadMC'] = [dataCollection.sigMCReader]
 buildAllPdfs    = predefined_sequence['buildAllPdfs'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, pdfCollection.stdPDFBuilder]
 buildEfficiecyHist = predefined_sequence['buildEfficiecyHist'] = [dataCollection.effiHistReader]
 
@@ -29,30 +30,27 @@ stdFit          = predefined_sequence['stdFit'] = [dataCollection.effiHistReader
 # For fitter validation and syst
 fitSig2D        = predefined_sequence['fitSig2D'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sig2DFitter]
 fitSigMCGEN     = predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
+fitall          = predefined_sequence['fitall'] = [dataCollection.effiHistReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter, dataCollection.sigMCReader, fitCollection.sig2DFitter]
 
-predefined_sequence['fitMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigGENFitter]
 createPlots = predefined_sequence['createPlots'] = [plotCollection.myplotter]
 
-subsampleTest = predefined_sequence['subsampleTest'] = [dataCollection.effiHistReader, dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter, fitCollection.sig2DFitter, plotCollection.myplotter]
-
 if __name__ == '__main__':
-    FitSequence = [fitSigMCGEN] #[fitEfficiency, fitSig2D, fitSigMCGEN]
-    binKey = [sys.argv[1]]
-    for sequence in FitSequence:
-        for b in binKey:
-            p.cfg['binKey'] = b
-            p.cfg['subsample']=str(sys.argv[2])
-            p.setSequence(sequence)
-            # p.setSequence(predefined_sequence['buildEfficiecyHist'])
-            # p.setSequence(predefined_sequence['fitBkgCombA'])
-            # p.setSequence(predefined_sequence['fitFinal3D'])
-            # p.setSequence(predefined_sequence['fitSigM'])
-            # p.setSequence(predefined_sequence['stdFit'])
-            # p.setSequence(predefined_sequence['fitMCGEN'])
-            try:
-                p.beginSeq()
-                #pdb.set_trace()
-                p.runSeq()
-            finally:
-                p.endSeq()
-                os.system("rm ./data/preload*.root")
+    parser = ArgumentParser(prog='seqCollection')
+    parser.add_argument('-b', '--binKey', dest='binKey', type=str, default=p.cfg['binKey'])
+    parser.add_argument('-s', '--seq', dest='seqKey', type=str, default=None)
+    args = parser.parse_args()
+    if args.binKey =="all":                                                                                                                    
+        p.cfg['bins'] = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "abovePsi2sA", "abovePsi2sB"]
+    else: 
+        p.cfg['bins'] = [args.binKey]
+    #pdb.set_trace()
+    #p.name="sigMCValidationProcess" 
+    for b in p.cfg['bins']:
+        p.cfg['binKey'] = b
+        p.setSequence(predefined_sequence[args.seqKey])
+        try:
+            p.beginSeq()
+            p.runSeq()
+        finally:
+            p.endSeq()
+            for obj in p._sequence: obj.reset()

@@ -8,7 +8,7 @@
 
 from v2Fitter.FlowControl.Path import Path
 
-import os
+import os, tempfile
 import ROOT
 from ROOT import TChain
 from ROOT import TIter
@@ -55,12 +55,14 @@ class DataReader(Path):
         print("""Create named dataset Actually""")
         if dname in self.dataset.keys():
             return self.dataset[dname]
+        tempfile_preload = ROOT.TFile(tempfile.gettempdir()+"temp.root", 'RECREATE') #Pritam
         data = RooDataSet(
             dname,
             "",
             self.ch,
             self.argset,
             dcut)
+        data.Write(); tempfile_preload.Close() #Pritam
         self.dataset[dname] = data
         print("ARGSET: ", self.argset, dcut)
         return data

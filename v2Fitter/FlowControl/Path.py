@@ -28,7 +28,7 @@ class Path():
     def hookProcess(self, process):
         """ Hook this path to process """
         self.process = process
-        self.logger = process.logger
+        #self.logger = process.logger
 
     def __str__(self):
         return "Path[{0}]".format(self.name)
@@ -52,5 +52,9 @@ class Path():
         """Add shared objects to the source pool."""
         for key, val in self.cfg['source'].items():
             self.process.sourcemanager.update(key, val, addHist=self.name)
-
         print("Sourcemanager Keys: ", self.process.sourcemanager.keys())
+        if self.name=="stdPDFBuilder":
+            for seq in self.process._sequence: 
+                if seq.name=="stdWspaceReader":
+                    seq._runPath()
+                    seq._addSource()   

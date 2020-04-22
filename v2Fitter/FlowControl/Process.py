@@ -8,6 +8,8 @@ import os
 from collections import OrderedDict
 from v2Fitter.FlowControl.Logger import Logger
 from v2Fitter.FlowControl.SourceManager import SourceManager, FileManager
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
+from BsToPhiMuMuFitter.anaSetup import modulePath
 
 import ROOT
 
@@ -22,9 +24,9 @@ class Process:
         # Register services
         self._services = OrderedDict()
 
-        self.addService('logger', Logger("runtime.log"))
-        self.addService('filemanager', FileManager())
-        self.addService('sourcemanager', SourceManager())
+        #self.addService('logger', Logger("runtime.log"))
+        #self.addService('filemanager', FileManager())
+        #self.addService('sourcemanager', SourceManager())
 
     def __str__(self):
         return self._sequence.__str__()
@@ -59,6 +61,14 @@ class Process:
 
     def beginSeq_registerServices(self):
         """Initialize all services."""
+        dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected"))
+        self.addService("dbplayer", dbplayer)
+        self.addService('logger', Logger("runtime.log"))
+        self.addService('filemanager', FileManager())
+        self.addService('sourcemanager', SourceManager())
+        
+        for seq_obj in self._sequence:
+            if seq_obj.logger is None: setattr(seq_obj, "logger", self.logger)
         for key, s in self._services.items():
             setattr(s, "process", self)
             if s.logger is None:
@@ -76,15 +86,12 @@ class Process:
 
     def runSeq(self):
         print("""Run all path. Process.runSeq() MainProcess""")
-        print("mainprocess self.cfg", self.cfg)
+        print("Mainprocess: self.cfg", self.cfg)
         for seq_obj in self._sequence:
-            # print ("Process.py", self._sequence) #Pritam
             self.logger.logDEBUG("Entering Path: {0}".format(seq_obj.cfg['name']))
             seq_obj.customize()
             seq_obj._runPath()
             seq_obj._addSource()
-            # print(self.sourcemanager)
-            # print(self.filemanager)
 
     def endSeq(self):
         """Terminate all services in a reversed order."""

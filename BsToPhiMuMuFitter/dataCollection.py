@@ -15,8 +15,8 @@ import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN
-from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath
-from python.datainput import sigMC, dataFilePath, UnfilteredMC, SubSample
+from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath, baseSel
+from python.datainput import sigMC, dataFilePath, UnfilteredMC
 import ROOT
 from ROOT import TChain
 from ROOT import TEfficiency, TH2D
@@ -35,8 +35,6 @@ CFG.update({
 # dataReader
 def customizeOne(self, targetBMassRegion=None, extraCuts=None):
     print("""Define datasets with arguments.""")
-    if SubSample==True:
-        self.cfg['ifile'][0]=self.cfg['ifile'][0].format(Total="50", Part=self.process.cfg['subsample'])
     if targetBMassRegion is None:
         targetBMassRegion = []
     if not self.process.cfg['binKey'] in q2bins.keys():
@@ -50,25 +48,23 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
             self.cfg['dataset'].append(
                 (
                     "{0}.{1}".format(self.cfg['name'], key),
-                    "({0}) && ({1}) && ({2}) && ({3})".format(
+                    "({0}) && ({1}) && ({2}) && ({3}) && ({4})".format(
                         val['cutString'],
-                        q2bins[self.process.cfg['binKey']]['cutString'],
+                        "1" if self.process.name=="sigMCValidationProcess" else q2bins[self.process.cfg['binKey']]['cutString'],
                         cuts[-1] if self.process.cfg['binKey'] not in ['jpsi', 'psi2s'] else cuts_noResVeto,
                         "1" if not extraCuts else extraCuts,
+                        baseSel,
                     )
                 )
             )
-        # print("dataset:? ", self.cfg['dataset'])
+    
     # Customize preload TFile
-    if self.cfg['preloadFile']:
-        self.cfg['preloadFile'] = self.cfg['preloadFile'].format(binLabel=q2bins[self.process.cfg['binKey']]['label'])
+    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{binLabel}.root".format(datasetName=self.cfg['name'], binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
 dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
-    #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/sel_*.root"],
     'ifile': dataFilePath,
-    #'ifriend': ["/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/BsToPhiMuMuFitter/script/plotMatchCandPreSelector.root"],
     'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
     'lumi': 19.98,
 })
@@ -80,13 +76,12 @@ dataReader.customize = types.MethodType(customizeData, dataReader)
 sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
-    #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/sel_*.root"],
     'ifile': sigMC,
     'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
     'lumi': 16281.440 + 21097.189,
 })
 sigMCReader = DataReader(sigMCReaderCfg)
-customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])  # Assuming cut_kshortWindow makes no impact
+customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])
 sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
 
 # sigMCGENReader
@@ -105,13 +100,11 @@ def customizeGEN(self):
         )
     )
     # Customize preload TFile
-    if self.cfg['preloadFile']:
-        self.cfg['preloadFile'] = self.cfg['preloadFile'].format(binLabel=q2bins[self.process.cfg['binKey']]['label'])
+    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{binLabel}.root".format(datasetName=self.cfg['name'], binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
 sigMCGENReaderCfg = copy(CFG)
 sigMCGENReaderCfg.update({
     'name': "sigMCGENReader",
-    #'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/sel_*.root"],
     'ifile': UnfilteredMC,
     'preloadFile': modulePath + "/data/preload_sigMCGENReader_{binLabel}.root",
     'argset': dataArgsGEN,
@@ -120,12 +113,8 @@ sigMCGENReader = DataReader(sigMCGENReaderCfg)
 sigMCGENReader.customize = types.MethodType(customizeGEN, sigMCGENReader)
 
 # effiHistReader
-#accXEffThetaLBins = array('d', [-1., -0.90, -0.80, -0.70, -0.60, -0.50, -0.40, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.])
-#accXEffThetaKBins = array('d', [-1., -0.90, -0.80, -0.70, -0.60, -0.50, -0.40, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.])
 accXEffThetaLBins = array('d', [-1., -0.8, -0.6, -0.4, -0.2, 0., 0.2, 0.4, 0.6, 0.8, 1.])
 accXEffThetaKBins = array('d', [-1., -0.8, -0.6, -0.4, -0.2, 0., 0.2, 0.4, 0.6, 0.8, 1.])
-#accXEffThetaLBins = array('d', [-1, -0.7, -0.3, 0., 0.3, 0.7, 1.])
-#accXEffThetaKBins = array('d', [-1, -0.7, 0., 0.4, 0.8, 1.])
 def buildAccXRecEffiHist(self):
     """Build efficiency histogram for later fitting/plotting"""
     print("Now I am Here in buildAccXRecEffiHist")
@@ -147,16 +136,15 @@ def buildAccXRecEffiHist(self):
             # Fill histograms
             setupEfficiencyBuildProcedure = {}
             setupEfficiencyBuildProcedure['acc'] = {
-                #'ifiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*.root", ],
                 'ifiles': UnfilteredMC,
                 'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
-                'cutString': "fabs(genMupEta)<2.2 && fabs(genMumEta)<2.2 && genMupPt>3.5 && genMumPt>3.5", # && KpPt>0.5 && KmPt>0.5 && fabs(KpEta)<2.4 && fabs(KmEta)<2.4",
+                'cutString': "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>3.9 && genMumPt>3.9", # && KpPt>0.5 && KmPt>0.5 && fabs(KpEta)<2.4 && fabs(KmEta)<2.4",
                 'fillXY': "genCosThetaK:genCosThetaL"  # Y:X
             }
             setupEfficiencyBuildProcedure['rec'] = {
                 'ifiles': sigMCReader.cfg['ifile'],
-                'baseString': "{0}".format(setupEfficiencyBuildProcedure['acc']['baseString']),
-                'cutString': "({2}) && ({1}) && (Bmass > 4.7) && ({0})".format(cuts[-1], setupEfficiencyBuildProcedure['acc']['cutString'], setupEfficiencyBuildProcedure['acc']['baseString']),
+                'baseString': re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']),
+                'cutString': "({0}) && ({1}) && (Bmass > 4.9 && Bmass < 5.9) && ({2})".format(cuts[-1], re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']), baseSel),
                 'fillXY': "CosThetaK:CosThetaL"  # Y:X
             }
             i=0 #testing events
