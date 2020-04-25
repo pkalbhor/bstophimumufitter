@@ -52,21 +52,30 @@ class EfficiencyFitter(FitterCore):
         h_accXrec_fine_ProjectionY = self.process.sourcemanager.get(self.cfg['dataY'])
         effi_cosl = self.process.sourcemanager.get(self.cfg['pdfX'])
         effi_cosK = self.process.sourcemanager.get(self.cfg['pdfY'])
-        pdb.set_trace()
         for proj, pdf, var, argPats in [(h_accXrec_fine_ProjectionX, effi_cosl, CosThetaL, [r"^l\d+$"]), (h_accXrec_fine_ProjectionY, effi_cosK, CosThetaK, [r"^k\d+$"])]:
             hdata = ROOT.RooDataHist("hdata", "", ROOT.RooArgList(var), ROOT.RooFit.Import(proj))
             self.ToggleConstVar(args, isConst=False, targetArgs=argPats)
-            
-            Link=ROOT.RooLinkedList();
-            print type(ROOT.RooFit.Save(1)) 
-            res=pdf.chi2FitTo(hdata, Link); 
-            #print "FitStatus: ", res.status()
-            
+            #pdb.set_trace()
+            theList = ROOT.RooLinkedList()
+            theSave = ROOT.RooFit.Save() #Python discards temporary objects.
+            Verbose    = ROOT.RooFit.Verbose(0)
+            theList.Add(theSave);  theList.Add(Verbose)
+            Res=pdf.chi2FitTo(hdata, theList);
+            Res.Print()
+
+            #chi2 = pdf.createChi2(hdata, ROOT.RooFit.Save(1))
+            #m=ROOT.RooMinuit(chi2)
+            #m.setPrintLevel(3)
+            #m.migrad()
+            #m.hesse()
+            #RooRes=m.save()
+            #print RooRes.status()            
+
             self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
 
         #self.ToggleConstVar(args, isConst=True, targetArgs=[r"^x\d+$"])
         args.find('effi_norm').setConstant(False)
-        self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True)) #, ROOT.RooFit.PrintLevel(-1))
+        Res2D=self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(False), ROOT.RooFit.Save()) #, ROOT.RooFit.PrintLevel(-1))
         print "Efficiency PDF, DATA: ",  self.pdf.Print(), self.data.Print()
 
         #args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
@@ -111,7 +120,7 @@ class EfficiencyFitter(FitterCore):
         # minuit.SetPrintLevel(-1) #Pritam
         minuit.Command("MINI")
         minuit.Command("MINI")
-        minuit.Command("MINOS")
+        #minuit.Command("MINOS")
         parVal = ROOT.Double(0)
         parErr = ROOT.Double(0)
         for xIdx in range(nPar):
@@ -120,6 +129,7 @@ class EfficiencyFitter(FitterCore):
             arg.setVal(parVal)
             arg.setError(parErr)
 
+        print "Status: ", minuit.GetStatus()
         # Check if efficiency is positive definite
         f2_max_x, f2_max_y = ROOT.Double(0), ROOT.Double(0)
         f2_min_x, f2_min_y = ROOT.Double(0), ROOT.Double(0)

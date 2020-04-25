@@ -35,6 +35,8 @@ CFG.update({
 # dataReader
 def customizeOne(self, targetBMassRegion=None, extraCuts=None):
     print("""Define datasets with arguments.""")
+    if self.process.name=="sigMCValidationProcess" and self.name=="sigMCReader":
+        sigMCReader.name="sigMCValidation"; sigMCReader.cfg['name']="sigMCValidation"
     if targetBMassRegion is None:
         targetBMassRegion = []
     if not self.process.cfg['binKey'] in q2bins.keys():
@@ -138,13 +140,13 @@ def buildAccXRecEffiHist(self):
             setupEfficiencyBuildProcedure['acc'] = {
                 'ifiles': UnfilteredMC,
                 'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
-                'cutString': "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>3.9 && genMumPt>3.9", # && KpPt>0.5 && KmPt>0.5 && fabs(KpEta)<2.4 && fabs(KmEta)<2.4",
+                'cutString': "fabs(genMupEta)<2.2 && fabs(genMumEta)<2.2 && genMupPt>3.9 && genMumPt>3.9", # && KpPt>0.5 && KmPt>0.5 && fabs(KpEta)<2.4 && fabs(KmEta)<2.4",
                 'fillXY': "genCosThetaK:genCosThetaL"  # Y:X
             }
             setupEfficiencyBuildProcedure['rec'] = {
                 'ifiles': sigMCReader.cfg['ifile'],
                 'baseString': re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']),
-                'cutString': "({0}) && ({1}) && (Bmass > 4.9 && Bmass < 5.9) && ({2})".format(cuts[-1], re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']), baseSel),
+                'cutString': "({0}) && ({1}) && (Bmass > 4.7) && ({2})".format(cuts[-1], re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']), baseSel),
                 'fillXY': "CosThetaK:CosThetaL"  # Y:X
             }
             i=0 #testing events

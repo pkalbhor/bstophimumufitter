@@ -21,6 +21,7 @@ import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
 import BsToPhiMuMuFitter.plotCollection as plotCollection
 import v2Fitter.Fitter.AbsToyStudier as AbsToyStudier
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
 # Define
 ROOT.gROOT.ProcessLine(
@@ -85,12 +86,12 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
 setupSigMCStudier = deepcopy(AbsToyStudier.AbsToyStudier.templateConfig())
 setupSigMCStudier.update({
     'name': "sigMCStudier",
-    'data': "sigMCReader.Fit",
+    'data': "sigMCValidation.Fit",
     'fitter': fitCollection.sig2DFitter,
     'nSetOfToys': 5,
 })
 sigMCStudier = SigMCStudier(setupSigMCStudier)
-fitCollection.sig2DFitter.cfg['data'] = "sigMCReader.Fit"
+fitCollection.sig2DFitter.cfg['data'] = "sigMCValidation.Fit"
 
 # Customize batch task
 
@@ -99,9 +100,9 @@ class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
         jdl = self.createJdlBase()
         for BinKey in parser_args.binKey:
             jdl += """
-arguments = --binKey {binKey} run $(Process)
+arguments = -b {binKey} -t {nSetOfToys} run $(Process)
 queue {nJobs}
-""".format(binKey=BinKey, nJobs=self.cfg['nJobs'])
+""".format(binKey=BinKey, nSetOfToys=parser_args.nSetOfToys, nJobs=self.cfg['nJobs'])
         print jdl
         return jdl
 
@@ -122,13 +123,14 @@ def GetParams(f, h, binKey, GEN, name):
     ROOT.TLatex().DrawLatexNDC(.73,.85,r"#scale[0.7]{{#color[2]{{Gen {Name}}}: {param}}}".format(Name="F_{L}" if name=="fl" else "A_{6}", param=round(GEN, 5)) )
     ROOT.TLatex().DrawLatexNDC(.73,.81,r"#scale[0.7]{{#color[4]{{Fit {Name}}}   : {param}}}".format(Name="F_{L}" if name=="fl" else "A_{6}", param=round(f.GetParameter(1), 5)) )
     ROOT.TLatex().DrawLatexNDC(.73,.77,r"#scale[0.7]{{#color[3]{{Mean}}   : {param}}}".format(param=round(h.GetMean(), 5)) )
+    ROOT.TLatex().DrawLatexNDC(.73,.73,r"#scale[0.7]{{#color[1]{{Samples}} : {param}}}".format(param=round(h.GetEntries(), 0)) )
     
 
 # Postproc fit results.
 def func_postproc(args):
     """ Fit to fit result and make plots """
     os.chdir(args.wrapper.task_dir)
-    
+    p.addService("dbplayer", FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected")))
     for binKey in args.binKey:
         ifilename = "setSummary_{0}.root".format(q2bins[binKey]['label'])
         if not os.path.exists(ifilename) or args.forceHadd:
@@ -191,11 +193,17 @@ if __name__ == '__main__':
 
     parser = AbsBatchTaskWrapper.BatchTaskParser
     parser.add_argument(
-        '--binKey',
+        '-b', '--binKey',
         dest="binKey",
         default="summary",
-        help="Select q2 bin with binKey"
-    )
+        help="Select q2 bin with binKey"    )
+
+    parser.add_argument(
+        '-t', '--nToy',
+        dest="nSetOfToys",
+        type=int,
+        default=5,
+        help="Number of subsamples to produce"    )
 
     BatchTaskSubparserPostproc = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('postproc')
     BatchTaskSubparserPostproc.add_argument(
@@ -217,6 +225,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.Function_name in ['run', 'submit']:
         p.name="sigMCValidationProcess"
+        sigMCStudier.cfg['nSetOfToys']=args.nSetOfToys
         p.setSequence([
             pdfCollection.stdWspaceReader,
             dataCollection.sigMCReader,
@@ -228,7 +237,6 @@ if __name__ == '__main__':
             cfg=setupBatchTask)
     else:
         wrapper = None
-
     parser.set_defaults(
         wrapper=wrappedTask,
         process=p

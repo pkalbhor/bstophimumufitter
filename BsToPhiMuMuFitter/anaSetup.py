@@ -124,7 +124,7 @@ bMassRegions['altSB_vetoJpsiX'] = createBmassTemplate("altSB_vetoJpsiX", 4.76, 5
 bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB_vetoJpsiX']['cutString'], bMassRegions['altSR_vetoJpsiX']['cutString'])
 
 # Cut strings
-baseSel = "fabs(Mupeta)<2.4 && fabs(Mumeta)<2.4 && Muppt>3.9 && Mumpt>3.9"
+baseSel = "fabs(Mupeta)<2.2 && fabs(Mumeta)<2.2 && Muppt>3.9 && Mumpt>3.9"
 cut_passTrigger = "JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0"
 cut_phiWindow = "Phimass>1.01 && Phimass < 1.03"
 cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"

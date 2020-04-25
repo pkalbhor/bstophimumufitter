@@ -52,10 +52,10 @@ class DataReader(Path):
         return cfg
 
     def createDataSet(self, dname, dcut):
-        print("""Create named dataset Actually""")
+        print("""Return named dataset, create if not exist""")
         if dname in self.dataset.keys():
             return self.dataset[dname]
-        tempfile_preload = ROOT.TFile(tempfile.gettempdir()+"temp.root", 'RECREATE') #Pritam
+        tempfile_preload = ROOT.TFile(tempfile.gettempdir()+"/temp.root", 'RECREATE') #Pritam
         data = RooDataSet(
             dname,
             "",
@@ -68,12 +68,11 @@ class DataReader(Path):
         return data
 
     def createDataSets(self, dataset):
-        print("""Create named dataset""")
+        print("""Get named dataset""")
         for name, cut in dataset:
             if self.cfg['preloadFile'] and os.path.exists(self.cfg['preloadFile']):
                 file_preload = ROOT.TFile(self.cfg['preloadFile'])
                 data = file_preload.Get(name)
-                # print("TTTT: ", self.argset.Print(), self.cfg['preloadFile'], name, data.Print())
                 if not data == None:
                     self.dataset[name] = data
                 file_preload.Close()
@@ -85,9 +84,6 @@ class DataReader(Path):
 
         print "Name: ", self.cfg['name']
         for f in self.cfg['ifile']:
-            #s=f.strip(f.split("/")[int(len(f.split("/")))-1]); s=s[:-1]
-            #print "DataReader File: ", s
-            #flie=ROOT.TFile.Open(s)
             #self.ch.SetName(flie.GetListOfKeys().At(0).GetName())
             self.ch.Add(f)
         if len(self.cfg['ifriend']) > 0:

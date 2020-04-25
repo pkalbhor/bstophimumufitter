@@ -8,7 +8,7 @@ The core of the fitting procedure, i.e. parts not for this particular analysis, 
 
 The package depends on python2.7 and pyROOT.
 
-On lxplus, just run
+On lxplus, run: (Every time you start Fitter session)
 
 ```bash
 source setup_ROOTEnv.sh
@@ -18,4 +18,43 @@ For the first time, you may need to install following pre-requisites with
 
 ```bash
 pip install --user enum34
+```
+
+# Instructions 
+Clean junk files:
+```bash
+TotalClean
+```
+Create RooWorkspace objects:
+```bash
+python seqCollection.py -b all -s buildAllPdfs
+```
+Create efficiency plots and fit efficiency + RECO level Plots:
+```bash
+python seqCollection.py -b all -s fitall
+```
+Fit GEN level Plots:
+```bash
+python seqCollection.py -b all -s fitSigMCGEN
+```
+Create all the plots:
+```bash
+createplots
+```
+Transfer fitter result for futher calculation:
+```bash
+cp Plots/*.db input/selected && rm data/preload*
+```
+Create GEN-RECO comparison plots for signal MCs:
+```bash
+python seqCollection.py -b belowJpsiA -s createPlots
+```
+Run validation script for low statistics sub-samples:
+```bash
+python script/batchTask_sigMCValidation.py -b all -t 10 run 0
+python script/batchTask_sigMCValidation.py -b all postproc
+```
+Submit HTCondor job for large set of sub-samples:
+```bash
+python script/batchTask_sigMCValidation.py -b all -t 3000 submit -q workday -n 1 -s
 ```

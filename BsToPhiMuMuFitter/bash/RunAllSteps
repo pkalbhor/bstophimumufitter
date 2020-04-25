@@ -3,11 +3,20 @@
 GITDIR=$(git rev-parse --show-toplevel)                                                                                                                                                 
 
 cd $GITDIR/BsToPhiMuMuFitter/ 
-./bash/TotalClean.sh
+TotalClean
 echo -e "\n>>>>>>> Started Creating RooWorkSpace <<<<<<<\n"
-./bash/pdfCollection.sh
+python seqCollection.py -b all -s buildAllPdfs
 echo -e "\n>>>>>>> Started Running Fitting Procedure <<<<<<<\n"
-./bash/seqCollection.sh
+python seqCollection.py -b all -s fitall
+echo -e "\n>>>>>>> Started GEN Level Fitting Procedure <<<<<<<\n"
+python seqCollection.py -b all -s fitSigMCGEN
+echo -e "\n>>>>>>> Started Result Comparison Plots <<<<<<<\n"
+createplots
+echo -e "\n>>>>>>> Copying object files for futher processing <<<<<<<\n"
 cp ./Plots/*.db ./input/selected/
 echo -e "\n>>>>>>> Started Creating Plots <<<<<<<\n"
-./bash/plotCollection.sh
+python seqCollection.py -b belowJpsiA -s createPlots
+echo -e "\n>>>>>>> Started Low-Statistic Samples Validation Procedure <<<<<<<\n"
+python script/batchTask_sigMCValidation.py -b all -t 10 run 0
+echo -e "\n>>>>>>> Started Plot Production and Fitting <<<<<<<\n"
+python script/batchTask_sigMCValidation.py -b all postproc
