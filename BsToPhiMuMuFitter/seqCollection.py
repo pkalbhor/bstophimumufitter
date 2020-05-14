@@ -9,20 +9,23 @@ import BsToPhiMuMuFitter.toyCollection as toyCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
 import BsToPhiMuMuFitter.plotCollection as plotCollection
-
+from BsToPhiMuMuFitter.anaSetup import q2bins
 from BsToPhiMuMuFitter.StdProcess import p
 from argparse import ArgumentParser
 
 # Standard fitting procedures
 predefined_sequence = {}
+dataCollection.effiHistReader=dataCollection.effiHistReaderOneStep   # Use two step efficiency
 loadData        = predefined_sequence['loadData'] = [dataCollection.dataReader]
 loadMC          = predefined_sequence['loadMC'] = [dataCollection.sigMCReader]
 buildAllPdfs    = predefined_sequence['buildAllPdfs'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, pdfCollection.stdPDFBuilder]
-buildEfficiecyHist = predefined_sequence['buildEfficiecyHist'] = [dataCollection.effiHistReader]
+buildEfficiencyHist = predefined_sequence['buildEfficiencyHist'] = [dataCollection.effiHistReader]
 
 fitEfficiency   = predefined_sequence['fitEfficiency'] = [dataCollection.effiHistReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter]
 fitSigM         = predefined_sequence['fitSigM'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMFitter]
+fitSigMBinned   = predefined_sequence['fitSigMBinned'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMBinnedFitter]
 fitBkgCombA     = predefined_sequence['fitBkgCombA'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombAFitter]
+fitBkgCombM     = predefined_sequence['fitBkgCombM'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombMFitter]
 fitFinal3D      = predefined_sequence['fitFinal3D'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter]
 
 stdFit          = predefined_sequence['stdFit'] = [dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter, fitCollection.sigMFitter, fitCollection.bkgCombAFitter, fitCollection.sig2DFitter, dataCollection.sigMCGENReader, fitCollection.sigAFitter, fitCollection.finalFitter]
@@ -40,9 +43,10 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--seq', dest='seqKey', type=str, default=None)
     args = parser.parse_args()
     if args.binKey =="all":                                                                                                                    
-        p.cfg['bins'] = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "abovePsi2sA", "abovePsi2sB"]
+        p.cfg['bins'] = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "abovePsi2sA", "abovePsi2sB", "summary", "summaryLowQ2"]
     else: 
-        p.cfg['bins'] = [args.binKey]
+        p.cfg['bins'] = [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
+    p.cfg['seqKey']= args.seqKey
     #pdb.set_trace()
     #p.name="sigMCValidationProcess" 
     for b in p.cfg['bins']:

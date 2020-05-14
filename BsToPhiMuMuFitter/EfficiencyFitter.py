@@ -55,30 +55,26 @@ class EfficiencyFitter(FitterCore):
         for proj, pdf, var, argPats in [(h_accXrec_fine_ProjectionX, effi_cosl, CosThetaL, [r"^l\d+$"]), (h_accXrec_fine_ProjectionY, effi_cosK, CosThetaK, [r"^k\d+$"])]:
             hdata = ROOT.RooDataHist("hdata", "", ROOT.RooArgList(var), ROOT.RooFit.Import(proj))
             self.ToggleConstVar(args, isConst=False, targetArgs=argPats)
-            #pdb.set_trace()
             theList = ROOT.RooLinkedList()
-            theSave = ROOT.RooFit.Save() #Python discards temporary objects.
+            theSave = ROOT.RooFit.Save() #Python discards temporary objects
             Verbose    = ROOT.RooFit.Verbose(0)
             theList.Add(theSave);  theList.Add(Verbose)
             Res=pdf.chi2FitTo(hdata, theList);
             Res.Print()
 
+            ################## AlTernatively #######################     
             #chi2 = pdf.createChi2(hdata, ROOT.RooFit.Save(1))
             #m=ROOT.RooMinuit(chi2)
             #m.setPrintLevel(3)
             #m.migrad()
             #m.hesse()
             #RooRes=m.save()
-            #print RooRes.status()            
 
             self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
 
-        #self.ToggleConstVar(args, isConst=True, targetArgs=[r"^x\d+$"])
         args.find('effi_norm').setConstant(False)
-        Res2D=self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(False), ROOT.RooFit.Save()) #, ROOT.RooFit.PrintLevel(-1))
-        print "Efficiency PDF, DATA: ",  self.pdf.Print(), self.data.Print()
-
-        #args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
+        Res2D=self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True), ROOT.RooFit.Save()) #, ROOT.RooFit.PrintLevel(-1))
+        args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
         args.find('effi_norm').setConstant(True)
 
         # Fix uncorrelated term and for later update with xTerms in main fit step
@@ -120,7 +116,7 @@ class EfficiencyFitter(FitterCore):
         # minuit.SetPrintLevel(-1) #Pritam
         minuit.Command("MINI")
         minuit.Command("MINI")
-        #minuit.Command("MINOS")
+        minuit.Command("MINOS")
         parVal = ROOT.Double(0)
         parErr = ROOT.Double(0)
         for xIdx in range(nPar):
@@ -144,7 +140,11 @@ class EfficiencyFitter(FitterCore):
         h2_effi_2D_comp = h2_accXrec.Clone("h2_effi_2D_comp")
         h2_effi_2D_comp.Reset("ICESM")
         for lBin, KBin in itertools.product(list(range(1, h2_effi_2D_comp.GetNbinsX() + 1)), list(range(1, h2_effi_2D_comp.GetNbinsY() + 1))):
-            h2_effi_2D_comp.SetBinContent(lBin, KBin, f2_effi_sigA.Eval(h2_accXrec.GetXaxis().GetBinCenter(lBin), h2_accXrec.GetYaxis().GetBinCenter(KBin)) / h2_accXrec.GetBinContent(lBin, KBin))
+            if h2_accXrec.GetBinContent(lBin, KBin)==0:
+                h2_effi_2D_comp.SetBinContent(lBin, KBin, 0)
+                print ">> ** Warning ** Empty bins: (l, k)", lBin, KBin
+            else:
+                h2_effi_2D_comp.SetBinContent(lBin, KBin, f2_effi_sigA.Eval(h2_accXrec.GetXaxis().GetBinCenter(lBin), h2_accXrec.GetYaxis().GetBinCenter(KBin)) / h2_accXrec.GetBinContent(lBin, KBin))
         h2_effi_2D_comp.SetMinimum(0)
         h2_effi_2D_comp.SetMaximum(1.5)
         h2_effi_2D_comp.SetTitleOffset(1.6, "X")

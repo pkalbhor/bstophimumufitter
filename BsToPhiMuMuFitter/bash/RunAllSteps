@@ -3,15 +3,14 @@
 GITDIR=$(git rev-parse --show-toplevel)                                                                                                                                                 
 
 cd $GITDIR/BsToPhiMuMuFitter/ 
-TotalClean
 echo -e "\n>>>>>>> Started Creating RooWorkSpace <<<<<<<\n"
 python seqCollection.py -b all -s buildAllPdfs
+echo -e "\n>>>>>>> Started Creating Efficiency Histograms <<<<<<<\n"
+python seqCollection.py -b all -s buildEfficiencyHist
 echo -e "\n>>>>>>> Started Running Fitting Procedure <<<<<<<\n"
 python seqCollection.py -b all -s fitall
 echo -e "\n>>>>>>> Started GEN Level Fitting Procedure <<<<<<<\n"
 python seqCollection.py -b all -s fitSigMCGEN
-echo -e "\n>>>>>>> Started Result Comparison Plots <<<<<<<\n"
-createplots
 echo -e "\n>>>>>>> Copying object files for futher processing <<<<<<<\n"
 cp ./Plots/*.db ./input/selected/
 echo -e "\n>>>>>>> Started Creating Plots <<<<<<<\n"

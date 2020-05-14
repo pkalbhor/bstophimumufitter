@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-# Description     : Fitter template without specification
-# Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
+# Description     : Fitter template for binned fit
+# Author          : Pritam Kalbhor (physics.pritam@gmail.com)
 
+import pdb
 import functools
 import math
 import ROOT
@@ -12,15 +13,18 @@ import BsToPhiMuMuFitter.cpp
 
 from v2Fitter.Fitter.FitterCore import FitterCore
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
+from BsToPhiMuMuFitter.StdFitter import StdFitter
 
-class StdFitter(FitterCore):
-    """Implementation to standard fitting procdeure to BuToKstarMuMu angular analysis"""
+from BsToPhiMuMuFitter.varCollection import Bmass
+
+class BinnedFitter(StdFitter):
+    """Implementation to Binned fitting procdeure to BsToPhiMuMu angular analysis"""
 
     @classmethod
     def templateConfig(cls):
         cfg = FitterCore.templateConfig()
         cfg.update({
-            'name': "StdFitter",
+            'name': "BinnedFitter",
             'data': "dataReader.Fit",
             'pdf': "f",
             'FitHesse': False,
@@ -33,17 +37,18 @@ class StdFitter(FitterCore):
         })
         return cfg
 
+    def _bookPdfData(self):
+        self.pdf = self.process.sourcemanager.get(self.cfg['pdf'])
+        print "PDF", self.process.sourcemanager.get(self.cfg['pdf'])
+        proj = self.process.sourcemanager.get('h_Bmass')
+        self.data = ROOT.RooDataHist("hdata", "", ROOT.RooArgList(Bmass), ROOT.RooFit.Import(proj))
+
     def _bookMinimizer(self):
         print("""_bookMinimizer from StdFitter""")
-        self.fitter = ROOT.StdFitter()
-        for opt in self.cfg.get("createNLLOpt", []):
-            self.fitter.addNLLOpt(opt)
-        self.fitter.Init(self.pdf, self.data)
-        self._nll = self.fitter.GetNLL()
+        pass
 
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
-        #if not self.name=="sigAFitter": 
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
@@ -76,7 +81,7 @@ class StdFitter(FitterCore):
 
     def _preFitSteps(self):
         """ Prefit steps """
-        self.args = self.pdf.getParameters(self.data)
+        self.args = self.pdf.getParameters(self.process.sourcemanager.get(self.cfg['data']))
         self._preFitSteps_initFromDB()
         self._preFitSteps_vetoSmallFs()
         self._preFitSteps_preFit()
@@ -87,16 +92,14 @@ class StdFitter(FitterCore):
         self.ToggleConstVar(self.args, True)
         if self.cfg['saveToDB']:
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
-            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
+            #FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
 
     def _runFitSteps(self):
-        self.FitMigrad()
-        if self.cfg.get('FitHesse', False):
-            print("FitHesse: ")
-            self.FitHesse()
-        if self.cfg.get('FitMinos', [False, ()])[0]:
-            self.FitMinos()
-
+        theList = ROOT.RooLinkedList()
+        theSave = ROOT.RooFit.Save() #Python discards temporary objects.
+        Verbose    = ROOT.RooFit.Verbose(0)
+        theList.Add(theSave);  theList.Add(Verbose)
+        self.fitResult=self.pdf.chi2FitTo(self.data, theList); 
     def FitMigrad(self):
         """Migrad"""
         migradResult = self.fitter.FitMigrad()
@@ -173,3 +176,4 @@ This would be quite useful for proflied Feldman-Cousins method"""
             func(self)
         return wrapped_f
     return wrapper
+

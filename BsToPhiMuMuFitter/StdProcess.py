@@ -210,6 +210,7 @@ msgService.addStream(4,
 processCfg = {
     'isBatchJob': False,
     'binKey': 'summary',
+    'seqKey': None,
 }
 p = Process("myProcess", "Plots", processCfg)
 #pdb.set_trace()

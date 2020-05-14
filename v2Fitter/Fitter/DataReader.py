@@ -8,11 +8,12 @@
 
 from v2Fitter.FlowControl.Path import Path
 
-import os, tempfile
+import os, pdb, tempfile
 import ROOT
 from ROOT import TChain
 from ROOT import TIter
 from ROOT import RooDataSet
+from BsToPhiMuMuFitter.varCollection import Bmass
 
 class DataReader(Path):
     """Create RooDataSet from a TChain"""
@@ -77,7 +78,13 @@ class DataReader(Path):
                     self.dataset[name] = data
                 file_preload.Close()
             self.createDataSet(name, cut)
+        if self.process.cfg['seqKey']=="fitSigMBinned": self.createBHist(cut)
         return self.dataset
+    
+    def createBHist(self, cut):
+        h_Bmass=ROOT.TH1D("h_Bmass", "", 18, 4.9, 5.8)
+        self.ch.Draw("Bmass>>h_Bmass", cut)
+        self.cfg['source']['h_Bmass']=h_Bmass
 
     def _runPath(self):
         self.ch = TChain()

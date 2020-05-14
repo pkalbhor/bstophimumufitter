@@ -7,7 +7,7 @@
 from ROOT import RooRealVar
 from ROOT import RooArgSet
 
-Bmass = RooRealVar("Bmass","m_{#phi#mu#mu} [GeV]", 4.9, 5.9)
+Bmass = RooRealVar("Bmass","m_{#phi#mu#mu} [GeV]", 4.9, 5.8)
 CosThetaK = RooRealVar("CosThetaK", "cos#theta_{K}", -1., 1.)
 CosThetaL = RooRealVar("CosThetaL", "cos#theta_{l}", -1., 1.)
 Mumumass = RooRealVar("Mumumass", "m_{#mu#mu} [GeV]", 0., 10.)

@@ -28,8 +28,8 @@ ROOT.gROOT.ProcessLine(
 """struct MyTreeContent {
    Double_t     fl;
    Double_t     afb;
-   Double_t     fs;
-   Double_t     transAs;
+   Double_t     fitstatus;
+   Double_t     events;
    Double_t     nSig;
    Double_t     nBkgComb;
    Double_t     nll;
@@ -41,7 +41,7 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
     def getSubDataEntries(self, setIdx):
         try:
             db = shelve.open(self.process.dbplayer.odbfile)
-            expectedYield = 500 #db['nSig']['getVal']
+            expectedYield = 400 #db['nSig']['getVal']
         finally:
             db.close()
         yields = ROOT.gRandom.Poisson(expectedYield)
@@ -53,8 +53,8 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
         self.treeContent = ROOT.MyTreeContent()
         self.otree.Branch("fl", AddressOf(self.treeContent, 'fl'), 'fl/D')
         self.otree.Branch("afb", AddressOf(self.treeContent, 'afb'), 'afb/D')
-        #self.otree.Branch("fs", AddressOf(self.treeContent, 'fs'), 'fs/D')
-        #self.otree.Branch("transAs", AddressOf(self.treeContent, 'transAs'), 'as/D')
+        self.otree.Branch("fitstatus", AddressOf(self.treeContent, 'fitstatus'), 'fitstatus/D')
+        self.otree.Branch("events", AddressOf(self.treeContent, 'events'), 'events/D')
         self.otree.Branch("nSig", AddressOf(self.treeContent, 'nSig'), 'nSig/D')
         self.otree.Branch("nBkgComb", AddressOf(self.treeContent, 'nBkgComb'), 'nBkgComb/D')
         self.otree.Branch("nll", AddressOf(self.treeContent, 'nll'), 'nll/D')
@@ -67,8 +67,8 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
         if math.fabs(self.fitter._nll.getVal()) < 1e20:
             self.treeContent.fl = self.process.sourcemanager.get('fl').getVal()
             self.treeContent.afb = self.process.sourcemanager.get('afb').getVal()
-            #self.treeContent.fs = self.fitter.args.find('fs').getVal()
-            #self.treeContent.transAs = self.fitter.args.find('transAs').getVal()
+            self.treeContent.fitstatus = self.fitter.fitResult['sig2DFitter.migrad']['status']
+            self.treeContent.events = self.fitter.data.numEntries()
             self.treeContent.nSig = 0
             self.treeContent.nBkgComb = 0
             self.treeContent.nll = self.fitter._nll.getVal()
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     if args.binKey =="all": 
-        args.binKey = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "abovePsi2sA", "abovePsi2sB"]
+        args.binKey = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "abovePsi2sA", "abovePsi2sB", "summary", "summaryLowQ2"]
         p.cfg['bins'] = args.binKey
     else: 
         p.cfg['bins'] = [args.binKey]

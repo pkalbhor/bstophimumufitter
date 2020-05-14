@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 
-import os
+import os, pdb
 from collections import OrderedDict
 from v2Fitter.FlowControl.Logger import Logger
 from v2Fitter.FlowControl.SourceManager import SourceManager, FileManager
@@ -61,8 +61,9 @@ class Process:
 
     def beginSeq_registerServices(self):
         """Initialize all services."""
-        dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected"))
-        self.addService("dbplayer", dbplayer)
+        if not 'dbplayer' in self._services.keys(): 
+            dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected"))
+            self.addService("dbplayer", dbplayer)
         self.addService('logger', Logger("runtime.log"))
         self.addService('filemanager', FileManager())
         self.addService('sourcemanager', SourceManager())

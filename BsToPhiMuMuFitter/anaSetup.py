@@ -101,11 +101,11 @@ def createBmassTemplate(name, lowerBd, upperBd):
     }
     return template
 
-bMassRegions['Fit'] = createBmassTemplate("Fit", 4.90, 5.90)
-bMassRegions['SR'] = createBmassTemplate("SR", 5.287, 5.447)
-bMassRegions['LSB'] = createBmassTemplate("LSB", 5.143, 5.223)
-bMassRegions['USB'] = createBmassTemplate("USB", 5.511, 5.591)
-bMassRegions['SB'] = createBmassTemplate("SB", 4.90, 5.90)
+bMassRegions['Fit'] = createBmassTemplate("Fit", 4.9, 5.8)
+bMassRegions['SR'] = createBmassTemplate("SR", 5.2, 5.5)
+bMassRegions['LSB'] = createBmassTemplate("LSB", 4.9, 5.2) #("LSB", 5.143, 5.223)
+bMassRegions['USB'] = createBmassTemplate("USB", 5.5, 5.8) #("USB", 5.511, 5.591)
+bMassRegions['SB'] = createBmassTemplate("SB", 4.90, 5.80)
 bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['cutString'], bMassRegions['SR']['cutString'])
 
 # systematics
@@ -124,11 +124,11 @@ bMassRegions['altSB_vetoJpsiX'] = createBmassTemplate("altSB_vetoJpsiX", 4.76, 5
 bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB_vetoJpsiX']['cutString'], bMassRegions['altSR_vetoJpsiX']['cutString'])
 
 # Cut strings
-baseSel = "fabs(Mupeta)<2.2 && fabs(Mumeta)<2.2 && Muppt>3.9 && Mumpt>3.9"
+baseSel = "fabs(Mupeta)<2.2 && fabs(Mumeta)<2.2 && Muppt>4.0 && Mumpt>4.0"
 cut_passTrigger = "JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0"
 cut_phiWindow = "Phimass>1.01 && Phimass < 1.03"
 cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
-cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.180 && abs(Bmass-Mumumass-1.681)>0.080"
+cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090"
 cut_Bdt = "Bdt > 0.09"
 # cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
 cuts = [

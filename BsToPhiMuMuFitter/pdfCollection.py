@@ -159,7 +159,7 @@ setupBuildSigM = {
     'objName': "f_sigM",
     'varNames': ["Bmass"],
     'factoryCmd': [
-        "sigMGauss_mean[5.38, 4.90, 5.45]",
+        "sigMGauss_mean[5.38, 5.30, 5.5]",
         "RooGaussian::f_sigMGauss1(Bmass, sigMGauss_mean, sigMGauss1_sigma[0.02, 0.0001, 0.05])",
         "RooGaussian::f_sigMGauss2(Bmass, sigMGauss_mean, sigMGauss2_sigma[0.08, 0.0005, 0.40])",
         "SUM::f_sigM(sigM_frac[0.,0.,1.]*f_sigMGauss1, f_sigMGauss2)",
@@ -229,8 +229,9 @@ buildBkgCombMAltM = functools.partial(buildGenericObj, **setupBuildBkgCombMAltM)
 
 f_analyticBkgCombA_format = {}
 
-f_analyticBkgCombA_format['belowJpsiA'] = [
-    "bkgCombL_c1[0.2,0.8]",
+"""f_analyticBkgCombA_format['belowJpsiA'] = [
+    "bkgCombL_c0[0,10]",
+    "bkgCombL_c1[0.3,0.9]",
     "bkgCombL_c2[0.2, 0.1, 1.0]",
     "bkgCombL_c3[-0.8,-0.2]",
     "bkgCombL_c4[0.2, 0.1, 1.0]",
@@ -239,9 +240,23 @@ f_analyticBkgCombA_format['belowJpsiA'] = [
     "bkgCombK_c2[0,50]",
     "bkgCombK_c3[-3,0]",
     "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
-        pdfL="exp(-0.5*pow((CosThetaL-bkgCombL_c1)/bkgCombL_c2,2))+bkgCombL_c5*exp(-0.5*pow((CosThetaL-bkgCombL_c3)/bkgCombL_c4,2))",
+        pdfL="bkgCombL_c0*exp(-0.5*pow((CosThetaL-bkgCombL_c1)/bkgCombL_c2,2))+bkgCombL_c5*exp(-0.5*pow((CosThetaL-bkgCombL_c3)/bkgCombL_c4,2))",
         pdfK="exp(bkgCombK_c1*CosThetaK)+exp(bkgCombK_c3*CosThetaK+bkgCombK_c2)",
-        args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3}")
+        args="{CosThetaL, CosThetaK, bkgCombL_c0, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3}")
+]"""
+
+f_analyticBkgCombA_format['belowJpsiA'] = [
+    "bkgCombL_c1[-10,10]",
+    "bkgCombL_c2[-10,10]",
+    "bkgCombL_c3[-10,10]",
+    "bkgCombL_c4[-10,10]",
+    "bkgCombK_c1[ 0,10]",
+    "bkgCombK_c2[0,50]",
+    "bkgCombK_c3[-3,0]",
+    "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
+        pdfL="1+bkgCombL_c1*CosThetaL+bkgCombL_c2*pow(CosThetaL, 2)+bkgCombL_c3*pow(CosThetaL,3) + bkgCombL_c4*pow(CosThetaL,4)",
+        pdfK="exp(bkgCombK_c1*CosThetaK)+exp(bkgCombK_c3*CosThetaK+bkgCombK_c2)",
+        args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3}")
 ]
 f_analyticBkgCombA_format['betweenPeaks'] = [
     "bkgCombL_c1[-3,3]",
@@ -300,32 +315,43 @@ setupBuildAnalyticBkgCombA = {
     ]
 }
 
-def buildSmoothBkgCombA(self):
+setupSmoothBkg={'factoryCmd': []}
+SmoothBkgCmd={}
+SmoothBkgCmd['DEFAULT']=[1.0, 1.0, 1.0, 1.0]
+SmoothBkgCmd['belowJpsiC']=[0.6, 0.6, 0.6, 0.6]
+SmoothBkgCmd['belowJpsiA']=[0.6, 0.6, 0.6, 0.6]
+SmoothBkgCmd['belowJpsiB']=[0.6, 0.6, 0.6, 0.6]
+SmoothBkgCmd['betweenPeaks']=[0.6, 0.6, 0.6, 0.6]
+SmoothBkgCmd['abovePsi2sA']=[0.6, 0.6, 0.6, 0.6]
+SmoothBkgCmd['abovePsi2sB']=[0.6, 0.6, 0.6, 0.6]
+SmoothBkgCmd['summary']=[0.6, 0.6, 0.6, 0.6]
+SmoothBkgCmd['summaryLowQ2']=[0.6, 0.6, 0.6, 0.6]
+def buildSmoothBkgCombA(self, factoryCmd):
     """Build with RooWorkspace.factory. See also RooFactoryWSTool.factory"""
     wspace = self.getWspace()
-
+    Cmd=factoryCmd
     f_bkgCombAAltA = wspace.pdf("f_bkgCombAAltA")
     if f_bkgCombAAltA == None:
         f_bkgCombAAltKUp = RooKeysPdf("f_bkgCombAAltKUp",
                                       "f_bkgCombAAltKUp",
                                       CosThetaK,
                                       self.process.sourcemanager.get('dataReader.USB'),
-                                      RooKeysPdf.MirrorBoth, 1.0)
+                                      RooKeysPdf.MirrorBoth, Cmd[0])
         f_bkgCombAAltKLo = RooKeysPdf("f_bkgCombAAltKLo",
                                       "f_bkgCombAAltKLo",
                                       CosThetaK,
                                       self.process.sourcemanager.get('dataReader.LSB'),
-                                      RooKeysPdf.MirrorBoth, 1.0)
+                                      RooKeysPdf.MirrorBoth, Cmd[1])
         f_bkgCombAAltLUp = RooKeysPdf("f_bkgCombAAltLUp",
                                       "f_bkgCombAAltLUp",
                                       CosThetaL,
                                       self.process.sourcemanager.get('dataReader.USB'),
-                                      RooKeysPdf.MirrorBoth, 1.0)
+                                      RooKeysPdf.MirrorBoth, Cmd[2])
         f_bkgCombAAltLLo = RooKeysPdf("f_bkgCombAAltLLo",
                                       "f_bkgCombAAltLLo",
                                       CosThetaL,
                                       self.process.sourcemanager.get('dataReader.LSB'),
-                                      RooKeysPdf.MirrorBoth, 1.0)
+                                      RooKeysPdf.MirrorBoth, Cmd[3])
         for f in f_bkgCombAAltKLo, f_bkgCombAAltKUp, f_bkgCombAAltLLo, f_bkgCombAAltLUp:
             getattr(wspace, 'import')(f)
         wspace.factory("PROD::f_bkgCombAAltAUp(f_bkgCombAAltKUp,f_bkgCombAAltLUp)")
@@ -402,7 +428,10 @@ def customizePDFBuilder(self):
         print("FactoryCMD: ", i)
     buildAnalyticBkgCombA = functools.partial(buildGenericObj, **setupBuildAnalyticBkgCombA)
     buildEffiSigA = functools.partial(buildGenericObj, **setupBuildEffiSigA)
-
+    
+    setupSmoothBkg['factoryCmd'] = SmoothBkgCmd.get(self.process.cfg['binKey'], SmoothBkgCmd['DEFAULT'])
+    print setupSmoothBkg
+    buildSmoothBkg = functools.partial(buildSmoothBkgCombA, **setupSmoothBkg)
     # Configure setup
     self.cfg.update({
         'wspaceTag': sharedWspaceTagString.format(binLabel=q2bins[self.process.cfg['binKey']]['label']),
@@ -412,7 +441,7 @@ def customizePDFBuilder(self):
             ('f_sigM', [buildSigM]),
             ('f_sig3D', [buildSig]),  # Include f_sig2D
             ('f_bkgCombA', [buildAnalyticBkgCombA]),
-            ('f_bkgCombAAltA', [buildSmoothBkgCombA]),
+            ('f_bkgCombAAltA', [buildSmoothBkg]),
             ('f_bkgCombM', [buildBkgCombM]),
             ('f_bkgCombMAltM', [buildBkgCombMAltM]),
             ('f_bkgComb', [buildBkgComb]),  # Include all variations

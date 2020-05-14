@@ -3,9 +3,7 @@
 
 from __future__ import print_function
 
-import os
-import sys
-import math
+import os, sys, math, pdb
 import types
 import shelve
 import functools
@@ -17,7 +15,7 @@ import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.FitterCore import FitterCore
 from v2Fitter.Fitter.AbsToyStudier import AbsToyStudier
 from v2Fitter.Fitter.DataReader import DataReader
-from BsToPhiMuMuFitter.anaSetup import q2bins, cut_kshortWindow
+from BsToPhiMuMuFitter.anaSetup import q2bins #, cut_kshortWindow
 from BsToPhiMuMuFitter.StdFitter import StdFitter, unboundFlToFl, unboundAfbToAfb
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 from BsToPhiMuMuFitter.plotCollection import Plotter, plotter
@@ -25,6 +23,7 @@ from BsToPhiMuMuFitter.plotCollection import Plotter, plotter
 import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
+import BsToPhiMuMuFitter.plotCollection as plotCollection
 
 from BsToPhiMuMuFitter.StdProcess import p
 
@@ -157,6 +156,7 @@ def func_randEffi(args):
 # Alternate efficiency map
 # # Use uncorrelated efficiency map and compare the difference
 def updateToDB_altShape(args, tag):
+    pdb.set_trace()
     """ Template db entry maker for syst """
     db = shelve.open(p.dbplayer.odbfile)
     nominal_fl = unboundFlToFl(db['unboundFl']['getVal'])
@@ -341,6 +341,34 @@ def func_altBkgCombA(args):
     setupFinalAltBkgCombAFitter.update({
         'pdf': "f_finalAltBkgCombA",
         'argAliasInDB': {'afb': 'afb_altBkgCombA', 'fl': 'fl_altBkgCombA'},
+        'saveToDB': True,
+    })
+    finalAltBkgCombAFitter = StdFitter(setupFinalAltBkgCombAFitter)
+
+    p.setSequence([
+        pdfCollection.stdWspaceReader,
+        dataCollection.dataReader,
+        finalAltBkgCombAFitter,
+        plotCollection.Bkgplotter,
+    ])
+
+    try:
+        p.beginSeq()
+        p.runSeq()
+
+        #updateToDB_altShape(args, "altBkgCombA")
+    finally:
+        p.endSeq()
+
+# Fitting Only Alternate bkgCombA shape
+# # Smooth function versus analytic function
+def func_OnlyaltBkgCombA(args):
+    """ Typically less than 10% """
+    setupFinalAltBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
+    setupFinalAltBkgCombAFitter.update({
+        'pdf': "f_bkgCombAltA", #"f_bkgCombAAltA",
+        'argAliasInDB': {'afb': 'afb_altBkgCombA', 'fl': 'fl_altBkgCombA'},
+        'createNLLOpt': [],
         'saveToDB': False,
     })
     finalAltBkgCombAFitter = StdFitter(setupFinalAltBkgCombAFitter)
@@ -349,15 +377,17 @@ def func_altBkgCombA(args):
         pdfCollection.stdWspaceReader,
         dataCollection.dataReader,
         finalAltBkgCombAFitter,
+        plotCollection.Bkgplotter,
     ])
 
     try:
         p.beginSeq()
         p.runSeq()
 
-        updateToDB_altShape(args, "altBkgCombA")
+        #updateToDB_altShape(args, "altBkgCombA") #TODO
     finally:
         p.endSeq()
+
 
 # Bmass range
 # # Vary Fit range
@@ -516,6 +546,9 @@ if __name__ == '__main__':
     subparser_altBkgCombA = subparsers.add_parser('altBkgCombA')
     subparser_altBkgCombA.set_defaults(func=func_altBkgCombA)
 
+    subparser_altBkgCombAOnly = subparsers.add_parser('altBkgCombAOnly')
+    subparser_altBkgCombAOnly.set_defaults(func=func_OnlyaltBkgCombA)
+
     subparser_vetoJpsiX = subparsers.add_parser('vetoJpsiX')
     subparser_vetoJpsiX.set_defaults(func=func_vetoJpsiX)
 
@@ -527,6 +560,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     p.cfg['binKey'] = args.binKey
-
+    pdb.set_trace() 
     args.func(args)
     sys.exit()

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent foldnestmax=3 ft=python et:
 
-import re
+import re, pdb
 import types
 import functools
 import itertools
@@ -117,7 +117,9 @@ sigMCGENReader.customize = types.MethodType(customizeGEN, sigMCGENReader)
 # effiHistReader
 accXEffThetaLBins = array('d', [-1., -0.8, -0.6, -0.4, -0.2, 0., 0.2, 0.4, 0.6, 0.8, 1.])
 accXEffThetaKBins = array('d', [-1., -0.8, -0.6, -0.4, -0.2, 0., 0.2, 0.4, 0.6, 0.8, 1.])
-def buildAccXRecEffiHist(self):
+#accXEffThetaLBins = array('d', [-1, -0.7, -0.3, 0., 0.3, 0.7, 1.])
+#accXEffThetaKBins = array('d', [-1, -0.7, 0., 0.4, 0.8, 1.])
+def buildTotalEffiHist(self):
     """Build efficiency histogram for later fitting/plotting"""
     print("Now I am Here in buildAccXRecEffiHist")
     fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_Run2016.root", "UPDATE")
@@ -241,6 +243,137 @@ def buildAccXRecEffiHist(self):
     self.cfg['source']['effiHistReader.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec)) # Effi 2D RooDataHist
     self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey'])) #Effi of CosThetaL
     self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(self.process.cfg['binKey'])) # Effi of CosThetaK
+
+
+def buildAccXRecEffiHist(self):
+    """Build efficiency histogram for later fitting/plotting"""
+    targetBins = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryLowQ2']
+    if self.process.cfg['binKey'] not in targetBins:
+        return
+
+    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_Run2012.root", "UPDATE")
+    #pdb.set_trace()
+    # Build acceptance, reco efficiency, and accXrec
+    forceRebuild = False
+
+    binKey = self.process.cfg['binKey']
+    h2_accXrec = fin.Get("h2_accXrec_{0}".format(binKey))
+    if h2_accXrec == None or forceRebuild:
+        h2_acc = fin.Get("h2_acc_{0}".format(binKey))
+        h2_rec = fin.Get("h2_rec_{0}".format(binKey))
+
+        # Fill histograms
+        setupEfficiencyBuildProcedure = {}
+        setupEfficiencyBuildProcedure['acc'] = {
+            'ifiles': [] if binKey in ['jpsi', 'psi2s'] else UnfilteredMC,
+            'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
+            'cutString': "({0}) && fabs(genMupEta)<2.2 && fabs(genMumEta)<2.2 && genMupPt>4.0 && genMumPt>4.0".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString'])),
+            'fillXY': "genCosThetaK:genCosThetaL",  # Y:X
+            'weight': None
+        }
+        setupEfficiencyBuildProcedure['rec'] = {
+            'ifiles': sigMCReader.cfg['ifile'],
+            'baseString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']), baseSel), #"{0}".format(setupEfficiencyBuildProcedure['acc']['baseString']),
+            'cutString': "(Bmass > 4.7) && ({0}) && ({1}) && ({2})".format(cuts_antiResVeto if binKey in ['jpsi', 'psi2s'] else cuts[-1], re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']), baseSel),
+            'fillXY': "CosThetaK:CosThetaL",  # Y:X
+            'weight': None
+        }
+        for h2, label in (h2_acc, 'acc'), (h2_rec, 'rec'):
+            if h2 == None or forceRebuild:
+                treein = TChain("tree")
+                for f in setupEfficiencyBuildProcedure[label]['ifiles']:
+                    treein.Add(f)
+
+                if setupEfficiencyBuildProcedure[label]['weight'] is None:
+                    df_tot = ROOT.RDataFrame(treein).Define('weight', "1").Filter(setupEfficiencyBuildProcedure[label]['baseString'])
+                else:
+                    df_tot = ROOT.RDataFrame(treein).Define('weight', *setupEfficiencyBuildProcedure[label]['weight']).Filter(setupEfficiencyBuildProcedure[label]['baseString'])
+                df_acc = df_tot.Filter(setupEfficiencyBuildProcedure[label]['cutString'])
+
+                fillXY = setupEfficiencyBuildProcedure[label]['fillXY'].split(':')
+                h2_total_config = ("h2_{0}_{1}_total".format(label, binKey), "", len(accXEffThetaLBins) - 1, accXEffThetaLBins, len(accXEffThetaKBins) - 1, accXEffThetaKBins)
+                h2_passed_config  = ("h2_{0}_{1}_passed".format(label, binKey), "", len(accXEffThetaLBins) - 1, accXEffThetaLBins, len(accXEffThetaKBins) - 1, accXEffThetaKBins)
+                h2_fine_total_config = ("h2_{0}_fine_{1}_total".format(label, binKey), "", 10, -1, 1, 10, -1, 1)
+                h2_fine_passed_config = ("h2_{0}_fine_{1}_passed".format(label, binKey), "", 10, -1, 1, 10, -1, 1)
+
+                h2ptr_total = df_tot.Histo2D(h2_total_config, fillXY[1], fillXY[0], "weight")
+                h2ptr_passed = df_acc.Histo2D(h2_passed_config, fillXY[1], fillXY[0], "weight")
+                h2ptr_fine_total = df_tot.Histo2D(h2_fine_total_config, fillXY[1], fillXY[0], "weight")
+                h2ptr_fine_passed = df_acc.Histo2D(h2_fine_passed_config, fillXY[1], fillXY[0], "weight")
+
+                h2_total = h2ptr_total.GetValue()
+                h2_passed = h2ptr_passed.GetValue()
+                h2_fine_total = h2ptr_fine_total.GetValue()
+                h2_fine_passed = h2ptr_fine_passed.GetValue()
+
+                print("{0}/{1}".format(df_acc.Count().GetValue(), df_tot.Count().GetValue()))
+                h2_eff = TEfficiency(h2_passed, h2_total)
+                h2_eff_fine = TEfficiency(h2_fine_passed, h2_fine_total)
+
+                #pdb.set_trace()
+                fin.cd()
+                for proj, var in [("ProjectionX", CosThetaL), ("ProjectionY", CosThetaK)]:
+                    proj_fine_total = getattr(h2_fine_total, proj)("{0}_{1}".format(h2_fine_total.GetName(), proj), 0, -1, "e")
+                    proj_fine_passed = getattr(h2_fine_passed, proj)("{0}_{1}".format(h2_fine_passed.GetName(), proj), 0, -1, "e")
+                    h_eff = TEfficiency(proj_fine_passed, proj_fine_total)
+                    h_eff.Write("h_{0}_fine_{1}_{2}".format(label, binKey, proj), ROOT.TObject.kOverwrite)
+
+                h2_eff.Write("h2_{0}_{1}".format(label, binKey), ROOT.TObject.kOverwrite)
+                h2_eff_fine.Write("h2_{0}_fine_{1}".format(label, binKey), ROOT.TObject.kOverwrite)
+
+                del df_acc, df_tot
+
+        #pdb.set_trace()
+        # Merge acc and rec to accXrec
+        fin.cd()
+        for proj in ["ProjectionX", "ProjectionY"]:
+            h_acc_fine = fin.Get("h_acc_fine_{0}_{1}".format(binKey, proj))
+            h_rec_fine = fin.Get("h_rec_fine_{0}_{1}".format(binKey, proj))
+            h_accXrec_fine = h_acc_fine.GetPassedHistogram().Clone("h_accXrec_fine_{0}_{1}".format(binKey, proj))
+            h_accXrec_fine.Reset("ICESM")
+            for b in range(1, h_accXrec_fine.GetNbinsX() + 1):
+                if h_rec_fine.GetTotalHistogram().GetBinContent(b) == 0 or h_rec_fine.GetPassedHistogram().GetBinContent(b) == 0:
+                    h_accXrec_fine.SetBinContent(b, 0)
+                    h_accXrec_fine.SetBinError(b, 1)
+                    print ">> Empty reco eff bin #", b
+                else:
+                    h_accXrec_fine.SetBinContent(b, h_acc_fine.GetEfficiency(b) * h_rec_fine.GetEfficiency(b))
+                    h_accXrec_fine.SetBinError(b, h_accXrec_fine.GetBinContent(b) * math.sqrt(1 / h_acc_fine.GetTotalHistogram().GetBinContent(b) + 1 / h_acc_fine.GetPassedHistogram().GetBinContent(b) + 1 / h_rec_fine.GetTotalHistogram().GetBinContent(b) + 1 / h_rec_fine.GetPassedHistogram().GetBinContent(b)))
+            h_accXrec_fine.Write("h_accXrec_{0}_{1}".format(binKey, proj), ROOT.TObject.kOverwrite)
+
+        h2_acc = fin.Get("h2_acc_{0}".format(binKey))
+        h2_rec = fin.Get("h2_rec_{0}".format(binKey))
+        h2_accXrec = h2_acc.GetPassedHistogram().Clone("h2_accXrec_{0}".format(binKey))
+        h2_accXrec.Reset("ICESM")
+        for iL, iK in itertools.product(range(1, len(accXEffThetaLBins)), range(1, len(accXEffThetaKBins))):
+            if h2_rec.GetTotalHistogram().GetBinContent(iL, iK) == 0 or h2_rec.GetPassedHistogram().GetBinContent(iL, iK) == 0 or h2_acc.GetTotalHistogram().GetBinContent(iL, iK) == 0 or h2_acc.GetPassedHistogram().GetBinContent(iL, iK) == 0:
+                h2_accXrec.SetBinContent(iL, iK, 0)
+                h2_accXrec.SetBinError(iL, iK, 1)
+                print ">> Empty recoORacc eff bin #", iL, iK
+            else:
+                iLK = h2_acc.GetGlobalBin(iL, iK)
+                h2_accXrec.SetBinContent(iL, iK, h2_acc.GetEfficiency(iLK) * h2_rec.GetEfficiency(iLK))
+                h2_accXrec.SetBinError(iL, iK, h2_accXrec.GetBinContent(iL, iK) * math.sqrt(1 / h2_acc.GetTotalHistogram().GetBinContent(iLK) + 1 / h2_acc.GetPassedHistogram().GetBinContent(iLK) + 1 / h2_rec.GetTotalHistogram().GetBinContent(iLK) + 1 / h2_rec.GetPassedHistogram().GetBinContent(iLK)))
+        h2_accXrec.SetXTitle("cos#theta_{l}")
+        h2_accXrec.SetYTitle("cos#theta_{K}")
+        h2_accXrec.SetZTitle("Overall efficiency")
+
+        h2_accXrec.Write("h2_accXrec_{0}".format(binKey), ROOT.TObject.kOverwrite)
+        self.logger.logINFO("Overall efficiency is built.")
+
+    # Register the chosen one to sourcemanager
+    #  h2_accXrec = fin.Get("h2_accXrec_{0}".format(self.process.cfg['binKey']))
+    self.cfg['source'][self.name + '.h2_accXrec'] = h2_accXrec
+    self.cfg['source'][self.name + '.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec))
+    self.cfg['source'][self.name + '.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey']))
+    self.cfg['source'][self.name + '.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(self.process.cfg['binKey']))
+
+effiHistReaderOneStep = ObjProvider({
+    'name': "effiHistReaderOneStep",
+    'obj': {
+        'effiHistReaderOneStep.h2_accXrec': [buildTotalEffiHist, ],
+    }
+})
 
 effiHistReader = ObjProvider({
     'name': "effiHistReader",

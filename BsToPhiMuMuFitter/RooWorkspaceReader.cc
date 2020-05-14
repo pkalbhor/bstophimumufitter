@@ -3,7 +3,7 @@
 #include <typeinfo>
 
 void RooWorkspaceReader(){
-std::string a[]={"1A"};//, "1B", "1C", "3", "5A", "5B"};
+std::string a[]={"1A"};//, "1B", "1C", "3", "5A", "5B", "0"};
 int n=sizeof(a)/sizeof(a[0]);
 
 RooWorkspace *w;
