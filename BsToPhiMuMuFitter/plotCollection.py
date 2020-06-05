@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 sts=4 fdm=indent fdl=0 fdn=3 ft=python et:
 
-import os, sys, pdb, copy
+import os, sys, pdb, copy 
 import re
 import math
 import types
@@ -221,12 +221,26 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
     }
 
+    cwd=os.getcwd()
     for frame in frames:
         plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
         self.latexQ2()
-        #if not frame =='B': self.DrawParams(pdfPlots) 
+        #if not frame =='B': self.DrawParams(pdfPlots)
+        ####################################
+        if pltName=="angular3D_bkgCombA":
+            path=modulePath+"/Plots/SideBandBkg/"
+            if not os.path.exists(path):                                                                                                       
+                os.mkdir(path)   
+            os.chdir(path)
+        if pltName=="angular3D_sigM" or pltName=="angular3D_sig2D":
+            path=modulePath+"/Plots/SignalFits/"
+            if not os.path.exists(path):                                                        
+                os.mkdir(path)                                                                 
+            os.chdir(path)
+        ####################################
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
         Plotter.canvas.cd()
+    os.chdir(cwd)
 
 types.MethodType(plotSimpleBLK, None, Plotter)
 
@@ -243,12 +257,21 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
         'K': {'func': Plotter.plotFrameK, 'tag': "_gencosK"},
     }
 
+    cwd=os.getcwd()
     for frame in frames:
         plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
         self.latexQ2()
         self.DrawParams(pdfPlots)
+        ########################################
+        if pltName=="angular3D_GEN":
+            path=modulePath+"/Plots/SignalFits/"
+            if not os.path.exists(path):                                                        
+                os.mkdir(path)                                                                 
+            os.chdir(path)
+        ######################################33
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
         Plotter.canvas.cd()
+    os.chdir(cwd)
 types.MethodType(plotSimpleGEN, None, Plotter)
 
 def DrawWithResidue(self, frame1):
@@ -270,6 +293,14 @@ def plotEfficiency(self, data_name, pdf_name):
         return
     args = pdf.getParameters(data)
     FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
+
+    #####################################
+    cwd=os.getcwd()
+    path=modulePath+"/Plots/Efficiency/"
+    if not os.path.exists(path):
+        os.mkdir(path)  
+    os.chdir(path)  
+    #####################################
 
     binningL = ROOT.RooBinning(len(dataCollection.accXEffThetaLBins) - 1, dataCollection.accXEffThetaLBins)
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
@@ -331,6 +362,7 @@ def plotEfficiency(self, data_name, pdf_name):
     Plotter.latexCMSExtra()
     self.canvasPrint(pltName + "_cosK")
     Plotter.canvas.cd()
+    os.chdir(cwd)
 
 types.MethodType(plotEfficiency, None, Plotter)
 
@@ -396,6 +428,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
         }
 
         drawLatexFitResults = False
+        cwd=os.getcwd()
         for frame in 'BLK':
             plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots)
             if drawLatexFitResults:
@@ -411,7 +444,15 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
                 elif frame == 'K':
                     Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
             self.latexQ2()
+            
+            ##################################
+            path=modulePath+"/Plots/FinalFit/" 
+            if not os.path.exists(path):
+                os.mkdir(path)
+            os.chdir(path)
+            ##################################
             self.canvasPrint(pltName + '_' + regionName + plotFuncs[frame]['tag'])
+        os.chdir(cwd)
 types.MethodType(plotPostfitBLK, None, Plotter)
 
 def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
@@ -771,8 +812,8 @@ if __name__ == '__main__':
         #plotter.cfg['switchPlots'].append('angular3D_final')
         #plotter.cfg['switchPlots'].append('angular3D_finalAlt') #SmoothBkg Final Fit
         #plotter.cfg['switchPlots'].append('angular3D_summary')
-        plotter.cfg['switchPlots'].append('angular3D_sig2D')               #To Produce RECO Level Plots
-        #plotter.cfg['switchPlots'].append('angular3D_GEN')                 #To Produce Gen Level Plots
+        #plotter.cfg['switchPlots'].append('angular3D_sig2D')               #To Produce RECO Level Plots
+        plotter.cfg['switchPlots'].append('angular3D_GEN')                 #To Produce Gen Level Plots
         #plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')    #Summary of Fl and Afb
         #plotter.cfg['switchPlots'].append('angular2D_RECO_values')    #Summary of Fl and Afb
         p.setSequence([dataCollection.effiHistReaderOneStep, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])

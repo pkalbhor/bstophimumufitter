@@ -41,7 +41,7 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
     def getSubDataEntries(self, setIdx):
         try:
             db = shelve.open(self.process.dbplayer.odbfile)
-            expectedYield = 400 #db['nSig']['getVal']
+            expectedYield = db['nSig']['getVal']
         finally:
             db.close()
         yields = ROOT.gRandom.Poisson(expectedYield)
@@ -86,7 +86,7 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
 setupSigMCStudier = deepcopy(AbsToyStudier.AbsToyStudier.templateConfig())
 setupSigMCStudier.update({
     'name': "sigMCStudier",
-    'data': "sigMCValidation.Fit",
+    'data': "sigMCReader.Fit",
     'fitter': fitCollection.sig2DFitter,
     'nSetOfToys': 5,
 })

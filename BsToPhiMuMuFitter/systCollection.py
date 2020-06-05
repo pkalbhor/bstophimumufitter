@@ -156,7 +156,7 @@ def func_randEffi(args):
 # Alternate efficiency map
 # # Use uncorrelated efficiency map and compare the difference
 def updateToDB_altShape(args, tag):
-    pdb.set_trace()
+    #pdb.set_trace()
     """ Template db entry maker for syst """
     db = shelve.open(p.dbplayer.odbfile)
     nominal_fl = unboundFlToFl(db['unboundFl']['getVal'])
@@ -340,7 +340,7 @@ def func_altBkgCombA(args):
     setupFinalAltBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltBkgCombAFitter.update({
         'pdf': "f_finalAltBkgCombA",
-        'argAliasInDB': {'afb': 'afb_altBkgCombA', 'fl': 'fl_altBkgCombA'},
+        #'argAliasInDB': {'afb': 'afb_altBkgCombA', 'fl': 'fl_altBkgCombA'},
         'saveToDB': True,
     })
     finalAltBkgCombAFitter = StdFitter(setupFinalAltBkgCombAFitter)

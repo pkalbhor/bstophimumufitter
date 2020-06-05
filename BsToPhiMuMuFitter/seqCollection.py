@@ -15,7 +15,7 @@ from argparse import ArgumentParser
 
 # Standard fitting procedures
 predefined_sequence = {}
-dataCollection.effiHistReader=dataCollection.effiHistReaderOneStep   # Use two step efficiency
+dataCollection.effiHistReader=dataCollection.effiHistReaderOneStep   # Use One step efficiency
 loadData        = predefined_sequence['loadData'] = [dataCollection.dataReader]
 loadMC          = predefined_sequence['loadMC'] = [dataCollection.sigMCReader]
 buildAllPdfs    = predefined_sequence['buildAllPdfs'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, pdfCollection.stdPDFBuilder]
@@ -48,7 +48,6 @@ if __name__ == '__main__':
         p.cfg['bins'] = [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
     p.cfg['seqKey']= args.seqKey
     #pdb.set_trace()
-    #p.name="sigMCValidationProcess" 
     for b in p.cfg['bins']:
         p.cfg['binKey'] = b
         p.setSequence(predefined_sequence[args.seqKey])

@@ -38,7 +38,7 @@ setupSigMFitter.update({
     'pdf': "f_sigM",
     'FitHesse': True,
     'argPattern': ['sigMGauss[12]_sigma', 'sigMGauss_mean', 'sigM_frac'],
-    'createNLLOpt': [ROOT.RooFit.Range(5.15, 5.55),],
+    'createNLLOpt': [ROOT.RooFit.Range(5.2, 5.5),],
     'argAliasInDB': {'sigMGauss1_sigma': 'sigMGauss1_sigma_RECO', 'sigMGauss2_sigma': 'sigMGauss2_sigma_RECO', 'sigMGauss_mean': 'sigMGauss_mean_RECO', 'sigM_frac': 'sigM_frac_RECO'},
 })
 sigMFitter = StdFitter(setupSigMFitter)

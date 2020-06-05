@@ -2,18 +2,16 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
+import os, re, itertools, pdb
+import ROOT
+
 from v2Fitter.Fitter.FitterCore import FitterCore
 
 import BsToPhiMuMuFitter.cpp
-from BsToPhiMuMuFitter.anaSetup import q2bins
+from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
 from BsToPhiMuMuFitter.StdProcess import setStyle
 from BsToPhiMuMuFitter.varCollection import CosThetaL, CosThetaK
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
-
-import re
-import itertools, pdb
-
-import ROOT
 
 class EfficiencyFitter(FitterCore):
     """Implementation to standard efficiency fitting procdeure to BuToKstarMuMu angular analysis"""
@@ -55,6 +53,7 @@ class EfficiencyFitter(FitterCore):
         for proj, pdf, var, argPats in [(h_accXrec_fine_ProjectionX, effi_cosl, CosThetaL, [r"^l\d+$"]), (h_accXrec_fine_ProjectionY, effi_cosK, CosThetaK, [r"^k\d+$"])]:
             hdata = ROOT.RooDataHist("hdata", "", ROOT.RooArgList(var), ROOT.RooFit.Import(proj))
             self.ToggleConstVar(args, isConst=False, targetArgs=argPats)
+            
             theList = ROOT.RooLinkedList()
             theSave = ROOT.RooFit.Save() #Python discards temporary objects
             Verbose    = ROOT.RooFit.Verbose(0)
@@ -68,13 +67,14 @@ class EfficiencyFitter(FitterCore):
             #m.setPrintLevel(3)
             #m.migrad()
             #m.hesse()
+            #m.minos()
             #RooRes=m.save()
 
             self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
 
         args.find('effi_norm').setConstant(False)
         Res2D=self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True), ROOT.RooFit.Save()) #, ROOT.RooFit.PrintLevel(-1))
-        args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
+        #args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
         args.find('effi_norm').setConstant(True)
 
         # Fix uncorrelated term and for later update with xTerms in main fit step
@@ -104,6 +104,7 @@ class EfficiencyFitter(FitterCore):
                 nPar = nPar + 1
             arg = args_it.Next()
         effi_sigA_formula = Formula
+        print "Formula: ", Formula
         effi_sigA_formula = re.sub(r"x(\d{1,2})", r"[\1]", effi_sigA_formula)
         effi_sigA_formula = re.sub(r"CosThetaL", r"x", effi_sigA_formula)
         effi_sigA_formula = re.sub(r"CosThetaK", r"y", effi_sigA_formula)
@@ -154,7 +155,16 @@ class EfficiencyFitter(FitterCore):
         h2_effi_2D_comp.Draw("LEGO2")
         latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
         latex.DrawLatexNDC(.08, .89, "#chi^{{2}}={0:.2f}".format(fitter.GetChi2()))
+        
+        ####################################
+        cwd=os.getcwd()
+        path=modulePath+"/Plots/Efficiency/"
+        if not os.path.exists(path):
+            os.mkdir(path)
+        os.chdir(path)
+        ####################################
         canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+        os.chdir(cwd)
         print "Eff Chi2: ", type(fitter), fitter.GetChi2()
 
     @staticmethod

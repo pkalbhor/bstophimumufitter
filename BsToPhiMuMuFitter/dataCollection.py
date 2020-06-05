@@ -16,7 +16,7 @@ from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN
 from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath, baseSel
-from python.datainput import sigMC, dataFilePath, UnfilteredMC
+from python.datainput import sigMC, dataFilePath, UnfilteredMC, sigMCD
 import ROOT
 from ROOT import TChain
 from ROOT import TEfficiency, TH2D
@@ -35,8 +35,8 @@ CFG.update({
 # dataReader
 def customizeOne(self, targetBMassRegion=None, extraCuts=None):
     print("""Define datasets with arguments.""")
-    if self.process.name=="sigMCValidationProcess" and self.name=="sigMCReader":
-        sigMCReader.name="sigMCValidation"; sigMCReader.cfg['name']="sigMCValidation"
+    #if self.process.name=="sigMCValidationProcess" and self.name=="sigMCReader":
+    #    sigMCReader.name="sigMCValidation"; sigMCReader.cfg['name']="sigMCValidation"
     if targetBMassRegion is None:
         targetBMassRegion = []
     if not self.process.cfg['binKey'] in q2bins.keys():
@@ -52,7 +52,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
                     "{0}.{1}".format(self.cfg['name'], key),
                     "({0}) && ({1}) && ({2}) && ({3}) && ({4})".format(
                         val['cutString'],
-                        "1" if self.process.name=="sigMCValidationProcess" else q2bins[self.process.cfg['binKey']]['cutString'],
+                        q2bins[self.process.cfg['binKey']]['cutString'],
                         cuts[-1] if self.process.cfg['binKey'] not in ['jpsi', 'psi2s'] else cuts_noResVeto,
                         "1" if not extraCuts else extraCuts,
                         baseSel,
@@ -117,8 +117,8 @@ sigMCGENReader.customize = types.MethodType(customizeGEN, sigMCGENReader)
 # effiHistReader
 accXEffThetaLBins = array('d', [-1., -0.8, -0.6, -0.4, -0.2, 0., 0.2, 0.4, 0.6, 0.8, 1.])
 accXEffThetaKBins = array('d', [-1., -0.8, -0.6, -0.4, -0.2, 0., 0.2, 0.4, 0.6, 0.8, 1.])
-#accXEffThetaLBins = array('d', [-1, -0.7, -0.3, 0., 0.3, 0.7, 1.])
-#accXEffThetaKBins = array('d', [-1, -0.7, 0., 0.4, 0.8, 1.])
+#accXEffThetaLBins = array('d', [-1, -0.75, -0.5, -0.25, 0., 0.25, 0.5, 0.75, 1.])
+#accXEffThetaKBins = array('d', [-1, -0.75, -0.5, -0.25, 0., 0.25, 0.5, 0.75, 1.])
 def buildTotalEffiHist(self):
     """Build efficiency histogram for later fitting/plotting"""
     print("Now I am Here in buildAccXRecEffiHist")
@@ -273,32 +273,46 @@ def buildAccXRecEffiHist(self):
         }
         setupEfficiencyBuildProcedure['rec'] = {
             'ifiles': sigMCReader.cfg['ifile'],
-            'baseString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']), baseSel), #"{0}".format(setupEfficiencyBuildProcedure['acc']['baseString']),
+            'dfiles': sigMCD,
+            'baseString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), "fabs(genMupEta)<2.2 && fabs(genMumEta)<2.2 && genMupPt>4.0 && genMumPt>4.0"), #"{0}".format(setupEfficiencyBuildProcedure['acc']['baseString']),
             'cutString': "(Bmass > 4.7) && ({0}) && ({1}) && ({2})".format(cuts_antiResVeto if binKey in ['jpsi', 'psi2s'] else cuts[-1], re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']), baseSel),
             'fillXY': "CosThetaK:CosThetaL",  # Y:X
+            'fillXYDen': "genCosThetaK:genCosThetaL",  # Y:X
             'weight': None
         }
         for h2, label in (h2_acc, 'acc'), (h2_rec, 'rec'):
             if h2 == None or forceRebuild:
+                pdb.set_trace()
                 treein = TChain("tree")
                 for f in setupEfficiencyBuildProcedure[label]['ifiles']:
                     treein.Add(f)
 
-                if setupEfficiencyBuildProcedure[label]['weight'] is None:
-                    df_tot = ROOT.RDataFrame(treein).Define('weight', "1").Filter(setupEfficiencyBuildProcedure[label]['baseString'])
-                else:
-                    df_tot = ROOT.RDataFrame(treein).Define('weight', *setupEfficiencyBuildProcedure[label]['weight']).Filter(setupEfficiencyBuildProcedure[label]['baseString'])
-                df_acc = df_tot.Filter(setupEfficiencyBuildProcedure[label]['cutString'])
+                treeDen = TChain()
+                if label=="rec":
+                    for f in setupEfficiencyBuildProcedure[label]['dfiles']:
+                        treeDen.Add(f)
 
+                if setupEfficiencyBuildProcedure[label]['weight'] is None and label=="acc":
+                    df_tot = ROOT.RDataFrame(treein).Define('weight', "1").Filter(setupEfficiencyBuildProcedure[label]['baseString'])
+                elif label=="acc":
+                    df_tot = ROOT.RDataFrame(treein).Define('weight', *setupEfficiencyBuildProcedure[label]['weight']).Filter(setupEfficiencyBuildProcedure[label]['baseString'])
+                elif setupEfficiencyBuildProcedure[label]['weight'] is None and label=="rec":
+                    df_tot = ROOT.RDataFrame(treeDen).Define('weight', "1").Filter(setupEfficiencyBuildProcedure[label]['baseString'])
+                elif label=="rec":
+                    df_tot = ROOT.RDataFrame(treeDen).Define('weight', *setupEfficiencyBuildProcedure[label]['weight']).Filter(setupEfficiencyBuildProcedure[label]['baseString'])
+                df_acc = ROOT.RDataFrame(treein).Define('weight', "1").Filter(setupEfficiencyBuildProcedure[label]['cutString'])
+
+                pdb.set_trace()
                 fillXY = setupEfficiencyBuildProcedure[label]['fillXY'].split(':')
+                if label=="rec": fillXYDen = setupEfficiencyBuildProcedure[label]['fillXYDen'].split(':')
                 h2_total_config = ("h2_{0}_{1}_total".format(label, binKey), "", len(accXEffThetaLBins) - 1, accXEffThetaLBins, len(accXEffThetaKBins) - 1, accXEffThetaKBins)
                 h2_passed_config  = ("h2_{0}_{1}_passed".format(label, binKey), "", len(accXEffThetaLBins) - 1, accXEffThetaLBins, len(accXEffThetaKBins) - 1, accXEffThetaKBins)
-                h2_fine_total_config = ("h2_{0}_fine_{1}_total".format(label, binKey), "", 10, -1, 1, 10, -1, 1)
-                h2_fine_passed_config = ("h2_{0}_fine_{1}_passed".format(label, binKey), "", 10, -1, 1, 10, -1, 1)
+                h2_fine_total_config = ("h2_{0}_fine_{1}_total".format(label, binKey), "", 20, -1, 1, 20, -1, 1)
+                h2_fine_passed_config = ("h2_{0}_fine_{1}_passed".format(label, binKey), "", 20, -1, 1, 20, -1, 1)
 
-                h2ptr_total = df_tot.Histo2D(h2_total_config, fillXY[1], fillXY[0], "weight")
+                h2ptr_total = df_tot.Histo2D(h2_total_config, fillXY[1], fillXY[0], "weight") if label=="acc" else df_tot.Histo2D(h2_total_config, fillXYDen[1], fillXYDen[0], "weight")
                 h2ptr_passed = df_acc.Histo2D(h2_passed_config, fillXY[1], fillXY[0], "weight")
-                h2ptr_fine_total = df_tot.Histo2D(h2_fine_total_config, fillXY[1], fillXY[0], "weight")
+                h2ptr_fine_total = df_tot.Histo2D(h2_fine_total_config, fillXY[1], fillXY[0], "weight") if label=="acc" else df_tot.Histo2D(h2_fine_total_config, fillXYDen[1], fillXYDen[0], "weight")
                 h2ptr_fine_passed = df_acc.Histo2D(h2_fine_passed_config, fillXY[1], fillXY[0], "weight")
 
                 h2_total = h2ptr_total.GetValue()

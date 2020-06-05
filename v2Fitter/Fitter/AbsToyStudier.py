@@ -76,7 +76,7 @@ Decide the number of entries of this subset.
 
             self.fitter.pdf = self.process.sourcemanager.get(self.fitter.cfg['pdf'])
             self.fitter.data = self.getSubData().next()
-            self.fitter.data = ROOT.RooDataSet(self.fitter.data.GetName(), self.fitter.data.GetTitle(),self.fitter.data,self.fitter.data.get(),"{0}".format(q2bins[self.fitter.process.cfg['binKey']]['cutString']))  #Added for applying Q2 cut, change line from getSubDataEntries() and from dataCollection.py
+            #self.fitter.data = ROOT.RooDataSet(self.fitter.data.GetName(), self.fitter.data.GetTitle(),self.fitter.data,self.fitter.data.get(),"{0}".format(q2bins[self.fitter.process.cfg['binKey']]['cutString']))  #Added for applying Q2 cut, change line from getSubDataEntries() and from dataCollection.py
             self.fitter._bookMinimizer()
             self.fitter._preFitSteps()
             self.fitter._runFitSteps()
