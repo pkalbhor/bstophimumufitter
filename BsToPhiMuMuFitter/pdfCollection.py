@@ -78,7 +78,7 @@ def buildGenericObj(self, objName, factoryCmd, varNames):
 
 f_effiSigA_format = {}
 
-pdfL = "1+l1*CosThetaL+l2*pow(CosThetaL,2)+l3*pow(CosThetaL,3)+l4*pow(CosThetaL,4)+l5*pow(CosThetaL,5)+l6*pow(CosThetaL,6)"; nLo=7
+pdfL = "1+l1*CosThetaL+l2*pow(CosThetaL,2)+l3*pow(CosThetaL,3)+l4*pow(CosThetaL,4)+l5*pow(CosThetaL,5)+l6*pow(CosThetaL,6)+l7*pow(CosThetaL,7)+l8*pow(CosThetaL,8)"; nLo=9
 pdfK = "1+k1*CosThetaK+k2*pow(CosThetaK,2)+k3*pow(CosThetaK,3)+k4*pow(CosThetaK,4)+k5*pow(CosThetaK,5)+k6*pow(CosThetaK,6)"; nK=7
 n=25 #Number of x. LP4*Pol4
 xTerm = "\
@@ -105,7 +105,8 @@ xTerm2 = "\
 +(x5+x6*CosThetaK+x7*(1.5*pow(CosThetaK,2)-0.5)+x8*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x9*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*CosThetaL\
 +(x10+x11*CosThetaK+x12*(1.5*pow(CosThetaK,2)-0.5)+x13*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x14*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,2)\
 +(x15+x16*CosThetaK+x17*(1.5*pow(CosThetaK,2)-0.5)+x18*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x19*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,3)"; n1A=20
-pdfL1A = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2))"; nLc=6
+#pdfL1A = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2))"; nLc=6
+pdfL1A = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2)) + l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLc=9
 pdfK1A = "1+k1*CosThetaK+k2*pow(CosThetaK,2)+k3*pow(CosThetaK,3)+k4*pow(CosThetaK,4)+k5*pow(CosThetaK,5)+k6*pow(CosThetaK,6)"; nK1A=7
 f_effiSigA_format['belowJpsiA'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(1, nLc/3+1)] \
     + ["l{0}[0,-.5,.5]".format(3*i-1) for i in range(1, nLc/3+1)] \
@@ -123,8 +124,7 @@ f_effiSigA_format['belowJpsiA'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(
 
 #f_effiSigA_format['belowJpsiC'] = deepcopy(f_effiSigA_format['belowJpsiA'])
 #f_effiSigA_format['summaryLowQ2'] = deepcopy(f_effiSigA_format['belowJpsiA'])
-pdfL1B = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2)) + l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"
-nLB=9
+pdfL1B = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2)) + l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLB=9
 f_effiSigA_format['belowJpsiB'] = ["l1[.1,0,10]", "l2[0,-0.5,0.5]", "l3[0.2,.01,5.]", "l4[0.2,0,10]", "l5[.2,-0.5,0.5]", "l6[.2,0.01,5.0]", "l7[0.1,0,10]", "l8[0,-.5,.5]", "l9[.2,.01,5.]"] \
     + ["k{0}[-10,10]".format(i) for i in range(1, nK)] \
     + ["effi_norm[1,0,1000]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(n)] \
@@ -136,6 +136,19 @@ f_effiSigA_format['belowJpsiB'] = ["l1[.1,0,10]", "l2[0,-0.5,0.5]", "l3[0.2,.01,
         pdfK=pdfK,
         xTerm=xTerm,
         args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, nLB+1)] + ["k{0}".format(i) for i in range(1, nK)] + ["x{0}".format(i) for i in range(n)]) + "}")]
+
+"""pdfL1C = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2))"; nLC=6
+f_effiSigA_format['belowJpsiC'] = ["l1[.1,0,10]", "l2[0,-0.5,0.5]", "l3[0.2,.01,5.]", "l4[0.2,0,10]", "l5[.2,-0.5,0.5]", "l6[.2,0.01,5.0]"] \
+    + ["k{0}[-10,10]".format(i) for i in range(1, nK)] \
+    + ["effi_norm[1,0,1000]", "hasXTerm[0]"] + ["x{0}[-2,2]".format(i) for i in range(n)] \
+    + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL1C, args="{CosThetaL,"+', '.join(["l{0}".format(i) for i in range(1, nLC+1)]) + "}")] \
+    + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, nK)]) + "}")] \
+    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(n)]) + "}")] \
+    + ["expr::effi_sigA('effi_norm*({pdfL})*({pdfK})*(1+hasXTerm*({xTerm}))', {args})".format(
+        pdfL=pdfL1C,
+        pdfK=pdfK,
+        xTerm=xTerm,
+        args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, nLC+1)] + ["k{0}".format(i) for i in range(1, nK)] + ["x{0}".format(i) for i in range(n)]) + "}")]"""
 
 
 pdfL = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2))+l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLB=9
@@ -168,6 +181,10 @@ setupBuildSigM = {
         "RooGaussian::f_sigMGauss1(Bmass, sigMGauss_mean, sigMGauss1_sigma[0.02, 0.0001, 0.05])",
         "RooGaussian::f_sigMGauss2(Bmass, sigMGauss_mean, sigMGauss2_sigma[0.08, 0.0005, 0.40])",
         "SUM::f_sigM(sigM_frac[0.,0.,1.]*f_sigMGauss1, f_sigMGauss2)",
+        "cbs_mean[5.38, 5.28, 5.5]",
+        "RooCBShape::cbs_1(Bmass, cbs_mean, cbs1_sigma[0.02, 0.0001, 0.60], cbs1_alpha[0.5, -6.0, 6.0], cbs1_n[1, 0, 1000])",
+        "RooCBShape::cbs_2(Bmass, cbs_mean, cbs2_sigma[0.02, 0.0001, 0.60], cbs2_alpha[-0.8, -9.4, 9.6], cbs2_n[10, 0, 1000])",
+        "SUM::f_sigMDCB(sigMDCB_frac[0.1, 0.0, 1.0]*cbs_1, cbs_2)",
     ],
 }
 buildSigM = functools.partial(buildGenericObj, **setupBuildSigM)
@@ -198,18 +215,24 @@ def buildSig(self):
 
     f_sig2D = wspace.obj("f_sig2D")
     f_sig3D = wspace.obj("f_sig3D")
-    if f_sig3D == None:
-        for k in ['effi_sigA', 'f_sigA', 'f_sigM']:
+    f_sig3DAltM = wspace.obj("f_sig3DAltM")
+    if f_sig3D == None or f_sig3DAltM == None:
+        for k in ['effi_sigA', 'f_sigA', 'f_sigM', 'f_sigMDCB']:
             locals()[k] = self.cfg['source'][k] if k in self.cfg['source'] else self.process.sourcemanager.get(k)
         f_sig2D = RooEffProd("f_sig2D", "", locals()['f_sigA'], locals()['effi_sigA'])
         getattr(wspace, 'import')(f_sig2D, ROOT.RooFit.RecycleConflictNodes())
         if wspace.obj("f_sigM") == None:
             getattr(wspace, 'import')(locals()['f_sigM'])
+        if wspace.obj("f_sigMDCB") == None:
+            getattr(wspace, 'import')(locals()['f_sigMDCB'])
         wspace.factory("PROD::f_sig3D(f_sigM, f_sig2D)")
+        wspace.factory("PROD::f_sig3DAltM(f_sigMDCB, f_sig2D)")
         f_sig3D = wspace.pdf("f_sig3D")
+        f_sig3DAltM = wspace.pdf("f_sig3DAltM")
 
     self.cfg['source']['f_sig2D'] = f_sig2D
     self.cfg['source']['f_sig3D'] = f_sig3D
+    self.cfg['source']['f_sig3DAltM'] = f_sig3DAltM
 
 setupBuildBkgCombM = {
     'objName': "f_bkgCombM",
@@ -376,7 +399,8 @@ def buildBkgComb(self):
 
     variations = [("f_bkgComb", "f_bkgCombM", "f_bkgCombA"),
                   ("f_bkgCombAltA", "f_bkgCombM", "f_bkgCombAAltA"),
-                  ("f_bkgCombAltM", "f_bkgCombMAltM", "f_bkgCombA")]
+                  ("f_bkgCombAltM", "f_bkgCombMAltM", "f_bkgCombA"),
+                  ("f_bkgCombAltM_AltA", "f_bkgCombMAltM", "f_bkgCombAAltA")]
     for p, pM, pA in variations:
         f_bkgComb = wspace.pdf(p)
         if f_bkgComb == None:
@@ -393,11 +417,15 @@ def buildFinal(self):
     wspace = self.getWspace()
 
     # Keep also mass spectrum only for prefit
-    variations = [("f_final", "f_sig3D", "f_bkgComb"),
+    variations = [("f_final", "f_sig3D", "f_bkgComb"),                                          #3D=nSig(Sig2D*SigM)+nBkg(fBkgM*fBkg)
                   ("f_finalAltBkgCombA", "f_sig3D", "f_bkgCombAltA"),
+                  ("f_finalAltMAltBkgCombA", "f_sig3DAltM", "f_bkgCombAltA"),
                   ("f_finalAltBkgCombM", "f_sig3D", "f_bkgCombAltM"),
-                  ("f_finalM", "f_sigM", "f_bkgCombM"),
-                  ("f_finalMAltBkgCombM", "f_sigM", "f_bkgCombMAltM")]
+                  ("f_finalAltM_AltBkgCombM_AltBkgCombA", "f_sig3DAltM", "f_bkgCombAltM_AltA"), #3D=nSig(Sig2D*SigMDCB)+nBkg(fBkgAltM*fBkgAltA)
+                  ("f_finalM", "f_sigM", "f_bkgCombM"),                                         #Mass PDF = nSig(SigM)+nBkg(fBkgM)
+                  ("f_finalMAltBkgCombM", "f_sigM", "f_bkgCombMAltM"),
+                  ("f_finalMDCB", "f_sigMDCB", "f_bkgCombM"),
+                  ("f_finalMDCB_AltBkgCombM", "f_sigMDCB", "f_bkgCombMAltM")]                   #Mass PDF = nSig(SigMDCB)+nBkg(fBkgAltM)
     wspace.factory("nSig[10,1e-2,1e5]")
     wspace.factory("nBkgComb[100,1e-2,1e5]")
     for p, pSig, pBkg in variations:

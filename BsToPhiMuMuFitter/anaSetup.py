@@ -31,6 +31,9 @@ q2bins['abovePsi2sA'] = createBinTemplate("bin5A", 15.00, 17.00)
 q2bins['abovePsi2sB'] = createBinTemplate("bin5B", 17.00, 19.00)
 q2bins['summaryLowQ2'] = createBinTemplate("summaryLowQ2", 1., 6.)
 q2bins['summary'] = createBinTemplate("bin0", 1., 19.)
+q2bins['Test1'] = createBinTemplate("binA", 1., 3.)
+q2bins['Test2'] = createBinTemplate("binB", 3., 5.)
+q2bins['Test3'] = createBinTemplate("binC", 15., 19.)
 q2bins['summary']['cutString'] = "(Mumumass > 1 && Mumumass < 4.35890) && !(Mumumass > 2.828427125 && Mumumass < 3.31662479) && !(Mumumass > 3.535533906 && Mumumass < 3.872983346)"
 
 q2bins['jpsi'] = createBinTemplate("bin2", 8.00, 11.00)
@@ -124,17 +127,18 @@ bMassRegions['altSB_vetoJpsiX'] = createBmassTemplate("altSB_vetoJpsiX", 4.76, 5
 bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB_vetoJpsiX']['cutString'], bMassRegions['altSR_vetoJpsiX']['cutString'])
 
 # Cut strings
-baseSel = "fabs(Mupeta)<2.2 && fabs(Mumeta)<2.2 && Muppt>4.0 && Mumpt>4.0"
+genSel = "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>4.0 && genMumPt>4.0 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5"
+recBaseSel = "fabs(Mupeta)<2.4 && fabs(Mumeta)<2.4 && Muppt>4.0 && Mumpt>4.0 && Kppt>0.5 && Kmpt>0.5 && fabs(Kpeta)<2.5 && fabs(Kmeta)<2.5"
 cut_passTrigger = "JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0"
 cut_phiWindow = "Phimass>1.01 && Phimass < 1.03"
-cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
-cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.140 && abs(Bmass-Mumumass-1.681)>0.200"
+#cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
+cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090"
 cut_Bdt = "Bdt > 0.14"
-# cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
+ExtraCuts = "mtrkqual==1 && ptrkqual==1 && dr0<0.1 && dr1<0.1 && Kptrkdcasigbs>0.8 && Kmtrkdcasigbs>0.8"
 cuts = [
+    recBaseSel,
     cut_passTrigger,
     cut_phiWindow,
-    cut_resonanceRej,
     cut_antiRadiation,
     cut_Bdt,
 ]

@@ -43,6 +43,18 @@ setupSigMFitter.update({
 })
 sigMFitter = StdFitter(setupSigMFitter)
 
+setupSigMDCBFitter = deepcopy(setupTemplateFitter)
+setupSigMDCBFitter.update({
+    'name': "sigMDCBFitter",
+    'data': "sigMCReader.Fit",
+    'pdf': "f_sigMDCB",
+    'FitHesse': True,
+    'argPattern': ['cbs[12]_sigma', 'cbs[12]_alpha', 'cbs[12]_n', 'cbs_mean', 'sigMDCB_frac'],
+    'createNLLOpt': [],
+    'argAliasInDB': {'cbs1_sigma': 'cbs1_sigma_RECO', 'cbs2_sigma': 'cbs2_sigma_RECO', 'cbs1_alpha': 'cbs1_alpha_RECO', 'cbs2_alpha': 'cbs2_alpha_RECO', 'cbs1_n': 'cbs1_n_RECO', 'cbs2_n': 'cbs2_n_RECO', 'cbs_mean': 'cbs_mean_RECO', 'sigMDCB_frac': 'sigMDCB_frac_RECO'},
+})
+sigMDCBFitter = StdFitter(setupSigMDCBFitter)
+
 setupSigMBinnedFitter = deepcopy(setupTemplateFitter)
 setupSigMBinnedFitter.update({
     'name': "sigMBinnedFitter",
@@ -123,7 +135,7 @@ setupBkgCombMFitter.update({
 })
 bkgCombMFitter = StdFitter(setupBkgCombMFitter)
 
-setupFinalFitter = deepcopy(setupTemplateFitter)
+setupFinalFitter = deepcopy(setupTemplateFitter)                         # 3D = nSig(Sig2D*SigM) + nBkg(fBkgM*fBkgA)
 setupFinalFitter.update({
     'name': "finalFitter",
     'data': "dataReader.Fit",
@@ -135,6 +147,58 @@ setupFinalFitter.update({
     'argAliasSaveToDB': False,
 })
 finalFitter = StdFitter(setupFinalFitter)
+
+setupFinal_AltM_AltBkgCombM_AltA_Fitter = deepcopy(setupTemplateFitter)  #Alternate 3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgAltM*fBkgAltA)
+setupFinal_AltM_AltBkgCombM_AltA_Fitter.update({
+    'name': "final_AltM_AltBkgCombM_AltA_Fitter",
+    'data': "dataReader.Fit",
+    'pdf': "f_finalAltM_AltBkgCombM_AltBkgCombA",
+    'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombMAltM_c[\d]+'],
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ],
+    'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
+    'argAliasInDB': dict(setupSigMDCBFitter['argAliasInDB'].items() + setupSigAFitter['argAliasInDB'].items()),
+    'argAliasSaveToDB': False,
+})
+final_AltM_AltBkgCombM_AltA_Fitter = StdFitter(setupFinal_AltM_AltBkgCombM_AltA_Fitter)
+
+setupFinalMFitter = deepcopy(setupTemplateFitter)                        # Final Mass PDF = nSig(SigM)+nBkg(fBkgM)
+setupFinalMFitter.update({
+    'name': "finalMFitter",
+    'data': "dataReader.Fit",
+    'pdf': "f_finalM",
+    'argPattern': ['nSig', 'nBkgComb', r'bkgCombM_c[\d]+'],
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ],
+    'FitMinos': [True, ('nSig', 'nBkgComb')],
+    'argAliasInDB': dict(setupSigMFitter['argAliasInDB'].items()),
+    'argAliasSaveToDB': False,
+})
+finalMFitter = StdFitter(setupFinalMFitter)
+
+setupFinalMDCBFitter = deepcopy(setupTemplateFitter)                     # Final Mass PDF: nSig(f_sigMDCB)+nBkg(fBkgM)
+setupFinalMDCBFitter.update({
+    'name': "finalMDCBFitter",
+    'data': "dataReader.Fit",
+    'pdf': "f_finalMDCB",
+    'argPattern': ['nSig', 'nBkgComb', r'bkgCombM_c[\d]+'],
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ],
+    'FitMinos': [True, ('nSig', 'nBkgComb')],
+    'argAliasInDB': dict(setupSigMDCBFitter['argAliasInDB'].items()),
+    'argAliasSaveToDB': False,
+})
+finalMDCBFitter = StdFitter(setupFinalMDCBFitter)
+
+setupFinalMDCB_AltBkgCombM_Fitter = deepcopy(setupTemplateFitter) # Final Mass Alternate Fitter: nSig(f_sigMDCB)+nBkg(fBkgAltM)
+setupFinalMDCB_AltBkgCombM_Fitter.update({
+    'name': "finalMDCB_AltBkgCombM_Fitter",
+    'data': "dataReader.Fit",
+    'pdf': "f_finalMDCB_AltBkgCombM",
+    'argPattern': ['nSig', 'nBkgComb', r'bkgCombMAltM_c[\d]+'],
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ],
+    'FitMinos': [True, ('nSig', 'nBkgComb')],
+    'argAliasInDB': dict(setupSigMDCBFitter['argAliasInDB'].items()),
+    'argAliasSaveToDB': False,
+})
+finalMDCB_AltBkgCombM_Fitter = StdFitter(setupFinalMDCB_AltBkgCombM_Fitter)
 
 if __name__ == '__main__':
     p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, effiFitter])

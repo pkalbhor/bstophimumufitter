@@ -10,5 +10,8 @@ rm -f $DIR/../data/*
 rm -f $DIR/../input/selected/* 
 rm -f $DIR/../input/*.root
 rm -f $DIR/../Plots/*
+rm -f $DIR/../Plots/Efficiency/*
+rm -f $DIR/../Plots/SignalFits/*
+rm -f $DIR/../Plots/FinalFit/*
 cd $DIR/../cpp
 rm -f *.pcm *.d *.so

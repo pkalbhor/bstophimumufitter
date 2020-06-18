@@ -81,7 +81,7 @@ class Plotter(Path):
 
     frameB = Bmass.frame()
     #frameB.SetMinimum(0)
-    frameB_binning = 18
+    frameB_binning = 72
 
     frameK = CosThetaK.frame()
     #frameK.SetMinimum(0)
@@ -98,6 +98,7 @@ class Plotter(Path):
 
     def initPdfPlotCfg(self, p):
         print(""" [Name, plotOnOpt, argAliasInDB, LegendName] """)
+        pdb.set_trace()
         pdfPlotTemplate = ["", plotterCfg_allStyle, None, None]
         p = p + pdfPlotTemplate[len(p):]
         if isinstance(p[0], str):
@@ -144,7 +145,8 @@ class Plotter(Path):
                         ROOT.RooFit.Name("pdfP{0}".format(pIdx)),
                         *p[1])
         cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
-        cloned_frame.Draw() #DrawWithResidue(plotter, cloned_frame) 
+        #cloned_frame.Draw() #
+        DrawWithResidue(plotter, cloned_frame) 
 
         # Legend
         Plotter.legend.Clear()
@@ -277,7 +279,7 @@ types.MethodType(plotSimpleGEN, None, Plotter)
 def DrawWithResidue(self, frame1):
     Plotter.canvas.cd()
     frame2 = frame1.emptyClone("frame_for_residue")
-    hresid = frame1.residHist()
+    hresid = frame1.pullHist() #residHist() #Get Pull
     frame2.addPlotable(hresid, "P")
     res=ROOT.NewResPlot(frame1, frame2); res.Draw();
     res.fUpperPad.cd()
@@ -352,8 +354,9 @@ def plotEfficiency(self, data_name, pdf_name):
     pdfK = self.process.sourcemanager.get("effi_cosK")
     pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill)#, ROOT.RooFit.LineWidth(2))
     cloned_frameK.GetYaxis().SetTitle("Efficiency [%]")
-    cloned_frameK.SetMaximum(10 + cloned_frameK.GetMaximum())
-    cloned_frameK.SetMinimum(h_accXrec_fine_ProjectionY.GetMinimum()*100-10)
+    cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
+    #cloned_frameK.SetMaximum(10 + cloned_frameK.GetMaximum())
+    #cloned_frameK.SetMinimum(h_accXrec_fine_ProjectionY.GetMinimum()*100-10)
 
     cloned_frameK.Draw() #DrawWithResidue(self, cloned_frameK)
     self.latexQ2()
@@ -366,7 +369,7 @@ def plotEfficiency(self, data_name, pdf_name):
 
 types.MethodType(plotEfficiency, None, Plotter)
 
-def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
+def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
     """Specification of plotSimpleBLK for post-fit plots"""
     for pIdx, plt in enumerate(pdfPlots):
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
@@ -377,11 +380,12 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
     nSigErrorDB = args.find('nSig').getError()
     nBkgCombDB = args.find('nBkgComb').getVal()
     nBkgCombErrorDB = args.find('nBkgComb').getError()
-    flDB = unboundFlToFl(args.find('unboundFl').getVal())
-    afbDB = unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
+    if 'L' in frames or 'K' in frames:
+        flDB = unboundFlToFl(args.find('unboundFl').getVal())
+        afbDB = unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
     sigFrac = {}
     bkgCombFrac = {}
-    for regionName in ["Fit", "SR", "LSB", "USB", "SB"]:
+    for regionName in ["Fit"]:#, "SR", "LSB", "USB", "SB"]:
         dataPlots = [["{0}.{1}".format(dataReader, regionName), plotterCfg_dataStyle, "Data"], ]
         for pIdx, p in enumerate(dataPlots):
             dataPlots[pIdx] = self.initDataPlotCfg(p)
@@ -427,9 +431,9 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
             'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
         }
 
-        drawLatexFitResults = False
+        drawLatexFitResults = True
         cwd=os.getcwd()
-        for frame in 'BLK':
+        for frame in frames:
             plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots)
             if drawLatexFitResults:
                 if frame == 'B':
@@ -699,7 +703,16 @@ plotterCfg['plots'] = {
                         ],
             'marks': ['sim']}
     },
-    'angular3D_sig2D': {
+    'angular3D_sigMDCB': {
+        'func': [functools.partial(plotSimpleBLK, frames='B')],
+        'kwargs': {
+            'pltName': "angular3D_sigMDCB",
+            'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [["f_sigMDCB", plotterCfg_sigStyle, fitCollection.setupSigMDCBFitter['argAliasInDB'], "Total fit"],
+                        ],
+            'marks': ['sim']}
+    },
+   'angular3D_sig2D': {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
         'kwargs': {
             'pltName': "angular3D_sig2D",
@@ -760,6 +773,42 @@ plotterCfg['plots'] = {
         }
     },
 
+   'angular3D_finalAltSigMAltBkgCombA': {
+        'func': [plotPostfitBLK],
+        'kwargs': {
+            'pltName': "angular3D_finalAltSigMAltBkgCombA",
+            'dataReader': "dataReader",
+            'pdfPlots': [["f_finalAltMAltBkgCombA", plotterCfg_allStyle, None, "Total Alt Fit"],
+                         ["f_sig3DAltM", plotterCfg_sigStyle, dict(fitCollection.setupSigMDCBFitter['argAliasInDB'].items() + fitCollection.setupSigAFitter['argAliasInDB'].items()), "Alt Sigal"],
+                         ["f_bkgCombAAltA", plotterCfg_bkgStyle, None, "Alt Background"],
+                        ],
+        }
+    },
+
+   'angular3D_final_AltMMA': {
+        'func': [plotPostfitBLK],
+        'kwargs': {
+            'pltName': "angular3D_final_AltMMA",
+            'dataReader': "dataReader",
+            'pdfPlots': [["f_finalAltM_AltBkgCombM_AltBkgCombA", plotterCfg_allStyle, None, "Total Alt Fit"],
+                         ["f_sig3DAltM", plotterCfg_sigStyle, dict(fitCollection.setupSigMDCBFitter['argAliasInDB'].items() + fitCollection.setupSigAFitter['argAliasInDB'].items()), "Alt Sigal"],
+                         ["f_bkgCombAltM_AltA", plotterCfg_bkgStyle, None, "Alt Background"],
+                        ],
+        }
+    },
+
+   'angular3D_final_AltMM': {       # 1D BMass Final Fit
+        'func': [functools.partial(plotPostfitBLK, frames='B')],
+        'kwargs': {
+            'pltName': "angular3D_final_AltMM",
+            'dataReader': "dataReader",
+            'pdfPlots': [["f_finalMDCB_AltBkgCombM", plotterCfg_allStyle, None, "Total Alt Fit"],
+                         ["f_sigMDCB", plotterCfg_sigStyle, dict(fitCollection.setupSigMDCBFitter['argAliasInDB'].items()), "Alt Sigal"],
+                         ["f_bkgCombMAltM", plotterCfg_bkgStyle, None, "Alt Background"],
+                        ],
+        }
+    },
+
     'angular3D_summary': {
         'func': [plotSummaryAfbFl],
         'kwargs': {
@@ -806,14 +855,18 @@ if __name__ == '__main__':
     for b in binKey:
         p.cfg['binKey'] = b
         #plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
-        plotter.cfg['switchPlots'].append('effi')            # Efficiency
+        #plotter.cfg['switchPlots'].append('effi')            # Efficiency
         #plotter.cfg['switchPlots'].append('angular3D_sigM')
+        #plotter.cfg['switchPlots'].append('angular3D_sigMDCB') # Plot for Signal Mass with DCB
         #plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
         #plotter.cfg['switchPlots'].append('angular3D_final')
         #plotter.cfg['switchPlots'].append('angular3D_finalAlt') #SmoothBkg Final Fit
+        #plotter.cfg['switchPlots'].append('angular3D_finalAltSigMAltBkgCombA') #SmoothBkg & DCB Signal Mass Final Fit
+        plotter.cfg['switchPlots'].append('angular3D_final_AltMM') #AltBkgM + AltMDCB: Final 1D BMass Fit
+        #plotter.cfg['switchPlots'].append('angular3D_final_AltMMA') #AltBkgM + SmoothBkgA + AltMDCB: Final 3D Fit
         #plotter.cfg['switchPlots'].append('angular3D_summary')
         #plotter.cfg['switchPlots'].append('angular3D_sig2D')               #To Produce RECO Level Plots
-        plotter.cfg['switchPlots'].append('angular3D_GEN')                 #To Produce Gen Level Plots
+        #plotter.cfg['switchPlots'].append('angular3D_GEN')                 #To Produce Gen Level Plots
         #plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')    #Summary of Fl and Afb
         #plotter.cfg['switchPlots'].append('angular2D_RECO_values')    #Summary of Fl and Afb
         p.setSequence([dataCollection.effiHistReaderOneStep, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])

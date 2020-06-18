@@ -15,7 +15,7 @@ import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN
-from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath, baseSel
+from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath, genSel, recBaseSel, ExtraCuts
 from python.datainput import sigMC, dataFilePath, UnfilteredMC, sigMCD
 import ROOT
 from ROOT import TChain
@@ -50,12 +50,11 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
             self.cfg['dataset'].append(
                 (
                     "{0}.{1}".format(self.cfg['name'], key),
-                    "({0}) && ({1}) && ({2}) && ({3}) && ({4})".format(
+                    "({0}) && ({1}) && ({2}) && ({3})".format(
                         val['cutString'],
                         q2bins[self.process.cfg['binKey']]['cutString'],
                         cuts[-1] if self.process.cfg['binKey'] not in ['jpsi', 'psi2s'] else cuts_noResVeto,
                         "1" if not extraCuts else extraCuts,
-                        baseSel,
                     )
                 )
             )
@@ -68,10 +67,10 @@ dataReaderCfg.update({
     'name': "dataReader",
     'ifile': dataFilePath,
     'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
-    'lumi': 19.98,
+    'lumi': 35.9,
 })
 dataReader = DataReader(dataReaderCfg)
-customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'])
+customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'], extraCuts=ExtraCuts)
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
@@ -83,7 +82,7 @@ sigMCReaderCfg.update({
     'lumi': 16281.440 + 21097.189,
 })
 sigMCReader = DataReader(sigMCReaderCfg)
-customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])
+customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCuts)
 sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
 
 # sigMCGENReader
@@ -142,13 +141,13 @@ def buildTotalEffiHist(self):
             setupEfficiencyBuildProcedure['acc'] = {
                 'ifiles': UnfilteredMC,
                 'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
-                'cutString': "fabs(genMupEta)<2.2 && fabs(genMumEta)<2.2 && genMupPt>3.9 && genMumPt>3.9", # && KpPt>0.5 && KmPt>0.5 && fabs(KpEta)<2.4 && fabs(KmEta)<2.4",
+                'cutString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel),
                 'fillXY': "genCosThetaK:genCosThetaL"  # Y:X
             }
             setupEfficiencyBuildProcedure['rec'] = {
                 'ifiles': sigMCReader.cfg['ifile'],
-                'baseString': re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']),
-                'cutString': "({0}) && ({1}) && (Bmass > 4.7) && ({2})".format(cuts[-1], re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']), baseSel),
+                'baseString': "({0}) && (1)".format(q2bins[binKey]['cutString'], recBaseSel),
+                'cutString': "({0}) && ({1}) && ({2})".format(cuts[-1], q2bins[binKey]['cutString'], 1 if ExtraCuts==None else ExtraCuts),
                 'fillXY': "CosThetaK:CosThetaL"  # Y:X
             }
             i=0 #testing events
@@ -252,7 +251,6 @@ def buildAccXRecEffiHist(self):
         return
 
     fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_Run2012.root", "UPDATE")
-    #pdb.set_trace()
     # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
 
@@ -267,22 +265,21 @@ def buildAccXRecEffiHist(self):
         setupEfficiencyBuildProcedure['acc'] = {
             'ifiles': [] if binKey in ['jpsi', 'psi2s'] else UnfilteredMC,
             'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
-            'cutString': "({0}) && fabs(genMupEta)<2.2 && fabs(genMumEta)<2.2 && genMupPt>4.0 && genMumPt>4.0".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString'])),
+            'cutString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel),
             'fillXY': "genCosThetaK:genCosThetaL",  # Y:X
             'weight': None
         }
         setupEfficiencyBuildProcedure['rec'] = {
             'ifiles': sigMCReader.cfg['ifile'],
             'dfiles': sigMCD,
-            'baseString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), "fabs(genMupEta)<2.2 && fabs(genMumEta)<2.2 && genMupPt>4.0 && genMumPt>4.0"), #"{0}".format(setupEfficiencyBuildProcedure['acc']['baseString']),
-            'cutString': "(Bmass > 4.7) && ({0}) && ({1}) && ({2})".format(cuts_antiResVeto if binKey in ['jpsi', 'psi2s'] else cuts[-1], re.sub("Mumumass", "sqrt(Q2)", q2bins[binKey]['cutString']), baseSel),
+            'baseString': "({0}) && ({1})".format(q2bins[binKey]['cutString'], recBaseSel),
+            'cutString': "({0}) && ({1}) && ({2})".format(cuts_antiResVeto if binKey in ['jpsi', 'psi2s'] else cuts[-1], q2bins[binKey]['cutString'], 1 if ExtraCuts==None else ExtraCuts),
             'fillXY': "CosThetaK:CosThetaL",  # Y:X
             'fillXYDen': "genCosThetaK:genCosThetaL",  # Y:X
             'weight': None
         }
         for h2, label in (h2_acc, 'acc'), (h2_rec, 'rec'):
             if h2 == None or forceRebuild:
-                pdb.set_trace()
                 treein = TChain("tree")
                 for f in setupEfficiencyBuildProcedure[label]['ifiles']:
                     treein.Add(f)
@@ -302,7 +299,6 @@ def buildAccXRecEffiHist(self):
                     df_tot = ROOT.RDataFrame(treeDen).Define('weight', *setupEfficiencyBuildProcedure[label]['weight']).Filter(setupEfficiencyBuildProcedure[label]['baseString'])
                 df_acc = ROOT.RDataFrame(treein).Define('weight', "1").Filter(setupEfficiencyBuildProcedure[label]['cutString'])
 
-                pdb.set_trace()
                 fillXY = setupEfficiencyBuildProcedure[label]['fillXY'].split(':')
                 if label=="rec": fillXYDen = setupEfficiencyBuildProcedure[label]['fillXYDen'].split(':')
                 h2_total_config = ("h2_{0}_{1}_total".format(label, binKey), "", len(accXEffThetaLBins) - 1, accXEffThetaLBins, len(accXEffThetaKBins) - 1, accXEffThetaKBins)
@@ -324,7 +320,6 @@ def buildAccXRecEffiHist(self):
                 h2_eff = TEfficiency(h2_passed, h2_total)
                 h2_eff_fine = TEfficiency(h2_fine_passed, h2_fine_total)
 
-                #pdb.set_trace()
                 fin.cd()
                 for proj, var in [("ProjectionX", CosThetaL), ("ProjectionY", CosThetaK)]:
                     proj_fine_total = getattr(h2_fine_total, proj)("{0}_{1}".format(h2_fine_total.GetName(), proj), 0, -1, "e")
@@ -337,7 +332,6 @@ def buildAccXRecEffiHist(self):
 
                 del df_acc, df_tot
 
-        #pdb.set_trace()
         # Merge acc and rec to accXrec
         fin.cd()
         for proj in ["ProjectionX", "ProjectionY"]:

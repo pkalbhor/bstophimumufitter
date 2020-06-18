@@ -360,35 +360,6 @@ def func_altBkgCombA(args):
     finally:
         p.endSeq()
 
-# Fitting Only Alternate bkgCombA shape
-# # Smooth function versus analytic function
-def func_OnlyaltBkgCombA(args):
-    """ Typically less than 10% """
-    setupFinalAltBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
-    setupFinalAltBkgCombAFitter.update({
-        'pdf': "f_bkgCombAltA", #"f_bkgCombAAltA",
-        'argAliasInDB': {'afb': 'afb_altBkgCombA', 'fl': 'fl_altBkgCombA'},
-        'createNLLOpt': [],
-        'saveToDB': False,
-    })
-    finalAltBkgCombAFitter = StdFitter(setupFinalAltBkgCombAFitter)
-
-    p.setSequence([
-        pdfCollection.stdWspaceReader,
-        dataCollection.dataReader,
-        finalAltBkgCombAFitter,
-        plotCollection.Bkgplotter,
-    ])
-
-    try:
-        p.beginSeq()
-        p.runSeq()
-
-        #updateToDB_altShape(args, "altBkgCombA") #TODO
-    finally:
-        p.endSeq()
-
-
 # Bmass range
 # # Vary Fit range
 def func_altFitRange(args):

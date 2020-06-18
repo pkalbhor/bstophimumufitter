@@ -6,7 +6,7 @@ cd $GITDIR/BsToPhiMuMuFitter/
 echo -e "\n>>>>>>> Started Creating RooWorkSpace <<<<<<<\n"
 python seqCollection.py -b all -s buildAllPdfs
 echo -e "\n>>>>>>> Started Creating Efficiency Histograms <<<<<<<\n"
-python seqCollection.py -b all -s buildEfficiencyHist
+python seqCollection.py -b bin1A -s buildEfficiencyHist
 echo -e "\n>>>>>>> Started Running Fitting Procedure <<<<<<<\n"
 python seqCollection.py -b all -s fitall
 echo -e "\n>>>>>>> Started GEN Level Fitting Procedure <<<<<<<\n"
@@ -14,8 +14,8 @@ python seqCollection.py -b all -s fitSigMCGEN
 echo -e "\n>>>>>>> Copying object files for futher processing <<<<<<<\n"
 cp ./Plots/*.db ./input/selected/
 echo -e "\n>>>>>>> Started Creating Plots <<<<<<<\n"
-python seqCollection.py -b belowJpsiA -s createPlots
+python seqCollection.py -b belowJpsiA -s createplots
 echo -e "\n>>>>>>> Started Low-Statistic Samples Validation Procedure <<<<<<<\n"
-python script/batchTask_sigMCValidation.py -b all -t 10 run 0
+#python script/batchTask_sigMCValidation.py -b all -t 10 run 0
 echo -e "\n>>>>>>> Started Plot Production and Fitting <<<<<<<\n"
-python script/batchTask_sigMCValidation.py -b all postproc
+#python script/batchTask_sigMCValidation.py -b all postproc

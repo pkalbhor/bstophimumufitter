@@ -107,7 +107,7 @@ void NewResPlot::PostDrawDecoration(){
 	frame2->GetYaxis()->SetNdivisions(505);
 	frame2->GetYaxis()->SetTitleSize(textsize);
 	frame2->GetYaxis()->SetTitleOffset(0.52);
-	frame2->GetYaxis()->SetTitle("Residual");
+	frame2->GetYaxis()->SetTitle("Pull");
 	frame2->SetTitle("");
 	
 	textsize = fFontSize/(fUpperPad->GetWh()*fUpperPad->GetAbsHNDC());

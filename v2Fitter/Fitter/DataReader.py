@@ -53,9 +53,11 @@ class DataReader(Path):
         return cfg
 
     def createDataSet(self, dname, dcut):
-        print("""Return named dataset, create if not exist""")
+        """Return named dataset, create if not exist"""
         if dname in self.dataset.keys():
+            print "\033[0;34;47m Dataset: ", dname, " Already Exists! \033[0m", dcut
             return self.dataset[dname]
+            
         tempfile_preload = ROOT.TFile(tempfile.gettempdir()+"/temp.root", 'RECREATE') #Pritam
         data = RooDataSet(
             dname,
@@ -65,11 +67,11 @@ class DataReader(Path):
             dcut)
         data.Write(); tempfile_preload.Close() #Pritam
         self.dataset[dname] = data
-        print("ARGSET: ", self.argset, dcut)
+        print "\033[0;34;47m Creating Dataset: ", dname, ": \033[0m", dcut
         return data
 
     def createDataSets(self, dataset):
-        print("""Get named dataset""")
+        """Get named dataset"""
         for name, cut in dataset:
             if self.cfg['preloadFile'] and os.path.exists(self.cfg['preloadFile']):
                 file_preload = ROOT.TFile(self.cfg['preloadFile'])
@@ -88,10 +90,8 @@ class DataReader(Path):
 
     def _runPath(self):
         self.ch = TChain()
-
         print "Name: ", self.cfg['name']
         for f in self.cfg['ifile']:
-            #self.ch.SetName(flie.GetListOfKeys().At(0).GetName())
             self.ch.Add(f)
         if len(self.cfg['ifriend']) > 0:
             self.friend = TChain("tree")
@@ -103,7 +103,7 @@ class DataReader(Path):
         pass
 
     def _addSource(self):
-        print("""Add dataset and arguments to source pool""")
+        """Add dataset and arguments to source pool"""
         print("source: cfg", self.cfg['source'])
         if self.cfg['preloadFile'] and not os.path.exists(self.cfg['preloadFile']):
             file_preload = ROOT.TFile(self.cfg['preloadFile'], 'RECREATE')
