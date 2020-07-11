@@ -4,10 +4,9 @@
 
 # Description     : Fitter template without specification
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
+#                 : Pritam Kalbhor (physics.pritam@gmail.com)
 
-import functools
-import math
-import ROOT
+import functools, math, ROOT, pdb
 import BsToPhiMuMuFitter.cpp
 
 from v2Fitter.Fitter.FitterCore import FitterCore
@@ -35,6 +34,16 @@ class StdFitter(FitterCore):
 
     def _bookMinimizer(self):
         print("""_bookMinimizer from StdFitter""")
+        ###
+        def myfunc(iArg):
+            lo=ROOT.Double(0)
+            hi=ROOT.Double(1)
+            self.data.getRange(iArg, lo, hi)
+            iArg.setRange(lo, hi)
+        FitterCore.ArgLooper(self.data.get(), myfunc)
+        FitterCore.ArgLooper(self.pdf.getObservables(self.data), myfunc)
+        ###
+
         self.fitter = ROOT.StdFitter()
         for opt in self.cfg.get("createNLLOpt", []):
             self.fitter.addNLLOpt(opt)
@@ -84,6 +93,16 @@ class StdFitter(FitterCore):
     def _postFitSteps(self):
         """Post-processing"""
         #  FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
+        """pdb.set_trace()
+        c2=ROOT.TCanvas(); c2.cd()
+        Bmass=ROOT.RooRealVar("Bmass", "Bmass", 4.9, 5.8)
+        frame=Bmass.frame()
+        self.pdf.plotOn(frame, ROOT.RooFit.Normalization(1136.0, ROOT.RooAbsReal.NumEvent))
+        self.data.plotOn(frame)
+        frame.Draw()
+        c2.SaveAs("PlotInstant.pdf")"""
+        ####
+
         self.ToggleConstVar(self.args, True)
         if self.cfg['saveToDB']:
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)

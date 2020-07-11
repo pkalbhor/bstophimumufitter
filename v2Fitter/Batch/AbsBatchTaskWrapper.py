@@ -15,7 +15,7 @@ from argparse import ArgumentParser
 
 # NOTE:
 #   Two steps to keep in mind:
-#       * Job submittion (with generator), on Host (lxplus)
+#       * Job submission (with generator), on Host (lxplus)
 #       * Processing, on computing nodes.
 #   The two steps should completely separated.
 
@@ -65,7 +65,7 @@ when_to_transfer_output = ON_EXIT
 """.format(
         initialdir=self.task_dir,
         JobFlavour=self.cfg['queue'],
-        executable=os.path.abspath(__main__.__file__),)
+        executable="{executable}",)
         return templateJdl
 
     @abc.abstractmethod
@@ -148,6 +148,7 @@ def submitTask(args):
         with tempfile.NamedTemporaryFile() as tmp:
             tmp.write(jdl)
             tmp.flush()
+            print jdl
             call("condor_submit {0}".format(tmp.name), shell=True)
     else:
         print(jdl)

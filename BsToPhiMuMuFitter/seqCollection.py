@@ -16,46 +16,58 @@ from argparse import ArgumentParser
 
 # Standard fitting procedures
 predefined_sequence = {}
-dataCollection.effiHistReader=dataCollection.effiHistReaderOneStep   # Use One step efficiency
-loadData        = predefined_sequence['loadData'] = [dataCollection.dataReader]
-loadMC          = predefined_sequence['loadMC'] = [dataCollection.sigMCReader]
-loadMCGEN       = predefined_sequence['loadMCGEN'] = [dataCollection.sigMCGENReader]
-buildAllPdfs    = predefined_sequence['buildAllPdfs'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, pdfCollection.stdPDFBuilder]
-buildEfficiencyHist = predefined_sequence['buildEfficiencyHist'] = [dataCollection.effiHistReader]
+def SetSequences():
+    predefined_sequence['loadData']     = [dataCollection.dataReader]
+    predefined_sequence['loadMC']       = [dataCollection.sigMCReader]
+    predefined_sequence['loadMCGEN']    = [dataCollection.sigMCGENReader]
+    predefined_sequence['buildPdfs'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, pdfCollection.stdPDFBuilder]
+    predefined_sequence['buildEff'] = [dataCollection.effiHistReader]
 
-fitEfficiency   = predefined_sequence['fitEfficiency'] = [dataCollection.effiHistReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter]
-fitSigM         = predefined_sequence['fitSigM'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMFitter]
-fitSigMDCB         = predefined_sequence['fitSigMDCB'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMDCBFitter]
-fitSigMBinned   = predefined_sequence['fitSigMBinned'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMBinnedFitter]
-fitBkgCombA     = predefined_sequence['fitBkgCombA'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombAFitter]
-fitBkgCombM     = predefined_sequence['fitBkgCombM'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombMFitter]
+    # For fitter validation and syst
+    predefined_sequence['fitEff']    = [dataCollection.effiHistReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter]
+    predefined_sequence['fitSig2D']         = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sig2DFitter]
+    predefined_sequence['fitSigMCGEN']      = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
+    predefined_sequence['fitall']           = [dataCollection.effiHistReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter, dataCollection.sigMCReader, fitCollection.sig2DFitter]
 
-predefined_sequence['fitFinalM'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalMFitter]
-predefined_sequence['fitFinalMDCB'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalMDCBFitter]
-predefined_sequence['fitFinalM_AltMM'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalMDCB_AltBkgCombM_Fitter]
-predefined_sequence['fitFinal_altMMA']=[dataCollection.dataReader,pdfCollection.stdWspaceReader,fitCollection.final_AltM_AltBkgCombM_AltA_Fitter]
-predefined_sequence['fitFinal3D'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter]
+    predefined_sequence['fitSigM']          = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMFitter]
+    predefined_sequence['fitSigMDCB']       = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMDCBFitter]
+    predefined_sequence['fitSigMBinned']    = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMBinnedFitter]
+    predefined_sequence['fitBkgCombA']      = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombAFitter]
+    predefined_sequence['fitBkgCombM']      = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombMFitter]
 
-stdFit          = predefined_sequence['stdFit'] = [dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter, fitCollection.sigMFitter, fitCollection.bkgCombAFitter, fitCollection.sig2DFitter, dataCollection.sigMCGENReader, fitCollection.sigAFitter, fitCollection.finalFitter]
+    predefined_sequence['fitFinalM']        = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalMFitter]
+    predefined_sequence['fitFinalMDCB']     = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalMDCBFitter]
+    predefined_sequence['fitFinalM_AltMM']  = [dataCollection.dataReader, pdfCollection.stdWspaceReader, 
+                                              fitCollection.finalMDCB_AltBkgCombM_Fitter]
+    predefined_sequence['fitFinal_altMMA']  = [dataCollection.dataReader,
+                                               pdfCollection.stdWspaceReader,
+                                               fitCollection.final_AltM_AltBkgCombM_AltA_Fitter]
+    predefined_sequence['fitFinal3D'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter]
+    predefined_sequence['fitFinal3D_AltM'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_AltM]
 
-# For fitter validation and syst
-fitSig2D        = predefined_sequence['fitSig2D'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sig2DFitter]
-fitSigMCGEN     = predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
-fitall          = predefined_sequence['fitall'] = [dataCollection.effiHistReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter, dataCollection.sigMCReader, fitCollection.sig2DFitter]
+    predefined_sequence['stdFit']     = [dataCollection.effiHistReader, 
+                                        dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, 
+                                        fitCollection.effiFitter, fitCollection.sigMFitter, fitCollection.bkgCombAFitter, 
+                                        fitCollection.sig2DFitter, dataCollection.sigMCGENReader, fitCollection.sigAFitter, 
+                                        fitCollection.finalFitter]
 
-createplots = predefined_sequence['createplots'] = [plotCollection.Bkgplotter]#myplotter]
+    predefined_sequence['createplots'] = [#dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, 
+                                        dataCollection.dataReader, pdfCollection.stdWspaceReader, plotCollection.plotter]
 
 if __name__ == '__main__':
     parser = ArgumentParser(prog='seqCollection')
-    parser.add_argument('-b', '--binKey', dest='binKey', type=str, default=p.cfg['binKey'])
-    parser.add_argument('-s', '--seq', dest='seqKey', type=str, default=None)
+    parser.add_argument('-b', '--binKey', dest='binKey', type=str, default=p.cfg['binKey'], help="Q2 Bin to run over")
+    parser.add_argument('-s', '--seq', dest='seqKey', type=str, default=None, help="Sequence namei")
+    parser.add_argument('--TwoStep', help='Use 2 Step efficiency', action='store_true')
+    parser.add_argument("--list", nargs="+", default=["effi"])
     args = parser.parse_args()
-    if args.binKey =="all":                                                                                                                    
-        p.cfg['bins'] = allBins
-    else: 
-        p.cfg['bins'] = [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
+    if not args.TwoStep:  dataCollection.effiHistReader=dataCollection.effiHistReaderOneStep   # Use One step efficiency
+    SetSequences()
+    p.cfg['bins'] = allBins if args.binKey=="all" else [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
     p.cfg['seqKey']= args.seqKey
-    #pdb.set_trace()
+    if args.seqKey=="createplots":
+       for plot in args.list: plotCollection.plotter.cfg['switchPlots'].append(plot) 
+        
     for b in p.cfg['bins']:
         p.cfg['binKey'] = b
         p.setSequence(predefined_sequence[args.seqKey])

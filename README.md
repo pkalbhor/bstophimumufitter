@@ -27,7 +27,7 @@ TotalClean
 ```
 Create RooWorkspace objects:
 ```bash
-python seqCollection.py -b all -s buildAllPdfs
+python seqCollection.py -b all -s buildPdfs
 ```
 Create efficiency plots and fit efficiency + RECO level Plots:
 ```bash
@@ -37,17 +37,17 @@ Fit GEN level Plots:
 ```bash
 python seqCollection.py -b all -s fitSigMCGEN
 ```
-Create all the plots:
+Create the plots:
 ```bash
-createplots
+python seqCollection.py -b all -s createplots --list effi
 ```
 Transfer fitter result for futher calculation:
 ```bash
-cp Plots/*.db input/selected && rm data/preload*
+cp Plots/*.db input/selected
 ```
 Create GEN-RECO comparison plots for signal MCs:
 ```bash
-python seqCollection.py -b belowJpsiA -s createPlots
+python seqCollection.py -s createplots
 ```
 Run validation script for low statistics sub-samples:
 ```bash
@@ -56,5 +56,5 @@ python script/batchTask_sigMCValidation.py -b all postproc
 ```
 Submit HTCondor job for large set of sub-samples:
 ```bash
-python script/batchTask_sigMCValidation.py -b all -t 3000 submit -q workday -n 1 -s
+python script/batchTask_sigMCValidation.py -b all -t 2000 submit -q workday -n 1 -s
 ```

@@ -14,11 +14,14 @@ import BsToPhiMuMuFitter.cpp
 from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
 from BsToPhiMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb
 from BsToPhiMuMuFitter.StdProcess import p
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
 # For developers:
 #   * Input db is forced to be StdProcess.dbplayer.absInputDir
 #   * function name for labelled table is table_label1[_label2]
 
+dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected"))
+p.addService("dbplayer", dbplayer)
 
 db_dir = p.dbplayer.absInputDir
 
@@ -74,10 +77,13 @@ def table_yields():
     print(indent * (baseIndentLevel + 1) + r"\hline")
 
     binKeyToLine = OrderedDict()
-    binKeyToLine['belowJpsi'] = ["1"]
-    binKeyToLine['betweenPeaks'] = ["3"]
-    binKeyToLine['abovePsi2s'] = ["5"]
-    binKeyToLine['summary'] = ["0"]
+    for binKey in q2bins.keys():
+        if binKey in ['jpsi', 'psi2s', 'peaks']:
+            continue
+        binKeyToLine[binKey] = [q2bins[binKey]['label'].strip('bin')]
+        #binKeyToLine['betweenPeaks'] = ["3"]
+        #binKeyToLine['abovePsi2s'] = ["5"]
+        #binKeyToLine['summary'] = ["0"]
     for binKey, latexLine in binKeyToLine.items():
         db = shelve.open("{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
         latexLine.append("${0:.01f} \pm {1:.01f}$".format(db['nSig']['getVal'], db['nSig']['getError']))
@@ -122,25 +128,30 @@ def table_dataresAFBFL():
     print("")
     print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{|c|c|c|c|c|}")
     print(indent * (baseIndentLevel + 1) + r"\hline")
-    print(indent * (baseIndentLevel + 1) + r"$q^2$ bin index & $q^2$ range (in $\GeV^2$) & Signal Yield & $A_{FB}$ & $F_{L}$ \\")
+    print(indent * (baseIndentLevel + 1) + r"$q^2$ bin index & $q^2$ range (in $GeV^2$) & Signal Yield & $A_{6}$ & $F_{L}$ \\")
     print(indent * (baseIndentLevel + 1) + r"\hline")
     print(indent * (baseIndentLevel + 1) + r"\hline")
 
     binKeyToLine = OrderedDict()
-    binKeyToLine['belowJpsi'] = ["1", r"1.00 -- 8.68"]
-    binKeyToLine['jpsi'] = ["2", r"8.68 -- 10.09", r"\multicolumn{3}{|c|} {$\JPsi$ resonance region}"]
-    binKeyToLine['betweenPeaks'] = ["3", r"10.09 -- 12.86"]
-    binKeyToLine['psi2s'] = ["4", r"12.86 -- 14.18", r"\multicolumn{3}{|c|} {$\psi'$ resonance region}"]
-    binKeyToLine['abovePsi2s'] = ["5", r"14.18 -- 19.00"]
-    binKeyToLine['summary'] = ["0", r"bin\#1 $+$ bin\#3 $+$ bin\#5"]
+    binKeyToLine['belowJpsiA'] = ["1A", r"1.00 -- 2.00"]
+    binKeyToLine['belowJpsiB'] = ["1B", r"2.00 -- 5.00"]
+    binKeyToLine['belowJpsiC'] = ["1C", r"5.00 -- 8.00"]
+    binKeyToLine['jpsi'] = ["2", r"8.00 -- 11.00", r"\multicolumn{3}{|c|} {$J/\psi$ resonance region}"]
+    binKeyToLine['betweenPeaks'] = ["3", r"11.00 -- 12.5"]
+    binKeyToLine['psi2s'] = ["4", r"12.5 -- 15.00", r"\multicolumn{3}{|c|} {$\psi'$ resonance region}"]
+    binKeyToLine['abovePsi2sA'] = ["5A", r"15.00 -- 17.00"]
+    binKeyToLine['abovePsi2sB'] = ["5B", r"17.00 -- 19.00"]
+    binKeyToLine['Test3'] = ["5AB", r"15.00 -- 19.00"]
+    binKeyToLine['summaryLowQ2'] = ["LowQ2", r"1.00 -- 6.00"]
+    binKeyToLine['summary'] = ["0", r"1A$+$1B$+$1C$+$3$+$5A$+$5B"]
 
     syst_sources = [
-        'syst_randEffi',
-        'syst_altEffi',
-        'syst_simMismodel',
-        'syst_altSP',
-        'syst_altBkgCombA',
-        'syst_vetoJpsiX',
+        #'syst_randEffi',
+        #'syst_altEffi',
+        #'syst_simMismodel',
+        #'syst_altSP',
+        #'syst_altBkgCombA',
+        #'syst_vetoJpsiX',
         #  'syst_altFitRange',
     ]
     for binKey, latexLine in binKeyToLine.items():
@@ -148,16 +159,25 @@ def table_dataresAFBFL():
             db = shelve.open(r"{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
             latexLine.append(r"${0:.01f} \pm {1:.01f}$".format(db['nSig']['getVal'], db['nSig']['getError']))
             fl = unboundFlToFl(db['unboundFl']['getVal'])
-            latexLine.append("${0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}} \pm {3:.2f}$".format(
-                unboundAfbToAfb(db['unboundAfb']['getVal'], fl),
-                db['stat_FC_afb']['getErrorHi'],
-                db['stat_FC_afb']['getErrorLo'],
-                math.sqrt(sum([pow(db[v + '_afb']['getError'], 2) for v in syst_sources]))))
-            latexLine.append("${0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}} \pm {3:.2f}$".format(
-                fl,
-                db['stat_FC_fl']['getErrorHi'],
-                db['stat_FC_fl']['getErrorLo'],
-                math.sqrt(sum([pow(db[v + '_fl']['getError'], 2) for v in syst_sources]))))
+            afb = unboundAfbToAfb(db['unboundAfb']['getVal'], fl)
+
+            yyFlErrHi = unboundFlToFl(db['unboundFl']['getVal'] + db['unboundFl']['getErrorHi']) - fl
+            yyFlErrLo = fl - unboundFlToFl(db['unboundFl']['getVal'] + db['unboundFl']['getErrorLo'])
+            yyAfbErrHi = unboundAfbToAfb(db['unboundAfb']['getVal'] + db['unboundAfb']['getErrorHi'], fl) - afb
+            yyAfbErrLo = afb - unboundAfbToAfb(db['unboundAfb']['getVal'] + db['unboundAfb']['getErrorLo'], fl)
+
+            latexLine.append("${0:.2f}^{{{1:+.2f}}}_{{-{2:.2f}}}$".format( # \pm {3:.2f}$".format(
+                afb, yyAfbErrHi, yyAfbErrLo
+                #db['stat_FC_afb']['getErrorHi'],
+                #db['stat_FC_afb']['getErrorLo'],
+                #math.sqrt(sum([pow(db[v + '_afb']['getError'], 2) for v in syst_sources]))
+                ))
+            latexLine.append("${0:.2f}^{{{1:+.2f}}}_{{-{2:.2f}}}$".format( # \pm {3:.2f}$".format(
+                fl, yyFlErrHi, yyFlErrLo
+                #db['stat_FC_fl']['getErrorHi'],
+                #db['stat_FC_fl']['getErrorLo'],
+                #math.sqrt(sum([pow(db[v + '_fl']['getError'], 2) for v in syst_sources]))
+                ))
             db.close()
         print(indent * (baseIndentLevel + 1) + " & ".join(latexLine) + r" \\")
         print(indent * (baseIndentLevel + 1) + r"\hline")
@@ -168,9 +188,40 @@ def table_dataresAFBFL():
 def table_FinalDataresAFBFL():
     table_dataresAFBFL()
 
+def table_FitResults():
+    baseIndentLevel = 2                                                                                                                        
+    print("[table_FitResults] Printing table of Fit-Results")
+    print("")
+    print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{|c|l|l|l|l|l|}")
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    print(indent * (baseIndentLevel + 1) + r"$q^2$ bin & SigGEN & Sig2D & SigM & SigMDCB & BkgCombA & Final \\")
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+ 
+    binKeyToLine = OrderedDict()
+    for binKey in q2bins.keys():
+        if binKey in ['jpsi', 'psi2s', 'peaks']:
+            continue
+        binKeyToLine[binKey] = [q2bins[binKey]['label'].strip('bin')]
+    for binKey, latexLine in binKeyToLine.items():
+        db = shelve.open("{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
+        latexLine.append("${0}$ nll:${1:10.1f}$ ".format(db['sigAFitter.migrad']['status'], db['sigAFitter.migrad']['nll']))
+        latexLine.append("${0}$ nll:${1:10.1f}$ ".format(db['sig2DFitter.migrad']['status'], db['sig2DFitter.migrad']['nll']))
+        latexLine.append("${0}$ nll:${1:10.1f}$ ".format(db['sigMFitter.migrad']['status'], db['sigMFitter.migrad']['nll']))
+        latexLine.append("${0}$ nll:${1:10.1f}$ ".format(db['sigMDCBFitter.migrad']['status'] if 'sigMDCBFitter.migrad' in db.keys() else 8, db['sigMDCBFitter.migrad']['nll'] if 'sigMDCBFitter.migrad' in db.keys() else 8))
+        latexLine.append("${0}$ nll:${1:10.1f}$ ".format(db['bkgCombAFitter.migrad']['status'], db['bkgCombAFitter.migrad']['nll']))
+        latexLine.append("${0}$ nll:${1:10.1f}$ ".format(db['finalFitter.migrad']['status'], db['finalFitter.migrad']['nll']))
+        db.close()
+        print(indent * (baseIndentLevel + 1) + " & ".join(latexLine) + r" \\")
+             
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    print(indent * (baseIndentLevel + 0) + r"\end{tabular}")
+    print("")
+ 
 if __name__ == '__main__':
     #  table_sysFL_sysAFB()
-    #  table_yields()
+    table_yields()
     #  table_coverageAFBFL()
     #  table_dataresAFBFL()
-    #  table_FinalDataresAFBFL()
+    table_FinalDataresAFBFL()
+    table_FitResults()

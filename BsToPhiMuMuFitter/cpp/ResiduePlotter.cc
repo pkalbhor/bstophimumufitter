@@ -1,5 +1,5 @@
 //  ////////////////////////////////////////////////////////////////////////////////////////////
-//  Description : Input given as two frames. It divides Canvas into two Pads and Plots two graph
+//  Description : Input given as two frames or two histograms. It divides Canvas into two Pads and Plots two graph
 //  Author      : Pritam Kalbhor
 //  Email       : physics.pritam@gmail.com
 //
@@ -14,40 +14,44 @@
 #include "TStyle.h"
 #include "TRatioPlot.h"
 
+template <typename T> 
 class NewResPlot{
 private:
 	void SetgStyles();
 	void SetupPads();
-	void Init(RooPlot *f1, RooPlot *f2);
+	void Init(T *f1, T *f2);
 	double fInsetWidth= 0.0025; 
 	double fSplitFraction=0.3;
    Float_t fUpTopMargin = 0.1; ///< Stores the top margin of the upper pad
    Float_t fUpBottomMargin = 0.02; ///< Stores the bottom margin of the upper pad
    Float_t fLowTopMargin = 0.05; ///< Stores the top margin of the lower pad
-   Float_t fLowBottomMargin = 0.3; ///< Stores the bottom margin of the lower pad
+   Float_t fLowBottomMargin = 0.335; ///< Stores the bottom margin of the lower pad
    Float_t fFontSize = 18.;
 
 public:
-	NewResPlot(RooPlot *f1, RooPlot *f2);
+	NewResPlot(T *f1, T *f2);
 	~NewResPlot();
 	TPad *fUpperPad = 0;
 	TPad *fLowerPad = 0;
-    RooPlot *frame1 = 0;
-    RooPlot *frame2 = 0;
+    T *frame1 = 0;
+    T *frame2 = 0;
 
     void SetPadMargins();
 	void PostDrawDecoration();
 	void Draw();
 };
 
-NewResPlot::NewResPlot(RooPlot *f1, RooPlot *f2){
+template <typename T> 
+NewResPlot<T>::NewResPlot(T *f1, T *f2){
  Init(f1, f2); 	
 }//Default Constructer
 
-NewResPlot::~NewResPlot(){}
+template <class T>
+NewResPlot<T>::~NewResPlot(){}
 
-void NewResPlot::SetupPads(){
-	double pm =fInsetWidth;
+template <class T>
+void NewResPlot<T>::SetupPads(){
+   double pm =fInsetWidth;
    double width = gPad->GetWNDC();
    double height = gPad->GetHNDC();
    double f = height/width;
@@ -60,7 +64,8 @@ void NewResPlot::SetupPads(){
     fLowerPad = new TPad("lower_pad", "", pm*f, pm, 1.-pm*f, fSplitFraction); 
 }
 
-void NewResPlot::SetgStyles(){
+template <class T>
+void NewResPlot<T>::SetgStyles(){
    gStyle->SetFrameBorderMode(0);
    gStyle->SetFrameBorderSize(1);
    gStyle->SetFrameFillColor(0);
@@ -81,23 +86,24 @@ void NewResPlot::SetgStyles(){
 
 }
 
-void NewResPlot::SetPadMargins(){
+template <class T>
+void NewResPlot<T>::SetPadMargins(){
    //fUpperPad->SetTopMargin(fUpTopMargin);
    fUpperPad->SetBottomMargin(fUpBottomMargin);
    fLowerPad->SetTopMargin(fLowTopMargin);
    fLowerPad->SetBottomMargin(fLowBottomMargin);
 }
 
-
-
-void NewResPlot::Init(RooPlot *f1, RooPlot *f2){
+template <class T>
+void NewResPlot<T>::Init(T *f1, T *f2){
 	frame1=f1; frame2=f2;
 	SetgStyles();
 	SetupPads();
 	SetPadMargins();
 }
 
-void NewResPlot::PostDrawDecoration(){
+template <class T>
+void NewResPlot<T>::PostDrawDecoration(){
 	float textsize = fFontSize/(fLowerPad->GetWh()*fLowerPad->GetAbsHNDC());
 	frame2->GetXaxis()->SetLabelSize(textsize);
 	frame2->GetYaxis()->SetLabelSize(textsize);
@@ -107,7 +113,7 @@ void NewResPlot::PostDrawDecoration(){
 	frame2->GetYaxis()->SetNdivisions(505);
 	frame2->GetYaxis()->SetTitleSize(textsize);
 	frame2->GetYaxis()->SetTitleOffset(0.52);
-	frame2->GetYaxis()->SetTitle("Pull");
+	if (frame2->GetYaxis()->GetTitle()==""){frame2->GetYaxis()->SetTitle("Pull");}
 	frame2->SetTitle("");
 	
 	textsize = fFontSize/(fUpperPad->GetWh()*fUpperPad->GetAbsHNDC());
@@ -117,7 +123,8 @@ void NewResPlot::PostDrawDecoration(){
 	frame1->GetXaxis()->SetLabelOffset(999);
 }
 
-void NewResPlot::Draw(){
+template <class T>
+void NewResPlot<T>::Draw(){
  	fUpperPad->Draw();
    fLowerPad->Draw();
 
@@ -129,10 +136,6 @@ void NewResPlot::Draw(){
 	
    PostDrawDecoration();
 }
-
-
-
-
 
 
 

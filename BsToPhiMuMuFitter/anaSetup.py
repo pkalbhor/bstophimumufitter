@@ -3,7 +3,7 @@
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-
+#                 : Pritam Kalbhor (physics.pritam@gmail.com)
 
 from __future__ import print_function, division
 import os
@@ -104,11 +104,11 @@ def createBmassTemplate(name, lowerBd, upperBd):
     }
     return template
 
-bMassRegions['Fit'] = createBmassTemplate("Fit", 4.9, 5.8)
-bMassRegions['SR'] = createBmassTemplate("SR", 5.2, 5.5)
-bMassRegions['LSB'] = createBmassTemplate("LSB", 4.9, 5.2) #("LSB", 5.143, 5.223)
-bMassRegions['USB'] = createBmassTemplate("USB", 5.5, 5.8) #("USB", 5.511, 5.591)
-bMassRegions['SB'] = createBmassTemplate("SB", 4.9, 5.8)
+bMassRegions['Fit'] = createBmassTemplate("Fit", 5.2, 5.6)
+bMassRegions['SR'] = createBmassTemplate("SR", 5.1, 5.6)
+bMassRegions['LSB'] = createBmassTemplate("LSB", 4.7, 5.1) #("LSB", 5.143, 5.223)
+bMassRegions['USB'] = createBmassTemplate("USB", 5.6, 6.0) #("USB", 5.511, 5.591)
+bMassRegions['SB'] = createBmassTemplate("SB", 4.7, 6.0)
 bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['cutString'], bMassRegions['SR']['cutString'])
 
 # systematics
@@ -127,16 +127,15 @@ bMassRegions['altSB_vetoJpsiX'] = createBmassTemplate("altSB_vetoJpsiX", 4.76, 5
 bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB_vetoJpsiX']['cutString'], bMassRegions['altSR_vetoJpsiX']['cutString'])
 
 # Cut strings
-genSel = "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>4.0 && genMumPt>4.0 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5"
-recBaseSel = "fabs(Mupeta)<2.4 && fabs(Mumeta)<2.4 && Muppt>4.0 && Mumpt>4.0 && Kppt>0.5 && Kmpt>0.5 && fabs(Kpeta)<2.5 && fabs(Kmeta)<2.5"
+genSel = "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5"
+recBaseSel = "fabs(Mupeta)<2.4 && fabs(Mumeta)<2.4 && Muppt>2.5 && Mumpt>2.5 && Kppt>0.5 && Kmpt>0.5 && fabs(Kpeta)<2.5 && fabs(Kmeta)<2.5"
 cut_passTrigger = "JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0"
 cut_phiWindow = "Phimass>1.01 && Phimass < 1.03"
 #cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
 cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090"
-cut_Bdt = "Bdt > 0.14"
-ExtraCuts = "mtrkqual==1 && ptrkqual==1 && dr0<0.1 && dr1<0.1 && Kptrkdcasigbs>0.8 && Kmtrkdcasigbs>0.8"
+cut_Bdt = "Bdt > 0.06"
+ExtraCuts = "mtrkqual==1 && ptrkqual==1 && dr0<0.1 && dr1<0.1"
 cuts = [
-    recBaseSel,
     cut_passTrigger,
     cut_phiWindow,
     cut_antiRadiation,

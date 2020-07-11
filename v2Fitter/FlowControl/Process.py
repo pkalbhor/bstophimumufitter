@@ -86,9 +86,10 @@ class Process:
         self.logger.logINFO("New process initialized with random seed {0}".format(ROOT.gRandom.GetSeed()))
 
     def runSeq(self):
-        print("""Run all path. Process.runSeq() MainProcess""")
-        print("Mainprocess: self.cfg", self.cfg)
+        """Run all path. Process.runSeq() MainProcess"""
+        print(">>>> MainProcess-> Object: ", self.cfg['seqKey'], " Bin: ", self.cfg['binKey'])
         for seq_obj in self._sequence:
+            print (">> Entering Path: {0}".format(seq_obj.cfg['name']))
             self.logger.logDEBUG("Entering Path: {0}".format(seq_obj.cfg['name']))
             seq_obj.customize()
             seq_obj._runPath()

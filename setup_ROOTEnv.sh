@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # Setup pyROOT
 export SCRAM_ARCH=slc7_amd64_gcc48
@@ -23,3 +23,11 @@ alias TotalClean="${DIR}/BsToPhiMuMuFitter/bash/TotalClean.sh"
 alias JunkClean="${DIR}/BsToPhiMuMuFitter/bash/JunkClean.sh"
 
 echo -e ">>>> Help <<<< \nCommand: runallsteps\t --> Usage: Run all steps sequestially to produce fit plots\n" 
+#var=$(python ${DIR}/BsToPhiMuMuFitter/python/ArgCompletion.py)
+#TotList=$(echo "$var" | grep bin1A)
+#dirlist=$(echo "$var" | grep seqCollection.py)
+#binKey=$(echo "$var" | grep bin1A)
+#seqKey=$(echo "$var" | grep fitSig2D)
+#plotList=$(echo "$var" | grep effi)
+
+#complete -X '!*.py' -W "$TotList" python

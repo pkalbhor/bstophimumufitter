@@ -531,6 +531,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     p.cfg['binKey'] = args.binKey
-    pdb.set_trace() 
     args.func(args)
     sys.exit()

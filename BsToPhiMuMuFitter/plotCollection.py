@@ -2,14 +2,9 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 sts=4 fdm=indent fdl=0 fdn=3 ft=python et:
 
-import os, sys, pdb, copy 
-import re
-import math
-import types
-import functools
-import shelve
+import os, sys, pdb, copy, re, math, types, functools, shelve 
 from array import array
-
+from math import sqrt
 import ROOT
 
 import BsToPhiMuMuFitter.cpp
@@ -17,7 +12,6 @@ from v2Fitter.FlowControl.Path import Path
 from v2Fitter.Fitter.FitterCore import FitterCore
 from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath, bMassRegions
 from BsToPhiMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, flToUnboundFl, afbToUnboundAfb
-
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 from BsToPhiMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Phimass, genCosThetaK, genCosThetaL
 
@@ -79,18 +73,18 @@ class Plotter(Path):
             Plotter.latexLumi()
             Plotter.latexCMSExtra()
 
-    frameB = Bmass.frame()
+    frameB = Bmass.frame(5.2, 5.6)
     #frameB.SetMinimum(0)
-    frameB_binning = 72
+    frameB_binning = 20
 
     frameK = CosThetaK.frame()
     #frameK.SetMinimum(0)
-    frameK_binning = 10
+    frameK_binning = 20
 
     frameL = CosThetaL.frame()
     #frameL.SetMinimum(0)
     frameL.SetTitle("")
-    frameL_binning = 10
+    frameL_binning = 20
 
     legend = ROOT.TLegend(.75, .70, .95, .90)
     legend.SetFillColor(0)
@@ -98,7 +92,6 @@ class Plotter(Path):
 
     def initPdfPlotCfg(self, p):
         print(""" [Name, plotOnOpt, argAliasInDB, LegendName] """)
-        pdb.set_trace()
         pdfPlotTemplate = ["", plotterCfg_allStyle, None, None]
         p = p + pdfPlotTemplate[len(p):]
         if isinstance(p[0], str):
@@ -157,6 +150,7 @@ class Plotter(Path):
             if p[3] is not None:
                 Plotter.legend.AddEntry("pdfP{0}".format(pIdx), p[3], "LF")
         Plotter.legend.Draw()
+        Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(dataPlots[0][0].sumEntries()) )
         #Plotter.latex.DrawLatexNDC(.45, .74, r"#scale[0.8]{{#chi^{{2}}/NDF = {0:.2f}}}".format(cloned_frame.chiSquare()/(binning-pdfPlots[0][0].getParameters(dataPlots[0][0]).getSize()))) #pdfPlots[0][0].getParameters(dataPlots[0][0]).getSize()
         # Some marks
         Plotter.latexDataMarks(marks)
@@ -196,16 +190,31 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     wspace.factory("RooGaussian::gauss1(Bmass,mean[5.28,5.25,5.39],sigma1[0.02,0.01,0.05])")
     wspace.factory("RooGaussian::gauss2(Bmass,mean,sigma2[0.08,0.05,0.40])")
     wspace.factory("SUM::sigM(sigFrac[0.8,0,1]*gauss1,gauss2)")
-    wspace.factory("c1[-5.6,-20,20]")
+    wspace.factory("c1[-5.6,-30,30]")
     wspace.factory("EXPR::bkgCombM('exp(c1*Bmass)',{Bmass,c1})")
     wspace.factory("SUM::model(tmp_nSig[1,1e5]*sigM,tmp_nBkg[20,1e5]*bkgCombM)")
-    pdfPlots = [
-        [wspace.pdf('model'), plotterCfg_allStyle, None, "Total fit"],
-        [wspace.pdf('model'), (ROOT.RooFit.Components('sigM'),) + plotterCfg_sigStyle, None, "Signal"],
-        [wspace.pdf('model'), (ROOT.RooFit.Components('bkgCombM'),) + plotterCfg_bkgStyle, None, "Background"],
-    ]
-
-    fitter=pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True), ROOT.RooFit.PrintLevel(3), ROOT.RooFit.Save(True))
+    wspace.factory("cbs_mean[5.28, 5.25, 5.39]")
+    wspace.factory("RooCBShape::cbs_1(Bmass, cbs_mean, cbs1_sigma[0.8, 0.0001, 0.60], cbs1_alpha[0.8, -6.0, 6.0], cbs1_n[10, 0, 1000])")
+    wspace.factory("RooCBShape::cbs_2(Bmass, cbs_mean, cbs2_sigma[0.005, 0.0001, 0.60], cbs2_alpha[-0.8, -2.4, 5.6], cbs2_n[100, 0, 1000])")
+    wspace.factory("SUM::f_sigMDCB(sigMDCB_frac[0.8,0, 1]*cbs_1, cbs_2)")
+    wspace.factory("SUM::model2(tmp_nSig*f_sigMDCB,tmp_nBkg*bkgCombM)")
+    
+    #pdb.set_trace()
+    
+    if False:
+        pdfPlots = [
+            [wspace.pdf('model'), plotterCfg_allStyle, None, "Total fit"],
+            [wspace.pdf('model'), (ROOT.RooFit.Components('sigM'),) + plotterCfg_sigStyle, None, "Signal"],
+            [wspace.pdf('model'), (ROOT.RooFit.Components('bkgCombM'),) + plotterCfg_bkgStyle, None, "Background"],
+        ]
+    else:
+         pdfPlots = [
+            [wspace.pdf('model2'), plotterCfg_allStyle, None, "Total fit"],
+            [wspace.pdf('model2'), (ROOT.RooFit.Components('f_sigMDCB'),) + plotterCfg_sigStyle, None, "Signal"],
+            [wspace.pdf('model2'), (ROOT.RooFit.Components('bkgCombM'),) + plotterCfg_bkgStyle, None, "Background"],
+        ]
+   
+    fitter=pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Range("signal"), ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True), ROOT.RooFit.PrintLevel(-1), ROOT.RooFit.Save(True))
     fitter.Print("v")
     Plotter.plotFrameB(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
     self.canvasPrint(pltName)
@@ -222,7 +231,14 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
         'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
     }
-
+    ############################--------TEST---------###########################
+    """mmFrame=Mumumass.frame(sqrt(q2bins[self.process.cfg['binKey']]['q2range'][0]), sqrt(q2bins[self.process.cfg['binKey']]['q2range'][1]))
+    phiFrame=Phimass.frame(1.01, 1.03)
+    dataPlots[0][0].plotOn(mmFrame, ROOT.RooFit.Name("dataMuMuMass"))
+    cmm=ROOT.TCanvas("cmm", "cmm"); mmFrame.Draw(); self.latexQ2(); cmm.Print("MuMuMass_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+    dataPlots[0][0].plotOn(phiFrame, ROOT.RooFit.Name("dataPhiMass"))
+    cphi=ROOT.TCanvas("cphi", "cphi"); phiFrame.Draw(); self.latexQ2(); cphi.Print("PhiMass_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))"""
+    ############################--------TEST---------###########################
     cwd=os.getcwd()
     for frame in frames:
         plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
@@ -277,11 +293,12 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
 types.MethodType(plotSimpleGEN, None, Plotter)
 
 def DrawWithResidue(self, frame1):
+    #pdb.set_trace()
     Plotter.canvas.cd()
     frame2 = frame1.emptyClone("frame_for_residue")
-    hresid = frame1.pullHist() #residHist() #Get Pull
+    hresid = frame1.pullHist(frame1.getObject(0).GetName(), frame1.getObject(1).GetName()) #residHist() #Get Pull
     frame2.addPlotable(hresid, "P")
-    res=ROOT.NewResPlot(frame1, frame2); res.Draw();
+    res=ROOT.NewResPlot('RooPlot')(frame1, frame2); res.Draw();
     res.fUpperPad.cd()
     return res
 types.MethodType(DrawWithResidue, None, Plotter)
@@ -348,7 +365,7 @@ def plotEfficiency(self, data_name, pdf_name):
     #Cos_K Efficiency 
     Plotter.canvas.cd()
     cloned_frameK = Plotter.frameK.emptyClone("cloned_frameK")
-    h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY")
+    h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY") 
     data_accXrec_fine_ProjectionY = ROOT.RooDataHist("data_accXrec_fine_ProjectionY", "", ROOT.RooArgList(CosThetaK), ROOT.RooFit.Import(h_accXrec_fine_ProjectionY))
     data_accXrec_fine_ProjectionY.plotOn(cloned_frameK, ROOT.RooFit.Rescale(100), ROOT.RooFit.MarkerStyle(7))
     pdfK = self.process.sourcemanager.get("effi_cosK")
@@ -385,7 +402,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
         afbDB = unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
     sigFrac = {}
     bkgCombFrac = {}
-    for regionName in ["Fit"]:#, "SR", "LSB", "USB", "SB"]:
+    for regionName in ["Fit", "SR", "SB", "LSB", "USB"]:
         dataPlots = [["{0}.{1}".format(dataReader, regionName), plotterCfg_dataStyle, "Data"], ]
         for pIdx, p in enumerate(dataPlots):
             dataPlots[pIdx] = self.initDataPlotCfg(p)
@@ -405,7 +422,6 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
             ROOT.RooFit.NormSet(obs),
             ROOT.RooFit.Range(regionName)).getVal()
         nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName]
-
         # Correct the shape of f_final
         args.find("nSig").setVal(nSigDB * sigFrac[regionName])
         args.find("nBkgComb").setVal(nBkgCombDB * bkgCombFrac[regionName])
@@ -735,11 +751,11 @@ plotterCfg['plots'] = {
         'kwargs': {
             'pltName': "angular3D_bkgCombA",
             'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
-            'pdfPlots': [#["f_bkgCombA", plotterCfg_bkgStyle, None, "Analytic Bkg."],
-                         ["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9)), None, "Smooth Bkg."],
+            'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle, None, "Analytic Bkg."],
+                         #["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9)), None, "Smooth Bkg."],
                         ],
             'marks': []}
-    },
+    }, #ROOT.RooFit.Range(bMassRegions['Fit']['range'][0], bMassRegions['Fit']['range'][1])
     'simpleBLK': {  # Most general case, to be customized by user
         'func': [functools.partial(plotSimpleBLK, frames='BLK')],
         'kwargs': {
@@ -761,7 +777,19 @@ plotterCfg['plots'] = {
         }
     },
 
-    'angular3D_finalAlt': {
+    'angular3D_final_AltM': {  
+        'func': [plotPostfitBLK],
+        'kwargs': {
+            'pltName': "angular3D_final_AltM",
+            'dataReader': "dataReader",
+            'pdfPlots': [["f_final_AltM", plotterCfg_allStyle, None, "Total fit"],
+                         ["f_sig3DAltM", plotterCfg_sigStyle, None, "Sigal"],
+                         ["f_bkgComb", plotterCfg_bkgStyle, None, "Background"],
+                        ],
+        }
+    },
+
+    'angular3D_final_AltBkgCombA': {
         'func': [plotPostfitBLK],
         'kwargs': {
             'pltName': "angular3D_finalAlt",
@@ -793,6 +821,30 @@ plotterCfg['plots'] = {
             'pdfPlots': [["f_finalAltM_AltBkgCombM_AltBkgCombA", plotterCfg_allStyle, None, "Total Alt Fit"],
                          ["f_sig3DAltM", plotterCfg_sigStyle, dict(fitCollection.setupSigMDCBFitter['argAliasInDB'].items() + fitCollection.setupSigAFitter['argAliasInDB'].items()), "Alt Sigal"],
                          ["f_bkgCombAltM_AltA", plotterCfg_bkgStyle, None, "Alt Background"],
+                        ],
+        }
+    },
+
+   'angular3D_finalM': {       # 1D BMass Final Fit: nSig(sigM)+nBkg(fBkgM)
+        'func': [functools.partial(plotPostfitBLK, frames='B')],
+        'kwargs': {
+            'pltName': "angular3D_finalM",
+            'dataReader': "dataReader",
+            'pdfPlots': [["f_finalM", plotterCfg_allStyle, dict(fitCollection.setupSigMFitter['argAliasInDB'].items()), "Total Alt Fit"],
+                         ["f_sigM", plotterCfg_sigStyle, dict(fitCollection.setupSigMFitter['argAliasInDB'].items()), "Alt Sigal"],
+                         ["f_bkgCombM", plotterCfg_bkgStyle, None, "Alt Background"],
+                        ],
+        }
+    },
+
+   'angular3D_finalMDCB': {       # 1D BMass Final Fit: nSig(sigMDCB)+nBkg(fBkgM)
+        'func': [functools.partial(plotPostfitBLK, frames='B')],
+        'kwargs': {
+            'pltName': "angular3D_finalMDCB",
+            'dataReader': "dataReader",
+            'pdfPlots': [["f_finalMDCB", (ROOT.RooFit.Range(*bMassRegions['Fit']['range']),)+plotterCfg_allStyle, None, "Total Alt Fit"],
+                         ["f_sigMDCB", (ROOT.RooFit.Range(*bMassRegions['Fit']['range']),)+plotterCfg_sigStyle, dict(fitCollection.setupSigMDCBFitter['argAliasInDB'].items()), "Alt Sigal"],
+                         ["f_bkgCombM", plotterCfg_bkgStyle, None, "Alt Background"],
                         ],
         }
     },
@@ -851,25 +903,26 @@ myplotter = Plotter(myplotterCfg)
 BkgShapeCfg=copy.deepcopy(plotterCfg); BkgShapeCfg['switchPlots'].append('angular3D_bkgCombA')
 Bkgplotter = Plotter(BkgShapeCfg)
 if __name__ == '__main__':
-    binKey =  [sys.argv[1]]
+    binKey =  [key for key in q2bins.keys() if q2bins[key]['label']==sys.argv[1]]
     for b in binKey:
         p.cfg['binKey'] = b
-        #plotter.cfg['switchPlots'].append('simpleSpectrum') # Bmass
-        #plotter.cfg['switchPlots'].append('effi')            # Efficiency
+        plotter.cfg['switchPlots'].append('simpleSpectrum')                # Bmass 1D Fit
+        #plotter.cfg['switchPlots'].append('effi')                          # Efficiency
         #plotter.cfg['switchPlots'].append('angular3D_sigM')
-        #plotter.cfg['switchPlots'].append('angular3D_sigMDCB') # Plot for Signal Mass with DCB
+        #plotter.cfg['switchPlots'].append('angular3D_sigMDCB')             #Plot for Signal Mass with DCB
         #plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
         #plotter.cfg['switchPlots'].append('angular3D_final')
-        #plotter.cfg['switchPlots'].append('angular3D_finalAlt') #SmoothBkg Final Fit
+        #plotter.cfg['switchPlots'].append('angular3D_finalAlt')            #SmoothBkg Final Fit
         #plotter.cfg['switchPlots'].append('angular3D_finalAltSigMAltBkgCombA') #SmoothBkg & DCB Signal Mass Final Fit
-        plotter.cfg['switchPlots'].append('angular3D_final_AltMM') #AltBkgM + AltMDCB: Final 1D BMass Fit
-        #plotter.cfg['switchPlots'].append('angular3D_final_AltMMA') #AltBkgM + SmoothBkgA + AltMDCB: Final 3D Fit
+        #plotter.cfg['switchPlots'].append('angular3D_final_AltMM')         #AltBkgM + AltMDCB: Final 1D BMass Fit
+        #plotter.cfg['switchPlots'].append('angular3D_final_AltMMA')        #AltBkgM + SmoothBkgA + AltMDCB: Final 3D Fit
         #plotter.cfg['switchPlots'].append('angular3D_summary')
         #plotter.cfg['switchPlots'].append('angular3D_sig2D')               #To Produce RECO Level Plots
         #plotter.cfg['switchPlots'].append('angular3D_GEN')                 #To Produce Gen Level Plots
         #plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')    #Summary of Fl and Afb
-        #plotter.cfg['switchPlots'].append('angular2D_RECO_values')    #Summary of Fl and Afb
-        p.setSequence([dataCollection.effiHistReaderOneStep, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
+        #plotter.cfg['switchPlots'].append('angular2D_RECO_values')         #Summary of Fl and Afb
+        dataCollection.effiHistReader=dataCollection.effiHistReaderOneStep
+        p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
         p.beginSeq()
         p.runSeq()
         p.endSeq()

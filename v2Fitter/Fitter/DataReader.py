@@ -67,7 +67,7 @@ class DataReader(Path):
             dcut)
         data.Write(); tempfile_preload.Close() #Pritam
         self.dataset[dname] = data
-        print "\033[0;34;47m Creating Dataset: ", dname, ": \033[0m", dcut
+        print "\033[0;34;47m Creating Dataset: ", dname, ": \033[0m", dcut, data.sumEntries()
         return data
 
     def createDataSets(self, dataset):

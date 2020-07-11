@@ -27,7 +27,6 @@ class ObjProvider(Path):
         for key, builders in self.cfg['obj'].items():
             if not key in self.process.sourcemanager.keys():
                 for builder in builders:
-                    print("builders:", builders)
                     builder(self)
                     if self.cfg['source'].has_key(key):
                         break

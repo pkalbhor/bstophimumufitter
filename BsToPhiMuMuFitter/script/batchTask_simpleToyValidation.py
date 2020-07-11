@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # vim: set sts=4 sw=4 fdm=indent fdl=1 fdn=3 et:
 
-import sys
+import sys, pdb, os
 
 from copy import copy, deepcopy
 import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
 
-from BsToPhiMuMuFitter.anaSetup import q2bins
+from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
+from BsToPhiMuMuFitter.python.datainput import allBins
 from BsToPhiMuMuFitter.StdProcess import p
 import ROOT
 import BsToPhiMuMuFitter.cpp
@@ -23,12 +24,13 @@ import BsToPhiMuMuFitter.plotCollection as plotCollection
 class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
     def createJdl(self, parser_args):
         jdl = self.createJdlBase()
-        jdl += """
+        for BinKey in parser_args.process.cfg['bins']:
+            jdl += """
 arguments = --binKey {binKey} {func} $(Process)
-queue {nJobs}
-""".format(nJobs=self.cfg['nJobs'],
-           binKey=parser_args.binKey,
-           func=parser_args.Function_name.replace('submit', 'run'))
+queue {nJobs}"""
+            jdl=jdl.format(nJobs=self.cfg['nJobs'],
+                            binKey=q2bins[BinKey]['label'],
+                            func=parser_args.Function_name.replace('submit', 'run'), executable=os.path.abspath(__file__),)
         return jdl
 
 class BatchTaskWrapperSummary(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
@@ -65,8 +67,11 @@ if __name__ == '__main__':
     AbsBatchTaskWrapper.BatchTaskSubparsers.choices['run_summary'] = BatchTaskSubparserRunSummary
 
     args = parser.parse_args()
-    p.cfg['binKey'] = args.binKey
-
+    #p.cfg['binKey'] = args.binKey
+    if args.binKey =="all":
+        p.cfg['bins'] = allBins
+    else:
+        p.cfg['bins'] = [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
     if args.Function_name in ['run', 'submit']:
         toyCollection.sigToyGenerator.cfg.update({
             'saveAs': None,
@@ -98,7 +103,7 @@ if __name__ == '__main__':
         ])
         wrappedTask = BatchTaskWrapper(
             "myBatchTask",
-            "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/BsToPhiMuMuFitter/batchTask_simpleToyValidation",
+            modulePath+"/batchTask_simpleToyValidation",
             cfg=setupBatchTask)
     elif args.Function_name in ['run_summary', 'submit_summary']:
         plotCollection.plotter.cfg['plots']['angular3D_summary']['kwargs']['drawSM'] = False
@@ -114,7 +119,7 @@ if __name__ == '__main__':
         ])
         wrappedTask = BatchTaskWrapperSummary(
             "myBatchTask",
-            "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/BsToPhiMuMuFitter/batchTask_simpleToyValidation",
+            modulePath+"/batchTask_simpleToyValidation",
             cfg=setupBatchTask)
     else:
         raise ValueError("Unknown function name")

@@ -50,6 +50,7 @@ RooMinuit* StdFitter::Init(RooAbsPdf* pdf, RooDataSet* data){
     nll = pdf->createNLL(*data, this->createNLLOpt);
     minuit = new RooMinuit(*nll);
     //minuit->setPrintLevel(3); //Pritam
+    minuit->setStrategy(1);
     return minuit;
 }
 

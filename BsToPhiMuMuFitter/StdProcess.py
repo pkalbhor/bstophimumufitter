@@ -213,7 +213,6 @@ processCfg = {
     'seqKey': None,
 }
 p = Process("myProcess", "Plots", processCfg)
-#pdb.set_trace()
 #dbplayer = FitDBPlayer(absInputDir=os.path.join(anaSetup.modulePath, "input", "selected"))
 #p.addService("dbplayer", dbplayer)
 

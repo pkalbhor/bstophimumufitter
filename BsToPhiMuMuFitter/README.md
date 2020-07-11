@@ -2,9 +2,9 @@
 
 ## Overview of the design
 
-* [`StdProcess.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/BsToPhiMuMuFitter/StdProcess.py)
-* [`anaSetup.pu`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/BsToPhiMuMuFitter/anaSetup.py)
 * [`seqCollection.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/BsToPhiMuMuFitter/seqCollection.py)
+* [`StdProcess.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/BsToPhiMuMuFitter/StdProcess.py)
+* [`anaSetup.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/BsToPhiMuMuFitter/anaSetup.py)
 
 # How to run?
 
@@ -13,10 +13,10 @@
 Select a pre-defined sequence in [`seqCollection.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/BsToPhiMuMuFitter/seqCollection.py), and then just
 
 ```sh
-python seqCollection.py
+python seqCollection.py --binKey bin# --seqKey sequence_to_execute
 ```
 
-## Validation
+## Fitter Validation
 
 * [`script/batchTask_simpleToyValidation.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/BsToPhiMuMuFitter/script/batchTask_simpleToyValidation.py)
 

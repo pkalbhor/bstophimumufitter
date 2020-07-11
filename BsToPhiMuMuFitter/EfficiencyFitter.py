@@ -33,7 +33,7 @@ class EfficiencyFitter(FitterCore):
         return cfg
 
     def _bookMinimizer(self):
-        print("""Pass complicate fitting control.""")
+        """Pass complicate fitting control."""
         pass
 
     def _preFitSteps(self):
@@ -56,10 +56,11 @@ class EfficiencyFitter(FitterCore):
             
             theList = ROOT.RooLinkedList()
             theSave = ROOT.RooFit.Save() #Python discards temporary objects
-            Verbose    = ROOT.RooFit.Verbose(0)
-            theList.Add(theSave);  theList.Add(Verbose)
-            Res=pdf.chi2FitTo(hdata, theList);
-            Res.Print()
+            Verbose   = ROOT.RooFit.Verbose(0)
+            PrintLevel= ROOT.RooFit.PrintLevel(-1)
+            theList.Add(theSave);  theList.Add(Verbose); theList.Add(PrintLevel)
+            Res=pdf.chi2FitTo(hdata, theList)
+            Res.Print("v")
 
             ################## AlTernatively #######################     
             #chi2 = pdf.createChi2(hdata, ROOT.RooFit.Save(1))
@@ -73,7 +74,8 @@ class EfficiencyFitter(FitterCore):
             self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
 
         args.find('effi_norm').setConstant(False)
-        Res2D=self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True), ROOT.RooFit.Save()) #, ROOT.RooFit.PrintLevel(-1))
+        Res2D=self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True), ROOT.RooFit.Save(), ROOT.RooFit.PrintLevel(-1))
+        Res2D.Print("v")
         #args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
         args.find('effi_norm').setConstant(True)
 
@@ -104,7 +106,6 @@ class EfficiencyFitter(FitterCore):
                 nPar = nPar + 1
             arg = args_it.Next()
         effi_sigA_formula = Formula
-        print "Formula: ", Formula
         effi_sigA_formula = re.sub(r"x(\d{1,2})", r"[\1]", effi_sigA_formula)
         effi_sigA_formula = re.sub(r"CosThetaL", r"x", effi_sigA_formula)
         effi_sigA_formula = re.sub(r"CosThetaK", r"y", effi_sigA_formula)
@@ -112,9 +113,9 @@ class EfficiencyFitter(FitterCore):
 
         fitter = ROOT.EfficiencyFitter()
         minuit = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
+        minuit.SetPrintLevel(-1) #Pritam
         for xIdx in range(nPar):
             minuit.DefineParameter(xIdx, "x{0}".format(xIdx), 0., 1E-4, -1E+1, 1E+1)
-        # minuit.SetPrintLevel(-1) #Pritam
         minuit.Command("MINI")
         minuit.Command("MINI")
         minuit.Command("MINOS")
@@ -125,7 +126,7 @@ class EfficiencyFitter(FitterCore):
             arg = args.find("x{0}".format(xIdx))
             arg.setVal(parVal)
             arg.setError(parErr)
-
+        minuit.Print()
         print "Status: ", minuit.GetStatus()
         # Check if efficiency is positive definite
         f2_max_x, f2_max_y = ROOT.Double(0), ROOT.Double(0)
