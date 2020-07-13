@@ -20,6 +20,19 @@ import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
 
+defaultPlotRegion = "Fit"
+plotterCfg_styles = {}
+plotterCfg_styles['dataStyle'] = (ROOT.RooFit.XErrorSize(0.),)
+plotterCfg_styles['mcStyleBase'] = ()
+plotterCfg_styles['allStyleBase'] = (ROOT.RooFit.LineColor(1),)
+plotterCfg_styles['sigStyleNoFillBase'] = (ROOT.RooFit.LineColor(4),)
+plotterCfg_styles['sigStyleBase'] = (ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3003), ROOT.RooFit.VLines())
+plotterCfg_styles['bkgStyleBase'] = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(2))
+plotterCfg_styles['mcStyle'] = plotterCfg_styles['mcStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_styles['allStyle'] = plotterCfg_styles['allStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_styles['sigStyle'] = plotterCfg_styles['sigStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_styles['sigStyleNoFill'] = plotterCfg_styles['sigStyleNoFillBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_styles['bkgStyle'] = plotterCfg_styles['bkgStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
 class Plotter(Path):
     """The plotter"""
     setStyle()
@@ -73,7 +86,7 @@ class Plotter(Path):
             Plotter.latexLumi()
             Plotter.latexCMSExtra()
 
-    frameB = Bmass.frame(5.2, 5.6)
+    frameB = Bmass.frame(ROOT.RooFit.Range(defaultPlotRegion))
     #frameB.SetMinimum(0)
     frameB_binning = 20
 
@@ -714,8 +727,8 @@ plotterCfg['plots'] = {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
         'kwargs': {
             'pltName': "angular3D_sigM",
-            'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_sigM", plotterCfg_sigStyle, fitCollection.setupSigMFitter['argAliasInDB'], "Total fit"],
+            'dataPlots': [["sigMCReader.Fit", plotterCfg_styles['mcStyle'], "Simulation"], ],
+            'pdfPlots': [["f_sigM", plotterCfg_styles['sigStyle'], fitCollection.setupSigMFitter['argAliasInDB'], "Total fit"],
                         ],
             'marks': ['sim']}
     },

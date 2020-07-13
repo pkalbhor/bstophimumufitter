@@ -75,7 +75,7 @@ sigMCReaderCfg.update({
     'name': "sigMCReader",
     'ifile': sigMC,
     'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
-    'lumi': 16281.440 + 21097.189,
+    'lumi': 66226.56,
 })
 sigMCReader = DataReader(sigMCReaderCfg)
 customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCuts)
