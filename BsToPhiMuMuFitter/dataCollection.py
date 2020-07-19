@@ -9,10 +9,10 @@ from copy import copy
 import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
-from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN
-from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath, genSel, recBaseSel, ExtraCuts
+from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN, dataArgsKStar
+from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath, genSel, recBaseSel, ExtraCuts, ExtraCutsKStar
 #from python.datainput import sigMC, dataFilePath, UnfilteredMC, sigMCD
-from BsToPhiMuMuFitter.python.datainput import allBins, sigMC, dataFilePath, UnfilteredMC, sigMCD
+from BsToPhiMuMuFitter.python.datainput import allBins, sigMC, dataFilePath, UnfilteredMC, sigMCD, KStarSigMC
 import ROOT
 from ROOT import TChain
 from ROOT import TEfficiency, TH2D
@@ -31,8 +31,6 @@ CFG.update({
 # dataReader
 def customizeOne(self, targetBMassRegion=None, extraCuts=None):
     """Define datasets with arguments."""
-    #if self.process.name=="sigMCValidationProcess" and self.name=="sigMCReader":
-    #    sigMCReader.name="sigMCValidation"; sigMCReader.cfg['name']="sigMCValidation"
     if targetBMassRegion is None:
         targetBMassRegion = []
     if not self.process.cfg['binKey'] in q2bins.keys():
@@ -66,7 +64,7 @@ dataReaderCfg.update({
     'lumi': 35.9,
 })
 dataReader = DataReader(dataReaderCfg)
-customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'], extraCuts=ExtraCuts)
+customizeData = functools.partial(customizeOne, targetBMassRegion=['^Full$', '^Fit$', '^SR$', '^.{0,1}SB$'], extraCuts=ExtraCuts)
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
@@ -80,6 +78,19 @@ sigMCReaderCfg.update({
 sigMCReader = DataReader(sigMCReaderCfg)
 customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCuts)
 sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
+
+# KStar0MuMu-sigMCReader
+KsigMCReaderCfg = copy(CFG)
+KsigMCReaderCfg.update({
+    'name': "KsigMCReader",
+    'ifile': KStarSigMC,
+    'argset': dataArgsKStar,
+    'preloadFile': modulePath + "/data/preload_KsigMCReader_{binLabel}.root",
+    'lumi': 2765.2853,
+})
+KsigMCReader = DataReader(KsigMCReaderCfg)
+customizeKSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCutsKStar)
+KsigMCReader.customize = types.MethodType(customizeKSigMC, KsigMCReader)
 
 # sigMCGENReader
 def customizeGEN(self):

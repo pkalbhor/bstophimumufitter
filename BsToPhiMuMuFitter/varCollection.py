@@ -8,7 +8,7 @@ from ROOT import RooRealVar
 from ROOT import RooArgSet
 from BsToPhiMuMuFitter.anaSetup import bMassRegions
 
-Bmass = RooRealVar("Bmass","m_{#phi#mu#mu} [GeV]", 4.7, 6.0)
+Bmass = RooRealVar("Bmass","m_{#phi#mu#mu} [GeV]", 5.2, 5.6) #4.7, 6.0)
 for regName, regCfg in bMassRegions.items():
     # Remark: Only regions defined while running pdfCollection could be used in ROOT.RooFit(regionName)
     Bmass.setRange(regName, regCfg['range'][0], regCfg['range'][1])
@@ -38,11 +38,23 @@ dr1 = RooRealVar("dr1", "#Delta_{1}(R)", 0, 100)
 Kptrkdcasigbs = RooRealVar("Kptrkdcasigbs", "#K_{+}(dca)", 0, 500)
 Kmtrkdcasigbs = RooRealVar("Kmtrkdcasigbs", "#K_{-}(dca)", 0, 500)
 
+#For K*0mumu DataSet
+LMNTTriggersdr0 = RooRealVar("LMNTTriggersdr0", "LMNTTriggersdr0", 0, 1e8)
+LMNTTriggersdr1 = RooRealVar("LMNTTriggersdr1", "LMNTTriggersdr1", 0, 1e8)
+JpsiTriggersdr0 = RooRealVar("JpsiTriggersdr0", "JpsiTriggersdr0", 0, 1e8)
+JpsiTriggersdr1 = RooRealVar("JpsiTriggersdr1", "JpsiTriggersdr1", 0, 1e8)
+PsiPTriggersdr0 = RooRealVar("PsiPTriggersdr0", "PsiPTriggersdr0", 0, 1e8)
+PsiPTriggersdr1 = RooRealVar("PsiPTriggersdr1", "PsiPTriggersdr1", 0, 1e8)
+
 TriggerBase = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1)
 VarSet = RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Mumumasserr, Phimass, Bdt)
-#KaonVar = RooArgSet(Mupeta, Mumeta, Muppt, Mumpt, Kppt, Kmpt, Kpeta, Kmeta)
-#TrigBase = RooArgSet(TriggerBase, KaonVar, "RooArgSet: Trigger+Muon+Kaon")
 dataArgs = RooArgSet(VarSet, TriggerBase, "RooArgSet for Data and MC")
+
+#For producing K*0mumu DataSet
+TriggerBaseKstar = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual)
+DRVars = RooArgSet(LMNTTriggersdr0, LMNTTriggersdr1, JpsiTriggersdr0, JpsiTriggersdr1, PsiPTriggersdr0, PsiPTriggersdr1)
+TrigBaseDR = RooArgSet(TriggerBaseKstar, DRVars, "RooArgSet, trigger, dr, trackQual")
+dataArgsKStar = RooArgSet(VarSet, TrigBaseDR, "RooArgSet for bd->K*0mumu MC")
 
 genCosThetaK = RooRealVar("genCosThetaK", "cos#theta_{K}", -1., 1.)
 genCosThetaL = RooRealVar("genCosThetaL", "cos#theta_{l}", -1., 1.)

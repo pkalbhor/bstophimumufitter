@@ -27,10 +27,10 @@ plotterCfg_styles['mcStyleBase'] = ()
 plotterCfg_styles['allStyleBase'] = (ROOT.RooFit.LineColor(1),)
 plotterCfg_styles['sigStyleNoFillBase'] = (ROOT.RooFit.LineColor(4),)
 plotterCfg_styles['sigStyleBase'] = (ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3003), ROOT.RooFit.VLines())
-plotterCfg_styles['bkgStyleBase'] = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(2))
-plotterCfg_styles['mcStyle'] = plotterCfg_styles['mcStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_styles['bkgStyleBase'] = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(2), ROOT.RooFit.FillColor(2), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3003))
+plotterCfg_styles['mcStyle'] = plotterCfg_styles['mcStyleBase']
 plotterCfg_styles['allStyle'] = plotterCfg_styles['allStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
-plotterCfg_styles['sigStyle'] = plotterCfg_styles['sigStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_styles['sigStyle'] = plotterCfg_styles['sigStyleBase'] #+ (ROOT.RooFit.Range(defaultPlotRegion),)
 plotterCfg_styles['sigStyleNoFill'] = plotterCfg_styles['sigStyleNoFillBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
 plotterCfg_styles['bkgStyle'] = plotterCfg_styles['bkgStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
 class Plotter(Path):
@@ -88,7 +88,7 @@ class Plotter(Path):
 
     frameB = Bmass.frame(ROOT.RooFit.Range(defaultPlotRegion))
     #frameB.SetMinimum(0)
-    frameB_binning = 20
+    frameB_binning = 20 #ROOT.RooBinning(20, 5.2, 5.6)
 
     frameK = CosThetaK.frame()
     #frameK.SetMinimum(0)
@@ -144,7 +144,7 @@ class Plotter(Path):
         for pIdx, p in enumerate(dataPlots):
             p[0].plotOn(cloned_frame,
                         ROOT.RooFit.Name("dataP{0}".format(pIdx)),
-                        ROOT.RooFit.Binning(binning),
+                        ROOT.RooFit.Binning(binning),# 5.2,5.6),
                         *p[1])
         for pIdx, p in enumerate(pdfPlots):
             p[0].plotOn(cloned_frame,
@@ -488,11 +488,149 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
         os.chdir(cwd)
 types.MethodType(plotPostfitBLK, None, Plotter)
 
+def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
+    """Specification of plotSimpleBLK for post-fit plots with KStar"""
+    for pIdx, plt in enumerate(pdfPlots):
+        pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
+
+    # Calculate normalization and then draw
+    args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL))
+
+
+    nSigDB = args.find('nSig').getVal()
+    nSigErrorDB = args.find('nSig').getError()
+    nBkgCombDB = args.find('nBkgComb').getVal()
+    nBkgCombErrorDB = args.find('nBkgComb').getError()
+    nBkgKStarDB = args.find('nBkgKStar').getVal()
+    nBkgKStarErrorDB = args.find('nBkgKStar').getError()
+    if 'L' in frames or 'K' in frames:
+        flDB = unboundFlToFl(args.find('unboundFl').getVal())
+        afbDB = unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
+    sigFrac = {}
+    bkgCombFrac = {}
+    bkgKStarFrac = {}
+    for regionName in ["Fit"]:
+        drawRegionName = {'SB': "LSB,USB", 'innerSB': "innerLSB,innerUSB", 'outerSB': "outerLSB,outerUSB"}.get(regionName, regionName)
+        dataPlots = [["{0}.{1}".format(dataReader, regionName), plotterCfg_styles['dataStyle'] + (ROOT.RooFit.CutRange(drawRegionName),), "Data"], ]
+        for pIdx, p in enumerate(dataPlots):
+            dataPlots[pIdx] = self.initDataPlotCfg(p)
+
+        # Bind the 'Bmass' defined in PDF with 'getObservables' to createIntegral
+        obs = pdfPlots[1][0].getObservables(dataPlots[0][0])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
+        sigFrac[regionName] = pdfPlots[1][0].createIntegral(
+            obs,
+            ROOT.RooFit.NormSet(obs),
+            ROOT.RooFit.Range(regionName)).getVal()
+
+        obs = pdfPlots[2][0].getObservables(dataPlots[0][0])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
+        bkgCombFrac[regionName] = pdfPlots[2][0].createIntegral(
+            obs,
+            ROOT.RooFit.NormSet(obs),
+            ROOT.RooFit.Range(regionName)).getVal()
+        obs = pdfPlots[3][0].getObservables(dataPlots[0][0])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
+        bkgKStarFrac[regionName] = pdfPlots[3][0].createIntegral(
+            obs,
+            ROOT.RooFit.NormSet(obs),
+            ROOT.RooFit.Range(regionName)).getVal()
+
+        nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName] + nBkgKStarDB * bkgKStarFrac[regionName]
+
+        if regionName not in ['SB', 'innerSB', 'outerSB']:
+            modified_pdfPlots = [
+                [pdfPlots[0][0],
+                 # pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
+                 pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
+                 pdfPlots[0][2],
+                 pdfPlots[0][3]],
+                [pdfPlots[0][0],
+                 # pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+                 pdfPlots[1][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+                 pdfPlots[1][2],
+                 pdfPlots[1][3]],
+                [pdfPlots[0][0],
+                 # pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+                 pdfPlots[2][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+                 pdfPlots[2][2],
+                 pdfPlots[2][3]],
+                [pdfPlots[0][0],
+                 # pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+                 pdfPlots[3][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[3][0].GetName())),
+                 pdfPlots[3][2],
+                 pdfPlots[3][3]],
+
+                [pdfPlots[0][0],
+                 pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
+                 pdfPlots[0][2],
+                 None], # Duplication of the Total fit to overwrite components. Legend is ignored.
+            ]
+        else:
+            # Correct the shape of f_final
+            args.find("nSig").setVal(nSigDB * sigFrac[regionName])
+            args.find("nBkgComb").setVal(nBkgCombDB * bkgCombFrac[regionName])
+            args.find("nBkgKStar").setVal(nBkgKStarDB * bkgKStarFrac[regionName])
+            modified_pdfPlots = [
+                [pdfPlots[0][0],
+                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.ProjectionRange(defaultPlotRegion), ),
+                 pdfPlots[0][2],
+                 pdfPlots[0][3]],
+                [pdfPlots[0][0],
+                 pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName()), ROOT.RooFit.ProjectionRange(defaultPlotRegion),  ),
+                 pdfPlots[1][2],
+                 pdfPlots[1][3]],
+                [pdfPlots[0][0],
+                 pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName()), ROOT.RooFit.ProjectionRange(defaultPlotRegion), ),
+                 pdfPlots[2][2],
+                 pdfPlots[2][3]],
+                [pdfPlots[0][0],
+                 pdfPlots[3][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[3][0].GetName()), ROOT.RooFit.ProjectionRange(defaultPlotRegion), ),
+                 pdfPlots[3][2],
+                 pdfPlots[3][3]],
+            ]
+
+        plotFuncs = {
+            'B': {'func': Plotter.plotFrameB, 'tag': ""},
+            'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
+            'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
+        }
+
+        drawLatexFitResults = True
+        cwd=os.getcwd()
+        for frame in frames:
+            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots)
+            if drawLatexFitResults:
+                if frame == 'B':
+                    Plotter.latex.DrawLatexNDC(.19, .77, "Y_{Signal}")
+                    Plotter.latex.DrawLatexNDC(.35, .77, "= {0:.2f}".format(nSigDB * sigFrac[regionName]))
+                    Plotter.latex.DrawLatexNDC(.50, .77, "#pm {0:.2f}".format(nSigErrorDB * sigFrac[regionName]))
+                    Plotter.latex.DrawLatexNDC(.19, .70, "Y_{Background}")
+                    Plotter.latex.DrawLatexNDC(.35, .70, "= {0:.2f}".format(nBkgCombDB * bkgCombFrac[regionName]))
+                    Plotter.latex.DrawLatexNDC(.50, .70, "#pm {0:.2f}".format(nBkgCombErrorDB * bkgCombFrac[regionName]))
+                    Plotter.latex.DrawLatexNDC(.19, .63, "Y_{K*0mumu Bkg}")
+                    Plotter.latex.DrawLatexNDC(.35, .63, "= {0:.2f}".format(nBkgKStarDB * bkgKStarFrac[regionName]))
+                    Plotter.latex.DrawLatexNDC(.50, .63, "#pm {0:.2f}".format(nBkgKStarErrorDB * bkgKStarFrac[regionName]))
+                elif frame == 'L':
+                    Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}".format(afbDB))
+                elif frame == 'K':
+                    Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
+            self.latexQ2()
+            
+            ##################################
+            path=modulePath+"/Plots/FinalFit/" 
+            if not os.path.exists(path):
+                os.mkdir(path)
+            os.chdir(path)
+            ##################################
+            self.canvasPrint(pltName + '_' + regionName + plotFuncs[frame]['tag'])
+        os.chdir(cwd)
+types.MethodType(plotPostfitBLK_WithKStar, None, Plotter)
+
 def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
-    print(""" Check carefully the keys in 'dbSetup' """)
+    """ Check carefully the keys in 'dbSetup' """
     if marks is None:
         marks = []
-    print self.process.cfg['binKey']
     binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB'] #, 'summaryLowQ2']
 
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
@@ -544,6 +682,10 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         'Minuit': getStatError_Minuit,
     }
     Plotter.legend.Clear()
+    legend = ROOT.TLegend(.78, .72, .95, .92)
+    legend.SetFillColor(0)
+    legend.SetFillStyle(0)
+    legend.SetBorderSize(0)
     for dbsIdx, dbs in enumerate(dbSetup):
         title = dbs.get('title', None)
         dbPat = dbs.get('dbPat', self.process.dbplayer.absInputDir + "/fitResults_{binLabel}.db")
@@ -605,6 +747,8 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
         grAfb = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyAfb, xxErr, xxErr, yyAfbErrLo, yyAfbErrHi)
         grAfb.SetMarkerColor(fillColor if fillColor else 2)
+        if title=='RECO': grAfb.SetMarkerStyle(4); grAfb.SetMarkerSize(1.2)
+        if title=='GEN': grAfb.SetMarkerSize(1)
         grAfb.SetLineColor(fillColor if fillColor else 2)
         grAfb.SetFillColor(fillColor if fillColor else 2)
         grAfb.SetFillStyle(fillStyle if fillStyle else 3001)
@@ -612,9 +756,11 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
         grFl = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyFl, xxErr, xxErr, yyFlErrLo, yyFlErrHi)
         grFl.SetMarkerColor(fillColor if fillColor else 2)
+        if title=='RECO': grFl.SetMarkerStyle(4); grFl.SetMarkerSize(1.2)
+        if title=='GEN': grFl.SetMarkerSize(1)
         grFl.SetLineColor(fillColor if fillColor else 2)
         grFl.SetFillColor(fillColor if fillColor else 2)
-        grFl.SetFillStyle(fillStyle if fillStyle else 3001)
+        grFl.SetFillStyle(fillStyle if fillStyle else 3003)
         grFls.append(grFl)
         
         if legendOpt:
@@ -632,7 +778,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         yyAfbErrHi = array('d', [0] * len(binKeys))
         yyAfbErrLo = array('d', [0] * len(binKeys))
 
-        for binKeyIdx, binKey in enumerate(['belowJpsiA','belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA','abovePsi2sB', 'summaryLowQ2']):
+        for binKeyIdx, binKey in enumerate(['belowJpsiA','belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA','abovePsi2sB']):
             if binKey != 'betweenPeaks':
                 fl = q2bins[binKey]['sm']['fl']
                 afb = q2bins[binKey]['sm']['afb']
@@ -644,7 +790,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 yyAfbErrLo[binKeyIdx] = afb['getError']
             else:
                 yyFl[binKeyIdx] = -1
-                yyAfb[binKeyIdx] = -1
+                yyAfb[binKeyIdx] = -1.2
                 yyFlErrHi[binKeyIdx] = 0
                 yyFlErrLo[binKeyIdx] = 0
                 yyAfbErrHi[binKeyIdx] = 0
@@ -669,7 +815,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle("q^{2} [GeV^{2}]")
         gr.GetYaxis().SetTitle("A_{6}")
-        gr.GetYaxis().SetRangeUser(-.05, .05) #+-0.02
+        gr.GetYaxis().SetRangeUser(-.05, .05) if not drawSM else gr.GetYaxis().SetRangeUser(-1., 1.)#+-0.02
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
@@ -677,6 +823,13 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 gr.Draw("A" + opt if optIdx == 0 else opt)
             else:
                 gr.Draw(opt + " SAME")
+    jpsiBox = ROOT.TBox(8.00, -.05, 11.0, .05) if not drawSM else ROOT.TBox(8.00, -1., 11.0, 1.) 
+    psi2sBox = ROOT.TBox(12.5, -.05, 15.0, .05) if not drawSM else ROOT.TBox(12.5, -1., 15.0, 1.) 
+    jpsiBox.SetFillColorAlpha(17, .35)
+    psi2sBox.SetFillColorAlpha(17, .35)
+    jpsiBox.Draw()
+    psi2sBox.Draw()
+    legend.Draw()
     Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
     self.canvasPrint(pltName + '_afb', False)
@@ -685,7 +838,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle("q^{2} [GeV^{2}]")
         gr.GetYaxis().SetTitle("F_{L}")
-        gr.GetYaxis().SetRangeUser(0.3, 0.90)
+        gr.GetYaxis().SetRangeUser(0.3, 0.90) if not drawSM else gr.GetYaxis().SetRangeUser(0., 1.)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
@@ -693,6 +846,13 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 gr.Draw("A" + opt if optIdx == 0 else opt)
             else:
                 gr.Draw(opt + " SAME")
+    jpsiBox.SetY1(0.3) if not drawSM else jpsiBox.SetY1(0.) 
+    jpsiBox.SetY2(.9) if not drawSM else jpsiBox.SetY2(1.) 
+    psi2sBox.SetY1(0.3) if not drawSM else psi2sBox.SetY1(0.) 
+    psi2sBox.SetY2(.9) if not drawSM else psi2sBox.SetY2(1.) 
+    jpsiBox.Draw()
+    psi2sBox.Draw()
+    legend.Draw()
     Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
     self.canvasPrint(pltName + '_fl', False)
@@ -709,6 +869,7 @@ plotterCfg_sigStyleNoFill = (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineWidth(2))
 #plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillColor(4), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines()); 
 plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4), ROOT.RooFit.DrawOption("L"), ROOT.RooFit.VLines())
 plotterCfg_bkgStyle = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
+plotterCfg_bkgStyle_KStar = (ROOT.RooFit.LineColor(6), ROOT.RooFit.LineStyle(8))
 plotterCfg['plots'] = {
     'simpleSpectrum': {
         'func': [plotSpectrumWithSimpleFit],
@@ -769,6 +930,38 @@ plotterCfg['plots'] = {
                         ],
             'marks': []}
     }, #ROOT.RooFit.Range(bMassRegions['Fit']['range'][0], bMassRegions['Fit']['range'][1])
+
+    'angular3D_bkgA_KStar': {  #Plot K*0MuMu Fits
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "angular3D_bkgA_KStar",
+            'dataPlots': [["KsigMCReader.Fit", plotterCfg_dataStyle, "MC"], ],
+            'pdfPlots': [["f_bkgA_KStar", plotterCfg_bkgStyle, None, "Analytic KStar0MuMu Bkg."],
+                        ],
+            'marks': []}
+    }, 
+    'angular3D_bkgM_KStar': {
+        'func': [functools.partial(plotSimpleBLK, frames='B')],
+        'kwargs': {
+            'pltName': "angular3D_bkgM_KStar",
+            'dataPlots': [["KsigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [["f_bkgM_KStar", plotterCfg_sigStyle, None, "Total fit"],
+                        ],
+            'marks': ['sim']}
+    },
+    'angular3D_final_WithKStar': {
+        'func': [plotPostfitBLK_WithKStar],
+        'kwargs': {
+            'pltName': "angular3D_final_WithKStar",
+            'dataReader': "dataReader",
+            'pdfPlots': [["f_final_WithKStar", plotterCfg_allStyle, None, "Total fit"],
+                         ["f_sig3D", plotterCfg_styles['sigStyleBase'], None, "Sigal"],
+                         ["f_bkgComb", plotterCfg_styles['bkgStyleBase'], None, "Background"],
+                         ["f_bkg_KStar", plotterCfg_bkgStyle_KStar, None, "K*0MuMu Background"],
+                        ],
+        }
+    },
+
     'simpleBLK': {  # Most general case, to be customized by user
         'func': [functools.partial(plotSimpleBLK, frames='BLK')],
         'kwargs': {
@@ -879,14 +1072,14 @@ plotterCfg['plots'] = {
         'kwargs': {
             'pltName': "angular3D_summary",
             'dbSetup': [{'title': "Data",
-                         'statErrorKey': 'FeldmanCousins',
+                         'statErrorKey': 'Minuit',#'FeldmanCousins',
                          'legendOpt': "LPE",
                          'fillColor': 1,
                          },
                         {'title': "Data",
-                         'statErrorKey': 'FeldmanCousins',
+                         'statErrorKey': 'Minuit',#'FeldmanCousins',
                          'fillColor': 1,
-                         'withSystError': True,
+                         'withSystError': False,
                          },
                         ],
             'drawSM': True,

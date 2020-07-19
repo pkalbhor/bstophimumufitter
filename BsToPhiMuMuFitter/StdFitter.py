@@ -33,7 +33,7 @@ class StdFitter(FitterCore):
         return cfg
 
     def _bookMinimizer(self):
-        print("""_bookMinimizer from StdFitter""")
+        """_bookMinimizer from StdFitter"""
         ###
         def myfunc(iArg):
             lo=ROOT.Double(0)
@@ -53,7 +53,7 @@ class StdFitter(FitterCore):
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
         #if not self.name=="sigAFitter": 
-        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
+        if self.process.cfg['args'].ImportDB: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgKStar'])
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
 

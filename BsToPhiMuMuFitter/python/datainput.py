@@ -13,3 +13,5 @@ path="/eos/home-c/ckar/BSTOPHIMUMU/FileForGroup/gentree/"
 sigMCD=os.listdir(path)
 for i in range(len(sigMCD)):
     sigMCD[i]=path+sigMCD[i]+"/gentree"
+
+KStarSigMC=["/eos/home-c/ckar/BSTOPHIMUMU/FileForGroup/sel_BdTokstarMuMu_2016MC_Official_Presel_mc.lite_cut_bdt-s03.root/tree"]

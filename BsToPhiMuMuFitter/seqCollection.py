@@ -19,9 +19,11 @@ predefined_sequence = {}
 def SetSequences():
     predefined_sequence['loadData']     = [dataCollection.dataReader]
     predefined_sequence['loadMC']       = [dataCollection.sigMCReader]
+    predefined_sequence['loadMCk']      = [dataCollection.KsigMCReader]
     predefined_sequence['loadMCGEN']    = [dataCollection.sigMCGENReader]
-    predefined_sequence['buildPdfs'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, pdfCollection.stdPDFBuilder]
-    predefined_sequence['buildEff'] = [dataCollection.effiHistReader]
+    predefined_sequence['buildEff']     = [dataCollection.effiHistReader]
+    predefined_sequence['buildPdfs'] = [dataCollection.dataReader, dataCollection.KsigMCReader, pdfCollection.stdWspaceReader, 
+                                        pdfCollection.stdPDFBuilder]
 
     # For fitter validation and syst
     predefined_sequence['fitEff']    = [dataCollection.effiHistReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter]
@@ -45,26 +47,32 @@ def SetSequences():
     predefined_sequence['fitFinal3D'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter]
     predefined_sequence['fitFinal3D_AltM'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_AltM]
 
+    predefined_sequence['fitBkgM_KStar'] = [dataCollection.KsigMCReader, pdfCollection.stdWspaceReader, fitCollection.bkgM_KStarFitter]
+    predefined_sequence['fitBkgA_KStar'] = [dataCollection.KsigMCReader, pdfCollection.stdWspaceReader, fitCollection.bkgA_KStarFitter]
+    predefined_sequence['fitFinal3D_WithKStar'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_WithKStar]
     predefined_sequence['stdFit']     = [dataCollection.effiHistReader, 
                                         dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, 
                                         fitCollection.effiFitter, fitCollection.sigMFitter, fitCollection.bkgCombAFitter, 
                                         fitCollection.sig2DFitter, dataCollection.sigMCGENReader, fitCollection.sigAFitter, 
                                         fitCollection.finalFitter]
 
-    predefined_sequence['createplots'] = [dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, 
+    predefined_sequence['createplots'] = [dataCollection.effiHistReader, 
+                                        dataCollection.sigMCReader, dataCollection.KsigMCReader, dataCollection.sigMCGENReader, 
                                         dataCollection.dataReader, pdfCollection.stdWspaceReader, plotCollection.plotter]
 
 if __name__ == '__main__':
     parser = ArgumentParser(prog='seqCollection')
-    parser.add_argument('-b', '--binKey', dest='binKey', type=str, default=p.cfg['binKey'], help="Q2 Bin to run over")
+    parser.add_argument('-b', '--binKey', dest='binKey', type=str, default='bin0', help="Q2 Bin to run over")
     parser.add_argument('-s', '--seq', dest='seqKey', type=str, default=None, help="Sequence namei")
     parser.add_argument('--TwoStep', help='Use 2 Step efficiency', action='store_true')
     parser.add_argument("--list", nargs="+", default=["effi"])
+    parser.add_argument('--ImportDB', help='Import variables from database', action='store_false')
     args = parser.parse_args()
     if not args.TwoStep:  dataCollection.effiHistReader=dataCollection.effiHistReaderOneStep   # Use One step efficiency
     SetSequences()
     p.cfg['bins'] = allBins if args.binKey=="all" else [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
     p.cfg['seqKey']= args.seqKey
+    p.cfg['args'] = args
     if args.seqKey=="createplots":
        for plot in args.list: plotCollection.plotter.cfg['switchPlots'].append(plot) 
         

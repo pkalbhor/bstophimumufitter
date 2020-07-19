@@ -44,17 +44,17 @@ q2bins['peaks']['cutString'] = "(Mumumass > 2.828427125 && Mumumass < 3.31662479
     # SM prediction
 q2bins['belowJpsiA']['sm'] = {
     'afb': {
-        'getVal': 0.077,
+        'getVal': -0.6,
         'getError': 0.097,
     },
     'fl': {
-        'getVal': 0.673,
+        'getVal': 0.453,
         'getError': 0.306,
     }
 }
 q2bins['belowJpsiB']['sm'] = {
     'afb': {
-        'getVal': 0.077,
+        'getVal': 0.037,
         'getError': 0.097,
     },
     'fl': {
@@ -68,31 +68,34 @@ q2bins['belowJpsiC']['sm'] = {
         'getError': 0.097,
     },
     'fl': {
-        'getVal': 0.673,
+        'getVal': 0.83,
         'getError': 0.306,
     }
 }
 q2bins['abovePsi2sA']['sm'] = {
     'afb': {
-        'getVal': 0.366,
+        'getVal': -0.206,
         'getError': 0.030,
     },
     'fl': {
-        'getVal': 0.346,
+        'getVal': 0.206,
         'getError': 0.035,
     }
 }
 q2bins['abovePsi2sB']['sm'] = {
     'afb': {
-        'getVal': 0.366,
+        'getVal': -0.406,
         'getError': 0.030,
     },
     'fl': {
-        'getVal': 0.346,
+        'getVal': 0.246,
         'getError': 0.035,
     }
 }
 
+q2bins['summary']['sm'] = q2bins['abovePsi2sB']['sm']
+q2bins['betweenPeaks']['sm'] = q2bins['abovePsi2sB']['sm']
+q2bins['summaryLowQ2']['sm'] = q2bins['abovePsi2sB']['sm']
 
 # B mass regions
 bMassRegions = {}
@@ -104,6 +107,7 @@ def createBmassTemplate(name, lowerBd, upperBd):
     }
     return template
 
+bMassRegions['Full'] = createBmassTemplate("Full", 4.5, 6.0) # Cut off below 4.68
 bMassRegions['Fit'] = createBmassTemplate("Fit", 5.2, 5.6)
 bMassRegions['SR'] = createBmassTemplate("SR", 5.1, 5.6)
 bMassRegions['LSB'] = createBmassTemplate("LSB", 4.7, 5.1) #("LSB", 5.143, 5.223)
@@ -135,6 +139,7 @@ cut_phiWindow = "Phimass>1.01 && Phimass < 1.03"
 cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090"
 cut_Bdt = "Bdt > 0.06"
 ExtraCuts = "mtrkqual==1 && ptrkqual==1 && dr0<0.1 && dr1<0.1"
+ExtraCutsKStar = "mtrkqual==1 && ptrkqual==1 && ((JpsiTriggersdr0 < 101 && JpsiTriggersdr1 <101)||(PsiPTriggersdr0 <101 && PsiPTriggersdr1 <101)||(LMNTTriggersdr0< 101 && LMNTTriggersdr1< 101))"
 cuts = [
     cut_passTrigger,
     cut_phiWindow,

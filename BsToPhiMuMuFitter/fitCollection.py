@@ -218,6 +218,43 @@ setupFinalMDCB_AltBkgCombM_Fitter.update({
 })
 finalMDCB_AltBkgCombM_Fitter = StdFitter(setupFinalMDCB_AltBkgCombM_Fitter)
 
+setupBkgA_KStarFitter = deepcopy(setupTemplateFitter)
+setupBkgA_KStarFitter.update({
+    'name': "bkgA_KStarFitter",
+    'data': "KsigMCReader.Fit",
+    'pdf': "f_bkgA_KStar",
+    'argPattern': [r'bkgKStar[KL]_c[\d]+', ],
+    'FitHesse': True,
+    'FitMinos': [False, ()],
+    'createNLLOpt': [],
+})
+bkgA_KStarFitter = StdFitter(setupBkgA_KStarFitter)
+
+setupBkgMFitter_KStar = deepcopy(setupTemplateFitter)
+setupBkgMFitter_KStar.update({
+    'name': "bkgM_KStarFitter",
+    'data': "KsigMCReader.Fit",
+    'pdf': "f_bkgM_KStar",
+    'FitHesse': True,
+    'argPattern': ['cbs[12]_sigma_KStar', 'cbs[12]_alpha_KStar', 'cbs[12]_n_KStar', 'cbs_mean_KStar', 'bkgM_frac_KStar', r'bkgMKStar_c[\d]+'],
+    'createNLLOpt': [],
+})
+bkgM_KStarFitter = StdFitter(setupBkgMFitter_KStar)
+
+setupFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                         # 3D = nSig(Sig2D*SigM) + nBkg(fBkgM*fBkgA)
+setupFinalFitter_WithKStar.update({
+    'name': "finalFitter_WithKStar",
+    'data': "dataReader.Fit",
+    'pdf': "f_final_WithKStar",
+    'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombM_c[\d]+'],
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ],
+    'FitHesse': True,
+    'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
+    'argAliasInDB': dict(setupSigMFitter['argAliasInDB'].items() + setupSigAFitter['argAliasInDB'].items()),
+    'argAliasSaveToDB': False,
+})
+finalFitter_WithKStar = StdFitter(setupFinalFitter_WithKStar)
+
 if __name__ == '__main__':
     p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, effiFitter])
     #  p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, sigMFitter])

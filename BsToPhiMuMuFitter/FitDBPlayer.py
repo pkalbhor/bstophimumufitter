@@ -112,7 +112,7 @@ class FitDBPlayer(Service):
             print("Updated to Database `{0}`.".format(dbfile))
 
     @staticmethod
-    def initFromDB(dbfile, args, aliasDict=None):
+    def initFromDB(dbfile, args, aliasDict=None, exclude=None):
         print("""Parameter initialization from db file""")
         if not os.path.exists(dbfile):
             print("dbfile doesnot exist..")
@@ -137,7 +137,7 @@ class FitDBPlayer(Service):
                         )
                 else:
                     print("WARNING\t: Unable to initialize {0}, record {1} not found in {2}.".format(argName, aliasName, dbfile))
-            FitterCore.ArgLooper(args, initFromDBImp)
+            FitterCore.ArgLooper(args, initFromDBImp, exclude, inverseSel=True)
             print("Initialized parameters from `{0}`.".format(dbfile))
         finally:
             db.close()
