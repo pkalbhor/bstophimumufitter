@@ -56,8 +56,8 @@ def SetSequences():
                                         fitCollection.sig2DFitter, dataCollection.sigMCGENReader, fitCollection.sigAFitter, 
                                         fitCollection.finalFitter]
 
-    predefined_sequence['createplots'] = [dataCollection.effiHistReader, 
-                                        dataCollection.sigMCReader, dataCollection.KsigMCReader, dataCollection.sigMCGENReader, 
+    predefined_sequence['createplots'] = [dataCollection.effiHistReader, dataCollection.KsigMCReader, 
+                                        dataCollection.sigMCReader, dataCollection.sigMCGENReader, 
                                         dataCollection.dataReader, pdfCollection.stdWspaceReader, plotCollection.plotter]
 
 if __name__ == '__main__':

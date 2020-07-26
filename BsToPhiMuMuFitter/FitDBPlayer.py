@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-import os, sys
+import os, sys, re
 import shutil
 import shelve
 import math
@@ -34,15 +34,29 @@ class FitDBPlayer(Service):
         self.odbfile = None
 
     @staticmethod
-    def PrintDB(dbfile):
-        def print_dict(dictionary, ident = '', braces=1):
-            """ Recursively prints nested dictionaries. Stolen from http://code.activestate.com/recipes/578094-recursively-print-nested-dictionaries/"""
+    def PrintDB(dbfile, var):
+        def selective(dictionary, ident = '   ', braces=1):
             for key, value in dictionary.items():
+                if isinstance(value, dict):
+                    print('%s%s%s%s' %(ident,braces*'[',key,braces*']'))
+                    selective(value, ident+'  ', braces+1)
+                else:
+                    print(ident+ident+ident+'%s = %s' %(key, value))
+                
+        def print_dict(dictionary, ident = '', braces=1):
+            """Recursively prints nested dictionaries. From http://code.activestate.com/recipes/578094-recursively-print-nested-dictionaries"""
+            def PrintValues(key, value):
                 if isinstance(value, dict):
                     print('%s%s%s%s' %(ident,braces*'[',key,braces*']'))
                     print_dict(value, ident+'  ', braces+1)
                 else:
                     print(ident+ident+ident+'%s = %s' %(key, value))
+            for key, value in dictionary.items():
+                if len(var)==0:
+                    PrintValues(key, value)
+                if any(re.match(pat, key) for pat in var): 
+                    PrintValues(key, value)
+                    selective(value)
         try:
             db = shelve.open(dbfile)
             print_dict(db)
@@ -219,4 +233,5 @@ class FitDBPlayer(Service):
 
 if __name__ == "__main__":
     for iDB in [ s for s in sys.argv if s.endswith(".db")]:
-        FitDBPlayer.PrintDB(iDB)
+        var = [v for v in sys.argv if (not v.endswith(".db") and not v.endswith(".py"))]
+        FitDBPlayer.PrintDB(iDB, var)

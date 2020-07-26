@@ -1,3 +1,9 @@
+# Description: Plot variables from a file
+#
+#
+#
+##################################################################################################
+
 import os, ROOT
 from datainput import sigMC, dataFilePath, UnfilteredMC
 from BsToPhiMuMuFitter.anaSetup import q2bins

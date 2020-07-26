@@ -20,178 +20,7 @@ import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
 
-defaultPlotRegion = "Fit"
-plotterCfg_styles = {}
-plotterCfg_styles['dataStyle'] = (ROOT.RooFit.XErrorSize(0.),)
-plotterCfg_styles['mcStyleBase'] = ()
-plotterCfg_styles['allStyleBase'] = (ROOT.RooFit.LineColor(1),)
-plotterCfg_styles['sigStyleNoFillBase'] = (ROOT.RooFit.LineColor(4),)
-plotterCfg_styles['sigStyleBase'] = (ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3003), ROOT.RooFit.VLines())
-plotterCfg_styles['bkgStyleBase'] = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(2), ROOT.RooFit.FillColor(2), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3003))
-plotterCfg_styles['mcStyle'] = plotterCfg_styles['mcStyleBase']
-plotterCfg_styles['allStyle'] = plotterCfg_styles['allStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
-plotterCfg_styles['sigStyle'] = plotterCfg_styles['sigStyleBase'] #+ (ROOT.RooFit.Range(defaultPlotRegion),)
-plotterCfg_styles['sigStyleNoFill'] = plotterCfg_styles['sigStyleNoFillBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
-plotterCfg_styles['bkgStyle'] = plotterCfg_styles['bkgStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
-class Plotter(Path):
-    """The plotter"""
-    setStyle()
-    canvas = ROOT.TCanvas()
-
-    def canvasPrint(self, name, withBinLabel=True):
-        Plotter.canvas.Update()
-        if withBinLabel:
-            Plotter.canvas.Print("{0}_{1}.pdf".format(name, q2bins[self.process.cfg['binKey']]['label']))
-        else:
-            Plotter.canvas.Print("{0}.pdf".format(name))
-
-    latex = ROOT.TLatex()
-    latexCMSMark = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS}"))
-    latexCMSSim = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}"))
-    latexCMSToy = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Post-fit Toy}}"))
-    latexCMSMix = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Toy + Simu.}}"))
-    latexCMSExtra = staticmethod(lambda x=0.19, y=0.85: Plotter.latex.DrawLatexNDC(x, y, "#font[52]{#scale[0.8]{Preliminary}}") if True else None)
-    latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{35.9 fb^{-1} (13 TeV)}"))
-    def latexQ2(self, x=0.45, y=0.89):
-        Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[self.process.cfg['binKey']]['latexLabel']))
-    def DrawParams(self, pdfPlots):
-        x=0.45; y=0.84
-        args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL)) #N3 Lines by Pritam
-        unboundFl=args.find('unboundFl').getVal(); unboundFlError=args.find('unboundFl').getError(); print unboundFlError
-        FlError=(unboundFlToFl(unboundFl+unboundFlError)-unboundFlToFl(unboundFl-unboundFlError))/2.
-        flDB=unboundFlToFl(args.find('unboundFl').getVal()); print type(flDB)
-        
-        unboundAfb=args.find('unboundAfb').getVal(); unboundAfbError=args.find('unboundAfb').getError(); print unboundAfbError
-        l1=(unboundAfbToAfb((unboundAfb+unboundAfbError), flDB)-unboundAfbToAfb((unboundAfb-unboundAfbError), flDB))/2.
-        l2=(unboundAfbToAfb(unboundAfb, (flDB+FlError))-unboundAfbToAfb(unboundAfb, (flDB-FlError)))/2.
-        AfbError=math.sqrt((l1*l1)+(l2*l2))                                #Error
-        afbDB=unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB) #Value
-
-        Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{F_{{l}} = {0}\pm {1}}}".format(round(flDB, 5), round(FlError, 5)))
-        Plotter.latex.DrawLatexNDC(x, 0.79, r"#scale[0.8]{{A_{{6}}= {0}\pm {1}}}".format(round(afbDB, 5), round(AfbError, 5)))
-        
-    @staticmethod
-    def latexDataMarks(marks):
-        if 'sim' in marks:
-            Plotter.latexCMSSim()
-            Plotter.latexCMSExtra()
-        elif 'toy' in marks:
-            Plotter.latexCMSToy()
-            Plotter.latexCMSExtra()
-        elif 'mix' in marks:
-            Plotter.latexCMSMix()
-            Plotter.latexCMSExtra()
-        else:
-            Plotter.latexCMSMark()
-            Plotter.latexLumi()
-            Plotter.latexCMSExtra()
-
-    frameB = Bmass.frame(ROOT.RooFit.Range(defaultPlotRegion))
-    #frameB.SetMinimum(0)
-    frameB_binning = 20 #ROOT.RooBinning(20, 5.2, 5.6)
-
-    frameK = CosThetaK.frame()
-    #frameK.SetMinimum(0)
-    frameK_binning = 20
-
-    frameL = CosThetaL.frame()
-    #frameL.SetMinimum(0)
-    frameL.SetTitle("")
-    frameL_binning = 20
-
-    legend = ROOT.TLegend(.75, .70, .95, .90)
-    legend.SetFillColor(0)
-    legend.SetBorderSize(0)
-
-    def initPdfPlotCfg(self, p):
-        print(""" [Name, plotOnOpt, argAliasInDB, LegendName] """)
-        pdfPlotTemplate = ["", plotterCfg_allStyle, None, None]
-        p = p + pdfPlotTemplate[len(p):]
-        if isinstance(p[0], str):
-            self.logger.logDEBUG("Initialize pdfPlot {0}".format(p[0]))
-            p[0] = self.process.sourcemanager.get(p[0])
-            if p[0] == None:
-                self.logger.logERROR("pdfPlot not found in source manager.")
-                raise RuntimeError
-        args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
-        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
-        return p
-
-    def initDataPlotCfg(self, p):
-        print(""" [Name, plotOnOpt, LegendName] """)
-        dataPlotTemplate = ["", plotterCfg_dataStyle, "Data"]
-        p = p + dataPlotTemplate[len(p):]
-
-        if isinstance(p[0], str):
-            self.logger.logDEBUG("Initialize dataPlot {0}".format(p[0]))
-            p[0] = self.process.sourcemanager.get(p[0])
-            if p[0] == None:
-                self.logger.logERROR("dataPlot not found in source manager.")
-                raise RuntimeError
-        return p
-
-    @staticmethod
-    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, scaleYaxis=1.8):
-        print("""
-            Use initXXXPlotCfg to ensure elements in xxxPlots fit the format
-        """)
-        # Major plot
-        cloned_frame = frame.emptyClone("cloned_frame")
-        marks = [] if marks is None else marks
-        dataPlots = [] if dataPlots is None else dataPlots
-        pdfPlots = [] if pdfPlots is None else pdfPlots
-
-        for pIdx, p in enumerate(dataPlots):
-            p[0].plotOn(cloned_frame,
-                        ROOT.RooFit.Name("dataP{0}".format(pIdx)),
-                        ROOT.RooFit.Binning(binning),# 5.2,5.6),
-                        *p[1])
-        for pIdx, p in enumerate(pdfPlots):
-            p[0].plotOn(cloned_frame,
-                        ROOT.RooFit.Name("pdfP{0}".format(pIdx)),
-                        *p[1])
-        cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
-        #cloned_frame.Draw() #
-        DrawWithResidue(plotter, cloned_frame) 
-
-        # Legend
-        Plotter.legend.Clear()
-        for pIdx, p in enumerate(dataPlots):
-            if p[2] is not None:
-                Plotter.legend.AddEntry("dataP{0}".format(pIdx), p[2], "LPFE")
-        for pIdx, p in enumerate(pdfPlots):
-            if p[3] is not None:
-                Plotter.legend.AddEntry("pdfP{0}".format(pIdx), p[3], "LF")
-        Plotter.legend.Draw()
-        Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(dataPlots[0][0].sumEntries()) )
-        #Plotter.latex.DrawLatexNDC(.45, .74, r"#scale[0.8]{{#chi^{{2}}/NDF = {0:.2f}}}".format(cloned_frame.chiSquare()/(binning-pdfPlots[0][0].getParameters(dataPlots[0][0]).getSize()))) #pdfPlots[0][0].getParameters(dataPlots[0][0]).getSize()
-        # Some marks
-        Plotter.latexDataMarks(marks)
-
-    plotFrameB = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning}))
-    plotFrameK = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning}))
-    plotFrameL = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning}))
-    plotFrameB_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning * 2}))
-    plotFrameK_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning * 2}))
-    plotFrameL_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning * 2}))
-
-    @classmethod
-    def templateConfig(cls):
-        cfg = Path.templateConfig()
-        cfg.update({
-            'db': "fitResults.db",
-            'plotFuncs': [],  # (function, kwargs)
-        })
-        return cfg
-
-    def _runPath(self):
-        """"""
-        for pltName, pCfg in self.cfg['plots'].items():
-            if pltName not in self.cfg['switchPlots']:
-                continue
-            for func in pCfg['func']:
-                func(self, **pCfg['kwargs'])
-                Plotter.canvas.Clear("d")
+from BsToPhiMuMuFitter.Plotter import Plotter, defaultPlotRegion, plotterCfg_styles
 
 
 def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
@@ -255,7 +84,7 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
     cwd=os.getcwd()
     for frame in frames:
         plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
-        self.latexQ2()
+        Plotter.latexQ2(self.process.cfg['binKey'])
         #if not frame =='B': self.DrawParams(pdfPlots)
         ####################################
         if pltName=="angular3D_bkgCombA":
@@ -305,17 +134,6 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
     os.chdir(cwd)
 types.MethodType(plotSimpleGEN, None, Plotter)
 
-def DrawWithResidue(self, frame1):
-    #pdb.set_trace()
-    Plotter.canvas.cd()
-    frame2 = frame1.emptyClone("frame_for_residue")
-    hresid = frame1.pullHist(frame1.getObject(0).GetName(), frame1.getObject(1).GetName()) #residHist() #Get Pull
-    frame2.addPlotable(hresid, "P")
-    res=ROOT.NewResPlot('RooPlot')(frame1, frame2); res.Draw();
-    res.fUpperPad.cd()
-    return res
-types.MethodType(DrawWithResidue, None, Plotter)
-
 def plotEfficiency(self, data_name, pdf_name):
     pltName = "effi"
     data = self.process.sourcemanager.get(data_name)
@@ -354,7 +172,7 @@ def plotEfficiency(self, data_name, pdf_name):
     Plotter.latexCMSSim(.08, .93)
     Plotter.latexCMSExtra(.08, .89)
     #Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
-    self.latexQ2(.40, .93)
+    Plotter.latexQ2(self.process.cfg['binKey'], .40, .93)
     self.canvasPrint(pltName + "_2D")
     data_accXrec.Scale(0.01)
     
@@ -369,7 +187,7 @@ def plotEfficiency(self, data_name, pdf_name):
     cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
 
     cloned_frameL.Draw() #DrawWithResidue(self, cloned_frameL)
-    self.latexQ2()
+    Plotter.latexQ2(self.process.cfg['binKey'])
     Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
@@ -389,7 +207,7 @@ def plotEfficiency(self, data_name, pdf_name):
     #cloned_frameK.SetMinimum(h_accXrec_fine_ProjectionY.GetMinimum()*100-10)
 
     cloned_frameK.Draw() #DrawWithResidue(self, cloned_frameK)
-    self.latexQ2()
+    Plotter.latexQ2(self.process.cfg['binKey'])
     Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
@@ -496,7 +314,6 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
     # Calculate normalization and then draw
     args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL))
 
-
     nSigDB = args.find('nSig').getVal()
     nSigErrorDB = args.find('nSig').getError()
     nBkgCombDB = args.find('nBkgComb').getVal()
@@ -511,26 +328,35 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
     bkgKStarFrac = {}
     for regionName in ["Fit"]:
         drawRegionName = {'SB': "LSB,USB", 'innerSB': "innerLSB,innerUSB", 'outerSB': "outerLSB,outerUSB"}.get(regionName, regionName)
-        dataPlots = [["{0}.{1}".format(dataReader, regionName), plotterCfg_styles['dataStyle'] + (ROOT.RooFit.CutRange(drawRegionName),), "Data"], ]
+        dataPlots = [["{0}.{1}".format(dataReader, regionName), plotterCfg_styles['dataStyle'] + (ROOT.RooFit.CutRange(regionName),), "Data"], ]
         for pIdx, p in enumerate(dataPlots):
             dataPlots[pIdx] = self.initDataPlotCfg(p)
 
         # Bind the 'Bmass' defined in PDF with 'getObservables' to createIntegral
+        def myfunc(iArg):
+            lo=ROOT.Double(0)
+            hi=ROOT.Double(1)
+            dataPlots[0][0].getRange(iArg, lo, hi)
+            iArg.setRange(lo, hi)
+        FitterCore.ArgLooper(dataPlots[0][0].get(), myfunc)
+        obs = pdfPlots[0][0].getObservables(dataPlots[0][0])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(*bMassRegions[regionName]['range']), ["Bmass"])
+
         obs = pdfPlots[1][0].getObservables(dataPlots[0][0])
-        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(*bMassRegions[regionName]['range']), ["Bmass"])
         sigFrac[regionName] = pdfPlots[1][0].createIntegral(
             obs,
             ROOT.RooFit.NormSet(obs),
             ROOT.RooFit.Range(regionName)).getVal()
 
         obs = pdfPlots[2][0].getObservables(dataPlots[0][0])
-        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(*bMassRegions[regionName]['range']), ["Bmass"])
         bkgCombFrac[regionName] = pdfPlots[2][0].createIntegral(
             obs,
             ROOT.RooFit.NormSet(obs),
             ROOT.RooFit.Range(regionName)).getVal()
         obs = pdfPlots[3][0].getObservables(dataPlots[0][0])
-        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(*bMassRegions[regionName]['range']), ["Bmass"])
         bkgKStarFrac[regionName] = pdfPlots[3][0].createIntegral(
             obs,
             ROOT.RooFit.NormSet(obs),
@@ -538,33 +364,24 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
 
         nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName] + nBkgKStarDB * bkgKStarFrac[regionName]
 
-        if regionName not in ['SB', 'innerSB', 'outerSB']:
+        if regionName in ['SB', 'innerSB', 'outerSB']:
             modified_pdfPlots = [
                 [pdfPlots[0][0],
-                 # pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
                  pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
                  pdfPlots[0][2],
                  pdfPlots[0][3]],
                 [pdfPlots[0][0],
-                 # pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
                  pdfPlots[1][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
                  pdfPlots[1][2],
                  pdfPlots[1][3]],
                 [pdfPlots[0][0],
-                 # pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
                  pdfPlots[2][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
                  pdfPlots[2][2],
                  pdfPlots[2][3]],
                 [pdfPlots[0][0],
-                 # pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
                  pdfPlots[3][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[3][0].GetName())),
                  pdfPlots[3][2],
                  pdfPlots[3][3]],
-
-                [pdfPlots[0][0],
-                 pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
-                 pdfPlots[0][2],
-                 None], # Duplication of the Total fit to overwrite components. Legend is ignored.
             ]
         else:
             # Correct the shape of f_final
@@ -573,25 +390,25 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
             args.find("nBkgKStar").setVal(nBkgKStarDB * bkgKStarFrac[regionName])
             modified_pdfPlots = [
                 [pdfPlots[0][0],
-                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.ProjectionRange(defaultPlotRegion), ),
+                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.ProjectionRange(defaultPlotRegion)),
                  pdfPlots[0][2],
                  pdfPlots[0][3]],
                 [pdfPlots[0][0],
-                 pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName()), ROOT.RooFit.ProjectionRange(defaultPlotRegion),  ),
+                 pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName()), ROOT.RooFit.ProjectionRange(defaultPlotRegion)),
                  pdfPlots[1][2],
                  pdfPlots[1][3]],
                 [pdfPlots[0][0],
-                 pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName()), ROOT.RooFit.ProjectionRange(defaultPlotRegion), ),
+                 pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName()), ROOT.RooFit.ProjectionRange(defaultPlotRegion)),
                  pdfPlots[2][2],
                  pdfPlots[2][3]],
                 [pdfPlots[0][0],
-                 pdfPlots[3][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[3][0].GetName()), ROOT.RooFit.ProjectionRange(defaultPlotRegion), ),
+                 pdfPlots[3][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[3][0].GetName()), ROOT.RooFit.ProjectionRange(defaultPlotRegion)),
                  pdfPlots[3][2],
                  pdfPlots[3][3]],
             ]
 
         plotFuncs = {
-            'B': {'func': Plotter.plotFrameB, 'tag': ""},
+            'B': {'func': Plotter.plotFrameB_fine, 'tag': ""},
             'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
             'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
         }
@@ -599,7 +416,7 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
         drawLatexFitResults = True
         cwd=os.getcwd()
         for frame in frames:
-            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots)
+            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots, legend=True)
             if drawLatexFitResults:
                 if frame == 'B':
                     Plotter.latex.DrawLatexNDC(.19, .77, "Y_{Signal}")
@@ -615,7 +432,7 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
                     Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}".format(afbDB))
                 elif frame == 'K':
                     Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
-            self.latexQ2()
+            Plotter.latexQ2(self.process.cfg['binKey'])
             
             ##################################
             path=modulePath+"/Plots/FinalFit/" 
@@ -938,23 +755,23 @@ plotterCfg['plots'] = {
             'dataPlots': [["KsigMCReader.Fit", plotterCfg_dataStyle, "MC"], ],
             'pdfPlots': [["f_bkgA_KStar", plotterCfg_bkgStyle, None, "Analytic KStar0MuMu Bkg."],
                         ],
-            'marks': []}
+            'marks': None}
     }, 
     'angular3D_bkgM_KStar': {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
         'kwargs': {
             'pltName': "angular3D_bkgM_KStar",
-            'dataPlots': [["KsigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_bkgM_KStar", plotterCfg_sigStyle, None, "Total fit"],
+            'dataPlots': [["KsigMCReader.Fit", plotterCfg_styles['mcStyle'], "Simulation"], ],
+            'pdfPlots': [["f_bkgM_KStar", plotterCfg_styles['sigStyle'], None, "Total fit"],
                         ],
-            'marks': ['sim']}
+            'marks': {'marks': ['sim']}}
     },
     'angular3D_final_WithKStar': {
         'func': [plotPostfitBLK_WithKStar],
         'kwargs': {
             'pltName': "angular3D_final_WithKStar",
             'dataReader': "dataReader",
-            'pdfPlots': [["f_final_WithKStar", plotterCfg_allStyle, None, "Total fit"],
+            'pdfPlots': [["f_final_WithKStar", plotterCfg_styles['allStyleBase'], None, "Total fit"],
                          ["f_sig3D", plotterCfg_styles['sigStyleBase'], None, "Sigal"],
                          ["f_bkgComb", plotterCfg_styles['bkgStyleBase'], None, "Background"],
                          ["f_bkg_KStar", plotterCfg_bkgStyle_KStar, None, "K*0MuMu Background"],
@@ -1099,7 +916,7 @@ plotterCfg['plots'] = {
                          'legendOpt': "LPE",
                          },
                         ],
-            'marks': ['sim'],
+            'marks'  : {'marks': ['sim']},
         },
     },
 }

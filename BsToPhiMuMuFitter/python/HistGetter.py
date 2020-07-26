@@ -1,3 +1,10 @@
+# Description: Shows comparison between two step efficiency and one step efficiency
+# 
+# Author     : Pritam Kalbhor (physics.pritam@gmail.com)
+#
+#
+##################################################################################################
+
 import os, re, math, ROOT, itertools
 from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
 import BsToPhiMuMuFitter.cpp
