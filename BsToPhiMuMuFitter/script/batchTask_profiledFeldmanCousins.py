@@ -1,18 +1,11 @@
 #!/usr/bin/env python
-# vim: set sts=4 sw=4 fdm=indent fdl=1 fdn=3 et:
+# vim: set sts=4 sw=4 fdm=indent fdl=0 fdn=1 et:
 
-import os, pdb
-import sys
-import re
-import math
-import shelve
-import types
-import functools
-import itertools
+import os, sys, re, math, shelve, types, functools, itertools, pdb
 from datetime import datetime
-from subprocess import call
-from copy import deepcopy
+from copy import copy, deepcopy
 
+from BsToPhiMuMuFitter.python.datainput import allBins
 from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
 import BsToPhiMuMuFitter.StdFitter as StdFitter
 import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
@@ -36,8 +29,8 @@ ROOT.gROOT.ProcessLine(
 """struct MyTreeContent {
    Double_t     fl;
    Double_t     afb;
-   Double_t     fs;
-   Double_t     transAs;
+   Double_t     entries;
+   Double_t     status;
    Double_t     nSig;
    Double_t     nBkgComb;
    Double_t     nll;
@@ -64,8 +57,8 @@ class ProfiledFCToyStudier(AbsToyStudier.AbsToyStudier):
         self.treeContent = ROOT.MyTreeContent()
         self.otree.Branch("fl", AddressOf(self.treeContent, 'fl'), 'fl/D')
         self.otree.Branch("afb", AddressOf(self.treeContent, 'afb'), 'afb/D')
-        self.otree.Branch("fs", AddressOf(self.treeContent, 'fs'), 'fs/D')
-        self.otree.Branch("transAs", AddressOf(self.treeContent, 'transAs'), 'as/D')
+        self.otree.Branch("entries", AddressOf(self.treeContent, 'entries'), 'entries/D')
+        self.otree.Branch("status", AddressOf(self.treeContent, 'status'), 'status/D')
         self.otree.Branch("nSig", AddressOf(self.treeContent, 'nSig'), 'nSig/D')
         self.otree.Branch("nBkgComb", AddressOf(self.treeContent, 'nBkgComb'), 'nBkgComb/D')
         self.otree.Branch("nll", AddressOf(self.treeContent, 'nll'), 'nll/D')
@@ -79,11 +72,11 @@ class ProfiledFCToyStudier(AbsToyStudier.AbsToyStudier):
         """ Fill information to otree """
         if math.fabs(self.fitter._nll.getVal()) < 1e20:
             unboundAfb = self.fitter.args.find('unboundAfb').getVal()
-            unboundFl  = self.fitter.args.find('unboundFl').getVal()
+            unboundFl = self.fitter.args.find('unboundFl').getVal()
             self.treeContent.fl = StdFitter.unboundFlToFl(unboundFl)
             self.treeContent.afb = StdFitter.unboundAfbToAfb(unboundAfb, self.treeContent.fl)
-            self.treeContent.fs = self.fitter.args.find('fs').getVal()
-            self.treeContent.transAs = self.fitter.args.find('transAs').getVal()
+            self.treeContent.entries = self.fitter.data.numEntries() #self.fitter.args.find('fs').getVal()
+            self.treeContent.status = self.fitter.fitResult['finalFitter.migrad']['status'] #self.fitter.args.find('transAs').getVal()
             self.treeContent.nSig = self.fitter.args.find('nSig').getVal()
             self.treeContent.nBkgComb = self.fitter.args.find('nBkgComb').getVal()
             self.treeContent.nll = self.fitter._nll.getVal()
@@ -119,14 +112,12 @@ setupProfiledFCToyStudier.update({
     'name': "profiledFCToyStudier",
     'data': "ToyGenerator.mixedToy",
     'fitter': fitCollection.finalFitter,
-    'nSetOfToys': 100,  # Typically 500 for acceptable precision, in proportion to generating time.
+    'nSetOfToys': 500,  # Typically 100 Toys * 5 submissions for acceptable precision, in proportion to generating time.
 })
 profiledFCToyStudier = ProfiledFCToyStudier(setupProfiledFCToyStudier)
 
-toyCollection.bkgCombToyGenerator.cfg['scale'] = profiledFCToyStudier.cfg['nSetOfToys'] * 5
-toyCollection.sigToyGenerator.cfg['scale'] = profiledFCToyStudier.cfg['nSetOfToys'] * 5
-
 setupProfiler = deepcopy(fitCollection.setupFinalFitter)
+setupProfiler.update({'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],})
 profiler = StdFitter.StdFitter(setupProfiler)
 profiler.name = "profiler"
 
@@ -135,10 +126,13 @@ profiler.name = "profiler"
 class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
     def createJdl(self, parser_args):
         jdl = self.createJdlBase()
-        jdl += """
+        for BinKey in parser_args.binKey:
+            jdl += """
+JobBatchName = "{JobBatchName}_{binKey}"
 arguments = --binKey {binKey} run $(Process)
 queue {nJobs}
-""".format(binKey=parser_args.binKey, nJobs=self.cfg['nJobs'])
+"""
+            jdl = jdl.format(JobBatchName="FCBatch", binKey=q2bins[BinKey]['label'], nJobs=self.cfg['nJobs'], executable=os.path.abspath(__file__),)
         return jdl
 
 setupBatchTask = deepcopy(BatchTaskWrapper.templateCfg())
@@ -150,10 +144,13 @@ setupBatchTask.update({
 class BatchTaskWrapperProfile(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
     def createJdl(self, parser_args):
         jdl = self.createJdlBase()
-        jdl += """
+        for BinKey in parser_args.binKey:
+            jdl += """
+JobBatchName = "{JobBatchName}_{binKey}"
 arguments = --binKey {binKey} run_profile $(Process)
 queue {nJobs}
-""".format(binKey=parser_args.binKey, nJobs=self.cfg['nJobs'])
+"""
+            jdl = jdl.format(JobBatchName="FCProfile", binKey=q2bins[BinKey]['label'], nJobs=self.cfg['nJobs'], executable=os.path.abspath(__file__),)
         return jdl
 
 setupBatchTaskProfile = deepcopy(BatchTaskWrapper.templateCfg())
@@ -165,10 +162,13 @@ setupBatchTaskProfile.update({
 class BatchTaskWrapperBestFit(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
     def createJdl(self, parser_args):
         jdl = self.createJdlBase()
-        jdl += """
+        for BinKey in parser_args.binKey:
+            jdl += """
+JobBatchName = "{JobBatchName}_{binKey}"
 arguments = --binKey {binKey} run_bestFit $(Process)
 queue {nJobs}
-""".format(binKey=parser_args.binKey, nJobs=self.cfg['nJobs'])
+"""
+            jdl = jdl.format(JobBatchName="FCBest", binKey=q2bins[BinKey]['label'], nJobs=self.cfg['nJobs'], executable=os.path.abspath(__file__),)
         return jdl
 
 setupBatchTaskBestFit = deepcopy(BatchTaskWrapper.templateCfg())
@@ -176,12 +176,9 @@ setupBatchTaskBestFit.update({
     'nJobs': 1,  # Fix to 1 for profiledFCToyStudier.cfg['nSetOfToys'] sets of toys
     'queue': "workday",
 })
-# Customize taskSubmitter and jobRunner if needed
 
 if __name__ == '__main__':
     # First create all profiling point...
-    pdb.set_trace()
-    p.addService("dbplayer", FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected")))#Pritam
     task_dir = modulePath+"/batchTask_profiledFeldmanCousins"
 
     for iAfbSet in range(150):
@@ -198,58 +195,29 @@ if __name__ == '__main__':
 
     parser = AbsBatchTaskWrapper.BatchTaskParser
     parser.add_argument(
-        '--binKey',
+        '-b', '--binKey',
         dest="binKey",
         default="summary",
         help="Select q2 bin with binKey"
     )
+    parser.add_argument('--ImportDB', help='Import variables from database', action='store_false')
 
-    BatchTaskSubparserSubmitProfile = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('submit_profile')
-    BatchTaskSubparserSubmitProfile.add_argument(
-        "-s", "--submit",
-        dest="doSubmit",
-        action="store_true",
-        default=False,
-        help="Submit the jobs. By default only show submit script to stdout.")
+    BatchTaskSubparserSubmitProfile = AbsBatchTaskWrapper.copyAndRegSubparser(AbsBatchTaskWrapper.BatchTaskSubparsers, 'submit', 'submit_profile')
     BatchTaskSubparserSubmitProfile.set_defaults(func=AbsBatchTaskWrapper.submitTask)
 
-    BatchTaskSubparserRunProfile = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('run_profile')
-    BatchTaskSubparserRunProfile.add_argument(
-        dest="jobId",
-        type=int,
-        help="JobId is used to specify which work_dir to go."
-    )
+    BatchTaskSubparserRunProfile = AbsBatchTaskWrapper.copyAndRegSubparser(AbsBatchTaskWrapper.BatchTaskSubparsers, 'run', 'run_profile')
     BatchTaskSubparserRunProfile.set_defaults(func=AbsBatchTaskWrapper.runJob)
 
-    BatchTaskSubparserSubmitBestFit = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('submit_bestFit')
-    BatchTaskSubparserSubmitBestFit.add_argument(
-        "-q", "--queue",
-        dest="queue",
-        help="JobFlavour of HTCondor.")
-    BatchTaskSubparserSubmitBestFit.add_argument(
-        "-n", "--nJobs",
-        dest="nJobs",
-        default=20,
-        type=int,
-        help="Number of jobs.")
-    BatchTaskSubparserSubmitBestFit.add_argument(
-        "-s", "--submit",
-        dest="doSubmit",
-        action="store_true",
-        default=False,
-        help="Submit the jobs. By default only show submit script to stdout.")
+    BatchTaskSubparserSubmitBestFit = AbsBatchTaskWrapper.copyAndRegSubparser(AbsBatchTaskWrapper.BatchTaskSubparsers, 'submit', 'submit_bestFit')
     BatchTaskSubparserSubmitBestFit.set_defaults(func=AbsBatchTaskWrapper.submitTask)
-    BatchTaskSubparserRunBestFit = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('run_bestFit')
-    BatchTaskSubparserRunBestFit.add_argument(
-        dest="jobId",
-        type=int,
-        help="JobId is used to specify which work_dir to go."
-    )
+    
+    BatchTaskSubparserRunBestFit = AbsBatchTaskWrapper.copyAndRegSubparser(AbsBatchTaskWrapper.BatchTaskSubparsers, 'run', 'run_bestFit')
     BatchTaskSubparserRunBestFit.set_defaults(func=AbsBatchTaskWrapper.runJob)
 
     args = parser.parse_args()
+    args.binKey = [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey][0]
     p.cfg['binKey'] = args.binKey
-    p.cfg['bins'] = [args.binKey] #Pritam
+    p.cfg['args'] = args
 
     if args.Function_name in ["submit_profile", "run_profile"]:
         if args.Function_name == "run_profile":
@@ -273,7 +241,7 @@ if __name__ == '__main__':
                         unboundFl.setVal(StdFitter.flToUnboundFl((1. - 1.33 * math.fabs(val)) / 20. * (20. - iFl)))
                         self.FitMigrad()
                         if math.fabs(self._nll.getVal()) < 1e20:
-                            break
+                              break
                 elif var == "fl":
                     unboundFl.setVal(StdFitter.flToUnboundFl(val))
                     unboundFl.setConstant(True)
@@ -302,11 +270,11 @@ if __name__ == '__main__':
             plotCollection.plotter.cfg['switchPlots'] = ['simpleBLK']
             plotCollection.plotter.cfg['plots']['simpleBLK']['kwargs'].update({
                 'dataPlots': [["dataReader.Fit", ()], ],
-                'pdfPlots': [["f_final", plotCollection.plotterCfg_allStyle],
-                             ["f_final", (ROOT.RooFit.Components('f_sig3D'), ) + plotCollection.plotterCfg_sigStyle],
-                             ["f_final", (ROOT.RooFit.Components('f_bkgComb'), ) + plotCollection.plotterCfg_bkgStyle],
+                'pdfPlots': [["f_final", plotCollection.plotterCfg_styles['allStyle'] + (ROOT.RooFit.ProjectionRange("Fit"), ROOT.RooFit.Range("Fit"))],
+                             ["f_final", plotCollection.plotterCfg_styles['sigStyleBase'] + (ROOT.RooFit.ProjectionRange("Fit"), ROOT.RooFit.Range("Fit"), ROOT.RooFit.Components('f_sig3D'))],
+                             ["f_final", plotCollection.plotterCfg_styles['bkgStyleBase'] + (ROOT.RooFit.ProjectionRange("Fit"), ROOT.RooFit.Range("Fit"), ROOT.RooFit.Components('f_bkgComb'))],
                              ],
-                'marks': [],
+                'marks': None,
             })
         p.setSequence([
             dataCollection.dataReader,
@@ -334,15 +302,18 @@ if __name__ == '__main__':
             cfg=setupBatchTask)
         if args.Function_name == "run":
             wrappedTask.task_dir = "{0}/{1}".format(task_dir, profilePoints[args.jobId])
-            pdb.set_trace()
+            p.addService("dbplayer", FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected")))
             p.dbplayer.absInputDir = wrappedTask.task_dir
             wrappedTask.cfg['work_dir'] = ['toys_{0}'.format(datetime.utcnow().strftime("UTC-%Y%m%d-%H%M%S"))] * len(profilePoints)
+
             toyCollection.sigToyGenerator.cfg.update({
+                'scale': profiledFCToyStudier.cfg['nSetOfToys'] * 5,
                 'db': "{0}/fitResults_{{binLabel}}.db".format(wrappedTask.task_dir),
                 'saveAs': "sigToyGenerator_{0}.root".format(q2bins[args.binKey]['label']),
                 'preloadFiles': ["{0}/sigToyGenerator_{1}.root".format(wrappedTask.task_dir, q2bins[args.binKey]['label'])],
             })
             toyCollection.bkgCombToyGenerator.cfg.update({
+                'scale': profiledFCToyStudier.cfg['nSetOfToys'] * 5,
                 'db': "{0}/fitResults_{{binLabel}}.db".format(wrappedTask.task_dir),
                 'saveAs': "bkgCombToyGenerator_{0}.root".format(q2bins[args.binKey]['label']),
                 'preloadFiles': ["{0}/bkgCombToyGenerator_{1}.root".format(wrappedTask.task_dir, q2bins[args.binKey]['label'])],
@@ -352,7 +323,10 @@ if __name__ == '__main__':
             if os.path.exists(wrappedTask.task_dir + "/failed_in_profile_{0}.txt".format(q2bins[args.binKey]['label'])):
                 print("INFO\t: Failed in profile step. Abort.\n")
                 sys.exit()
+        else:
+            print("Each submit creates {0} toys. Please do submit many times to ensure sufficient accuracy.".format(profiledFCToyStudier.cfg['nSetOfToys']))
     elif args.Function_name in ['submit_bestFit', 'run_bestFit']:
+        nBestFitJobs = 20
         p.setSequence([
             pdfCollection.stdWspaceReader,
             toyCollection.sigToyGenerator,
@@ -364,17 +338,21 @@ if __name__ == '__main__':
             "{0}/bestFit".format(task_dir),
             cfg=setupBatchTaskBestFit)
         if args.Function_name == "run_bestFit":
-            wrappedTask.cfg['work_dir'] = ['toys_{0}'.format(datetime.utcnow().strftime("UTC-%Y%m%d-%H%M%S"))] * 20
+            wrappedTask.cfg['work_dir'] = ['toys_{0}'.format(datetime.utcnow().strftime("UTC-%Y%m%d-%H%M%S"))] * nBestFitJobs
             toyCollection.sigToyGenerator.cfg.update({
+                'scale': profiledFCToyStudier.cfg['nSetOfToys'] * 5,
                 'saveAs': "sigToyGenerator_{0}.root".format(q2bins[args.binKey]['label']),
                 'preloadFiles': ["{0}/sigToyGenerator_{1}.root".format(wrappedTask.task_dir, q2bins[args.binKey]['label'])],
             })
             toyCollection.bkgCombToyGenerator.cfg.update({
+                'scale': profiledFCToyStudier.cfg['nSetOfToys'] * 5,
                 'saveAs': "bkgCombToyGenerator_{0}.root".format(q2bins[args.binKey]['label']),
                 'preloadFiles': ["{0}/bkgCombToyGenerator_{1}.root".format(wrappedTask.task_dir, q2bins[args.binKey]['label'])],
             })
         else:
-            wrappedTask.cfg['nJobs'] = args.nJobs
+            if args.nJobs:
+                print("WARNING\t: Force nJobs={0} in coverage test.".format(nBestFitJobs))
+            wrappedTask.cfg['nJobs'] = nBestFitJobs
     else:
         raise ValueError("Unknown function '{0}'".format(args.Function_name))
 
@@ -382,9 +360,15 @@ if __name__ == '__main__':
         wrapper=wrappedTask,
         process=p
     )
-    
-    pdb.set_trace()
+
     args = parser.parse_args()
+    if args.binKey =="all":           
+        args.binKey = allBins         
+        p.cfg['bins'] = args.binKey   
+    else:                             
+        p.cfg['bins'] = [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
+        args.binKey = p.cfg['bins'] 
     args.func(args)
 
     sys.exit()
+

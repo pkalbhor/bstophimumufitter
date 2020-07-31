@@ -1,52 +1,57 @@
 #!/usr/bin/env python
-# vim: set sts=4 sw=4 fdm=indent fdn=3 et:
+# vim: set sts=4 sw=4 fdm=indent fdl=0 fdn=1 et:
 
 from __future__ import print_function
 
-import os
-import sys
-import re
-import math
-import glob
-import shelve
+import os, sys, re, math, glob, shelve, pdb
 from subprocess import call
 from argparse import ArgumentParser
 from multiprocessing import Pool
 
 import ROOT
 from BsToPhiMuMuFitter.anaSetup import modulePath, q2bins
-from BsToPhiMuMuFitter.StdProcess import dbplayer
 from BsToPhiMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb
 from BsToPhiMuMuFitter.plotCollection import Plotter
+from BsToPhiMuMuFitter.python.datainput import allBins
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
-targetBinKeys = ["belowJpsi", "betweenPeaks", "abovePsi2s", "summary"]
+dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected"))
+targetBinKeys = ['summary'] #allBins #["belowJpsi", "betweenPeaks", "abovePsi2s", "summary"]
 targetCoverage = 0.683
 
 def worker_mergeToys(task_dir):
+    print("INFO\t: Merge toys from {0}".format(task_dir))
     for binKey in targetBinKeys:
         for fileKey, wspaceKey in [("sigToyGenerator", "f_sig3DData"), ("bkgCombToyGenerator", "f_bkgCombData")]:
             files = glob.glob(args.batchDir + "/" + task_dir + "/*/{0}_{1}.root".format(fileKey, q2bins[binKey]['label']))
             merged_file = args.batchDir + "/" + task_dir + "/{0}_{1}.root".format(fileKey, q2bins[binKey]['label'])
-            if os.path.exists(merged_file) and args.mergeExists:
-                files.append(merged_file)
+            if os.path.exists(merged_file) and os.path.getsize(merged_file) > 1e3:
+                if args.mergeExists:
+                    files.append(merged_file)
+                else:
+                    # print("WARNING\t: A sizable {0}_{1}.root found under {2}. Skip!".format(fileKey, q2bins[binKey]['label'], task_dir))
+                    continue
 
             for fIdx, f in enumerate(files):
                 try:
                     fin = ROOT.TFile(f)
                     dataset = fin.Get(wspaceKey)
+
+                    if fIdx == 0:
+                        merged_dataset = dataset
+                    else:
+                        merged_dataset.append(dataset)
+
                 finally:
                     fin.Close()
 
-                if fIdx == 0:
-                    merged_dataset = dataset
-                else:
-                    merged_dataset.append(dataset)
-
             if len(files) > 0:
-                ofile = ROOT.TFile(merged_file, 'RECREATE')
-                #  print("DEBUG\t: Writing {0}_{1}.root under {2}".format(fileKey, q2bins[binKey]['label'], task_dir))
-                merged_dataset.Write()
-                ofile.Close()
+                try:
+                    ofile = ROOT.TFile(merged_file, 'RECREATE')
+                    #  print("DEBUG\t: Writing {0}_{1}.root under {2}".format(fileKey, q2bins[binKey]['label'], task_dir))
+                    merged_dataset.Write()
+                finally:
+                    ofile.Close()
             else:
                 print("WARNING\t: {0}_{1}.root not found under {2}".format(fileKey, q2bins[binKey]['label'], task_dir))
 
@@ -56,6 +61,7 @@ def func_mergeToys(args):
     pool.map(worker_mergeToys,
              filter(lambda i: re.match(args.taskDirPatn, i) or re.match("bestFit", i), os.listdir(args.batchDir)))
     pool.close()
+    pool.join()
 
 def worker_mergeSetSummary(task_dir):
     for binKey in targetBinKeys:
@@ -64,8 +70,7 @@ def worker_mergeSetSummary(task_dir):
         merged_file = args.batchDir + "/" + task_dir + "/{0}_{1}.root".format(fileKey, q2bins[binKey]['label'])
 
         if os.path.exists(merged_file):
-            #  print("WARNING\t: {0} exists. Skip!".format(merged_file))
-            pass
+            print("WARNING\t: {0} exists. Skip!".format(merged_file))
         elif len(files) > 0:
             call(["hadd", merged_file] + files)
         else:
@@ -77,6 +82,7 @@ def func_mergeSetSummary(args):
     pool.map(worker_mergeSetSummary,
              filter(lambda i: re.match(args.taskDirPatn, i) or re.match("bestFit", i), os.listdir(args.batchDir)))
     pool.close()
+    pool.join()
     os.system("ls -l " + args.batchDir + "/*/setSummary_*.root")
     print("INFO\t: Please check the merged filesize makes sense, and then delete work_dirs.")
 
@@ -96,6 +102,10 @@ def func_getFCConfInterval(args):
                 try:
                     fin = ROOT.TFile(args.batchDir + "/" + taskDir + "/setSummary_{0}.root".format(q2bins[binKey]['label']))
                     tree = fin.Get("tree")
+                    if not tree:
+                        print("WARNING\t: Unable to find the tree in " + args.batchDir + "/" + taskDir + "/setSummary_{0}.root".format(q2bins[binKey]['label']))
+                        continue
+
                     if varName == "afb":
                         pdf = ROOT.TF1("pdf_{0}".format(setTag), "gaus(0)+[3]*exp(-0.5*(x/[4])**2)+[5]*exp(-0.5*((x-0.745)/[6])**2)+[7]*exp(-0.5*((x+0.745)/[8])**2)", -0.75, 0.75)
                         pdf.SetParameter(1, varVal)
@@ -148,6 +158,8 @@ def func_getFCConfInterval(args):
                 finally:
                     fin.Close()
 
+            fout.cd() # Associate TGraph and TH1 to a directory.
+            
             # Prepare likelihood ratio map for later use
             LRatioAfb = ROOT.TH2F("LRatioAfb", "", 150, -0.75, 0.75, 150, -0.75, 0.75)
             for afbMeas in afbFitResults.keys():
@@ -242,7 +254,7 @@ def func_fitFCConfInterval(args):
             grHi.Draw("P SAME")
             line.DrawLine(measAfb, -0.75, measAfb, 0.75)
             Plotter.latexCMSMark()
-            Plotter.latexCMSExtra()
+            Plotter.latexCMSExtra(.20, .86)
             Plotter.latexLumi()
 
         def drawFlPlot(grLo, grHi, measFl):
@@ -261,11 +273,12 @@ def func_fitFCConfInterval(args):
             grHi.Draw("P SAME")
             line.DrawLine(measFl, 0, measFl, 1)
             Plotter.latexCMSMark()
-            Plotter.latexCMSExtra()
+            Plotter.latexCMSExtra(.20, .86)
             Plotter.latexLumi()
 
-        db = shelve.open(args.dbDirPath + "/fitResults_{0}.db".format(q2bins[binKey]['label']),
-                         writeback=True if args.saveToDB else False)
+        dbName = args.dbDirPath + "/fitResults_{0}.db".format(q2bins[binKey]['label'])
+        print("Work with DB file: {0}".format(dbName))
+        db = shelve.open(dbName, writeback=True if args.saveToDB else False)
         fl = unboundFlToFl(db['unboundFl']['getVal'])
         afb = unboundAfbToAfb(db['unboundAfb']['getVal'], fl)
         fin = ROOT.TFile(args.batchDir + "/FCConfInterval_{0}.root".format(q2bins[binKey]['label']))
@@ -351,12 +364,12 @@ def func_fitFCConfInterval(args):
 
             drawAfbPlot(gr_afbCILo, gr_afbCIHi, afb)
             Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}}".format(afb, stat_FC_afb_getErrorHi, stat_FC_afb_getErrorLo))
-            Plotter.latex.DrawLatexNDC(.19, .70, "Coverage: {0:.1f}%".format(100*stat_FC_afb_coverage))
+            # Plotter.latex.DrawLatexNDC(.19, .70, "Coverage: {0:.1f}%".format(100*stat_FC_afb_coverage))
             Plotter.canvas.Print(args.batchDir + "/FCConfInterval_afb_global_{0}.pdf".format(q2bins[binKey]['label']))
 
             drawFlPlot(gr_flCILo, gr_flCIHi, fl)
             Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}}".format(fl, stat_FC_fl_getErrorHi, stat_FC_fl_getErrorLo))
-            Plotter.latex.DrawLatexNDC(.19, .70, "Coverage: {0:.1f}%".format(100*stat_FC_fl_coverage))
+            # Plotter.latex.DrawLatexNDC(.19, .70, "Coverage: {0:.1f}%".format(100*stat_FC_fl_coverage))
             Plotter.canvas.Print(args.batchDir + "/FCConfInterval_fl_global_{0}.pdf".format(q2bins[binKey]['label']))
 
         if args.saveToDB:
@@ -394,7 +407,6 @@ if __name__ == '__main__':
         default=r"^(afb|fl)[+-]0\.\d{3}$",
         help="Regex pattern of task_dir under batchDir",
     )
-
 
     parser.add_argument(
         '-w', '--workDirPatn',
@@ -444,3 +456,4 @@ if __name__ == '__main__':
     args.func(args)
 
     sys.exit()
+

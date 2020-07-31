@@ -49,6 +49,7 @@ class AbsBatchTaskWrapper:
     def createJdlBase(self):
         """ Base of jdl script to be futher decorated in createJdl """
         """"""
+        #transfer_output_files = job$(Process),job$(Process).tar.gz
         templateJdl = """
 getenv      = True
 log         = log/log.$(Process)
@@ -61,7 +62,6 @@ executable  = {executable}
 Notify_user = physics.pritam@gmail.com
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-#  transfer_output_files = job$(Process),job$(Process).tar.gz
 """.format(
         initialdir=self.task_dir,
         JobFlavour=self.cfg['queue'],
