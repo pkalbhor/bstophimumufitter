@@ -62,7 +62,7 @@ class Process:
     def beginSeq_registerServices(self):
         """Initialize all services."""
         if not 'dbplayer' in self._services.keys(): 
-            dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected"))
+            dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, "plots_"+str(self.cfg['args'].Year)))
             self.addService("dbplayer", dbplayer)
         self.addService('logger', Logger("runtime.log"))
         self.addService('filemanager', FileManager())

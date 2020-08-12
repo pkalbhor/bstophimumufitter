@@ -4,7 +4,7 @@
 
 import os, re, itertools, pdb
 import ROOT
-
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 from v2Fitter.Fitter.FitterCore import FitterCore
 
 import BsToPhiMuMuFitter.cpp
@@ -40,7 +40,7 @@ class EfficiencyFitter(FitterCore):
         print("""Prefit uncorrelated term""")
         #pdb.set_trace()
         args = self.pdf.getParameters(self.data)
-        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
+        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
         self.ToggleConstVar(args, isConst=True)
         
         # Disable xTerm correction and fit to 1-D
@@ -159,7 +159,7 @@ class EfficiencyFitter(FitterCore):
         
         ####################################
         cwd=os.getcwd()
-        path=modulePath+"/Plots/Efficiency/"
+        path=modulePath+"/"+self.process.work_dir+"/Efficiency/"
         if not os.path.exists(path):
             os.mkdir(path)
         os.chdir(path)

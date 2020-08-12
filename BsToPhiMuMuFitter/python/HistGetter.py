@@ -6,6 +6,8 @@
 ##################################################################################################
 
 import os, re, math, ROOT, itertools
+from BsToPhiMuMuFitter.python.ArgParser import SetParser
+parser=SetParser(); args = parser.parse_args()
 from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
 import BsToPhiMuMuFitter.cpp
 
@@ -25,12 +27,12 @@ ROOT.gStyle.SetHistLineColor(1)
 #ROOT.gStyle.SetHistLineStyle(0)
 ROOT.gStyle.SetHistLineWidth(1)"""
 
-fname=modulePath+"/data/accXrecEffHists_Run16.root"
-fname2=modulePath+"/data/TotalEffHists_Run16.root"
+fname=modulePath+"/data/accXrecEffHists_{0}.root".format(str(args.Year))
+fname2=modulePath+"/data/TotalEffHists_{0}.root".format(str(args.Year))
 if not os.path.exists(fname):
-    os.system("hadd {0} {1}".format(fname, modulePath+"/data/accXrecEffHists_Run16_*.root"))
+    os.system("hadd {0} {1}".format(fname, modulePath+"/data/accXrecEffHists_{0}_*.root".format(str(args.Year))))
 if not os.path.exists(fname2):
-    os.system("hadd {0} {1}".format(fname2, modulePath+"/data/TotalEffHists_Run16_*.root"))
+    os.system("hadd {0} {1}".format(fname2, modulePath+"/data/TotalEffHists_{0}_*.root".format(str(args.Year))))
 
 f=ROOT.TFile(fname, "READ")
 f2=ROOT.TFile(fname2, "READ")
@@ -56,7 +58,6 @@ def SetStyles(obj, obj2):
     obj2.SetMarkerStyle(8); obj2.SetMarkerColor(2); obj2.SetLineColor(2); obj2.SetLineWidth(1); obj2.SetFillColorAlpha(2, .2)
 
 for i in List:
-    #obj=f.Get(i.GetName())
     obj=f.Get(i.GetName())
     if obj.InheritsFrom(ROOT.TH1D.Class()):
         print "TH1D: ", obj.GetName()
@@ -82,7 +83,7 @@ for i in List:
                 h2.GetYaxis().SetTitle("Ratio"); h2.SetMarkerColor(1)
                 h2Can=ROOT.TCanvas(); h2Can.cd(); h2.Draw()
                 #ROOT.gPad.cd(); h2.Draw()
-                h2Can.SaveAs("Ratio2by1_{0}_".format("cosl" if "ProjectionX" in obj.GetName() else "cosK")+q2bins[key[0]]['label']+".pdf")
+                h2Can.SaveAs("Ratio2by1_{1}_{0}_".format("cosl" if "ProjectionX" in obj.GetName() else "cosK", str(args.Year))+q2bins[key[0]]['label']+".pdf")
                 #obj.GetYaxis().SetRangeUser(0.5,1.5)
                 #rp=ROOT.TRatioPlot(obj, obj2);
                 print "TEST>>>>>>>>>>>>>>"
@@ -91,7 +92,7 @@ for i in List:
                 print "TEST>>>>>>>>>>>>>>"
                 res.fUpperPad.cd()
                 ROOT.TLatex().DrawLatexNDC(0.45, 0.89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[key[0]]['latexLabel']))
-                h1Canvas.SaveAs("Overlay_{0}_".format("cosl" if "ProjectionX" in obj.GetName() else "cosK")+q2bins[key[0]]['label']+".pdf")
+                h1Canvas.SaveAs("Overlay_{1}_{0}_".format("cosl" if "ProjectionX" in obj.GetName() else "cosK", str(args.Year))+q2bins[key[0]]['label']+".pdf")
 
     elif obj.InheritsFrom(ROOT.TH2D.Class()) : 
         print "TH2D: ", obj.GetName()
@@ -116,9 +117,10 @@ for i in List:
                 h2_effi_2D_comp.Draw("LEGO2")
                 canvas.SetRightMargin(0.032)
                 ROOT.TLatex().DrawLatexNDC(0.12, 0.89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[key[0]]['latexLabel']))
-                canvas.SaveAs("2DRatio_{0}".format(q2bins[key[0]]['label'])+".pdf")
+                canvas.SaveAs("2DRatio_{1}_{0}".format(q2bins[key[0]]['label'], str(args.Year))+".pdf")
 
                 canvas2 = ROOT.TCanvas()
+                ROOT.gStyle.SetPalette(ROOT.kBlackBody)
                 h2_effi_2D_comp.Draw("COLZ") #("LEGO2")
                 obj.SetBarOffset(0.2);    obj.Draw("TEXT SAME"); h2_effi_2D_comp.GetXaxis().SetTitleOffset(1)
                 canvas2.SetRightMargin(0.1)
@@ -126,7 +128,7 @@ for i in List:
                 h2_effi_2D_comp.GetYaxis().SetTitleOffset(1)
                 obj2.SetMarkerColor(2); obj2.SetBarOffset(-0.2); obj2.Draw("TEXT SAME")
                 ROOT.TLatex().DrawLatexNDC(0.12, 0.96, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[key[0]]['latexLabel']))
-                canvas2.SaveAs("2DRatioTEXT_{0}".format(q2bins[key[0]]['label'])+".pdf")
+                canvas2.SaveAs("2DRatioTEXT_{1}_{0}".format(q2bins[key[0]]['label'], str(args.Year))+".pdf")
  
     elif obj.InheritsFrom(ROOT.TEfficiency.Class()): 
         print "TEfficiency: ", obj.GetName()
@@ -145,7 +147,6 @@ for i in List:
 
             key=[k for k in q2bins.keys() if k in obj.GetName()]
             ROOT.TLatex().DrawLatexNDC(0.45, 0.89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[key[0]]['latexLabel']))
-            c1.SaveAs("{0}Eff_{1}_".format("Acc_" if "acc_" in obj.GetName() else "Rec_", "cosl" if "ProjectionX" in obj.GetName() else "cosK")+q2bins[key[0]]['label']+".pdf")
+            c1.SaveAs("{0}Eff_{2}_{1}_".format("Acc_" if "acc_" in obj.GetName() else "Rec_", "cosl" if "ProjectionX" in obj.GetName() else "cosK", str(args.Year))+q2bins[key[0]]['label']+".pdf")
     else:
         pass
-   #print type(f.Get("h_accXrec_belowJpsiA_ProjectionX"))

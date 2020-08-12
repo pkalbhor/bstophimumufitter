@@ -5,6 +5,7 @@
 import os
 from v2Fitter.FlowControl.Path import Path
 import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 class ToyGenerator(Path):
     """Create toy data from RooAbsPdf and mix with another RooDataSet"""

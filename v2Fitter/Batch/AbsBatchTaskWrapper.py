@@ -3,7 +3,6 @@
 
 import os
 import abc
-import __main__
 import tempfile
 from copy import copy
 from subprocess import call
@@ -11,7 +10,7 @@ from subprocess import call
 import v2Fitter.Batch.batchConfig as batchConfig
 from v2Fitter.FlowControl.Logger import Logger
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 
 # NOTE:
 #   Two steps to keep in mind:
@@ -52,9 +51,9 @@ class AbsBatchTaskWrapper:
         #transfer_output_files = job$(Process),job$(Process).tar.gz
         templateJdl = """
 getenv      = True
-log         = log/log.$(Process)
-output      = log/out.$(Process)
-error       = log/err.$(Process)
+log         = log/log.$(Cluster).$(Process)
+output      = log/out.$(Cluster).$(Process)
+error       = log/err.$(Cluster).$(Process)
 +JobFlavour = "{JobFlavour}"
 
 initialdir  = {initialdir}
@@ -105,9 +104,9 @@ when_to_transfer_output = ON_EXIT
 
 # Followings are pre-defined procedure to reduce routine
 
-BatchTaskParser = ArgumentParser(
+BatchTaskParser = ArgumentParser(add_help=False, conflict_handler='resolve',
     description="""
-Routine to run a batch task on HTCondor.
+Routine to run a batch task on HTCondor.""", epilog="""
 Users must complete following step(s):
     * Set the task wrapper with
         BatchTaskParser.set_defaults(
@@ -117,7 +116,7 @@ Users must complete following step(s):
 Optional customization:
     * Customize and hook a submit function with BatchTaskSubparserSubmit.set_defaults(func=?)
     * Customize and hook a run function with BatchTaskSubparserRun.set_defaults(func=?)
-""")
+""", formatter_class=RawTextHelpFormatter)
 
 BatchTaskSubparsers = BatchTaskParser.add_subparsers(help='Functions', dest='Function_name')
 BatchTaskSubparserSubmit = BatchTaskSubparsers.add_parser('submit')

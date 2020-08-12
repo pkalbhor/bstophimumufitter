@@ -5,22 +5,23 @@ import os, pdb, sys, shelve, math, glob
 from subprocess import call
 from copy import copy, deepcopy
 
-from BsToPhiMuMuFitter.python.datainput import allBins
-from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
-import BsToPhiMuMuFitter.StdFitter as StdFitter
-import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
-
-from BsToPhiMuMuFitter.StdProcess import p
 import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True # supress ROOT parser options
+from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
+import BsToPhiMuMuFitter.python.ArgParser as ArgParser
+parentParser=ArgParser.SetParser(False)      # Mandatory for passing commandline options to other modules
+args=parentParser.parse_known_args()[0]
+
+import BsToPhiMuMuFitter.StdFitter as StdFitter
+from BsToPhiMuMuFitter.StdProcess import p
+from BsToPhiMuMuFitter.python.datainput import allBins
 import BsToPhiMuMuFitter.cpp
 import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
 import BsToPhiMuMuFitter.plotCollection as plotCollection
-import v2Fitter.Fitter.AbsToyStudier as AbsToyStudier
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
-# Define
 ROOT.gROOT.ProcessLine(
 """struct MyTreeContent {
    Double_t     fl;
@@ -31,8 +32,8 @@ ROOT.gROOT.ProcessLine(
    Double_t     nBkgComb;
    Double_t     nll;
 };""")
-from ROOT import AddressOf
 
+import v2Fitter.Fitter.AbsToyStudier as AbsToyStudier
 class SigMCStudier(AbsToyStudier.AbsToyStudier):
     """"""
     def getSubDataEntries(self, setIdx):
@@ -48,13 +49,13 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
     def _preSetsLoop(self):
         self.otree = ROOT.TTree("tree", "")
         self.treeContent = ROOT.MyTreeContent()
-        self.otree.Branch("fl", AddressOf(self.treeContent, 'fl'), 'fl/D')
-        self.otree.Branch("afb", AddressOf(self.treeContent, 'afb'), 'afb/D')
-        self.otree.Branch("fitstatus", AddressOf(self.treeContent, 'fitstatus'), 'fitstatus/D')
-        self.otree.Branch("events", AddressOf(self.treeContent, 'events'), 'events/D')
-        self.otree.Branch("nSig", AddressOf(self.treeContent, 'nSig'), 'nSig/D')
-        self.otree.Branch("nBkgComb", AddressOf(self.treeContent, 'nBkgComb'), 'nBkgComb/D')
-        self.otree.Branch("nll", AddressOf(self.treeContent, 'nll'), 'nll/D')
+        self.otree.Branch("fl", ROOT.AddressOf(self.treeContent, 'fl'), 'fl/D')
+        self.otree.Branch("afb", ROOT.AddressOf(self.treeContent, 'afb'), 'afb/D')
+        self.otree.Branch("fitstatus", ROOT.AddressOf(self.treeContent, 'fitstatus'), 'fitstatus/D')
+        self.otree.Branch("events", ROOT.AddressOf(self.treeContent, 'events'), 'events/D')
+        self.otree.Branch("nSig", ROOT.AddressOf(self.treeContent, 'nSig'), 'nSig/D')
+        self.otree.Branch("nBkgComb", ROOT.AddressOf(self.treeContent, 'nBkgComb'), 'nBkgComb/D')
+        self.otree.Branch("nll", ROOT.AddressOf(self.treeContent, 'nll'), 'nll/D')
         pass
 
     def _preRunFitSteps(self, setIdx):
@@ -91,7 +92,7 @@ sigMCStudier = SigMCStudier(setupSigMCStudier)
 fitCollection.sig2DFitter.cfg['data'] = "sigMCValidation.Fit"
 
 # Customize batch task
-
+import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
 class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
     def createJdl(self, parser_args):
         jdl = self.createJdlBase()
@@ -183,18 +184,8 @@ def func_postproc(args):
         db.close()
 
 if __name__ == '__main__':
-    wrappedTask = BatchTaskWrapper(
-        "myBatchTask",
-        modulePath+"/batchTask_sigMCValidation",
-        cfg=setupBatchTask)
-
     parser = AbsBatchTaskWrapper.BatchTaskParser
-    parser.add_argument(
-        '-b', '--binKey',
-        dest="binKey",
-        default="summary",
-        help="Select q2 bin with binKey"    )
-
+    parser._add_container_actions(parentParser) # Connect with main parser
     parser.add_argument(
         '-t', '--nToy',
         dest="nSetOfToys",
@@ -218,8 +209,9 @@ if __name__ == '__main__':
     BatchTaskSubparserPostproc.set_defaults(
         func=func_postproc,
     )
-
+    ArgParser.add_help(parser)
     args = parser.parse_args()
+
     if args.Function_name in ['run', 'submit']:
         p.name="sigMCValidationProcess"
         sigMCStudier.cfg['nSetOfToys']=args.nSetOfToys
@@ -228,6 +220,7 @@ if __name__ == '__main__':
             dataCollection.sigMCReader,
             sigMCStudier,
         ])
+        p.cfg['args'] = args
         wrappedTask = BatchTaskWrapper(
             "myBatchTask",
             modulePath+"/batchTask_sigMCValidation",
@@ -247,5 +240,13 @@ if __name__ == '__main__':
         args.binKey = p.cfg['bins']
     args.func(args)
 
-    sys.exit()
-
+    #sys.exit()
+"""
+from v2Fitter.Fitter.ObjProvider import ObjProvider
+BatchJob = ObjProvider({
+    'name': "BatchJob",
+    'obj': {
+        'BatchJob.test': [__main__, ],
+    }
+})   
+"""

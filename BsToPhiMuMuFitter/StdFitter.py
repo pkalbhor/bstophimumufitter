@@ -8,7 +8,7 @@
 
 import functools, math, ROOT, pdb
 import BsToPhiMuMuFitter.cpp
-
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 from v2Fitter.Fitter.FitterCore import FitterCore
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
@@ -53,7 +53,7 @@ class StdFitter(FitterCore):
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
         #if not self.name=="sigAFitter": 
-        if self.process.cfg['args'].ImportDB: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgKStar'])
+        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgKStar'])
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
 
@@ -74,7 +74,7 @@ class StdFitter(FitterCore):
             unboundFl.setVal(flToUnboundFl(0.5 * fl))
 
     def _preFitSteps_vetoSmallFs(self):
-        print(""" fs is usually negligible, set the fraction to 0""")
+        """ fs is usually negligible, set the fraction to 0"""
         if "fs" in self.cfg.get('argPattern'):
             fs = self.args.find("fs")
             transAs = self.args.find("transAs")
@@ -111,7 +111,6 @@ class StdFitter(FitterCore):
     def _runFitSteps(self):
         self.FitMigrad()
         if self.cfg.get('FitHesse', False):
-            print("FitHesse: ")
             self.FitHesse()
         if self.cfg.get('FitMinos', [False, ()])[0]:
             self.FitMinos()

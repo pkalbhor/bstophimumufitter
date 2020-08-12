@@ -9,6 +9,7 @@ import shelve
 import math
 
 import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 from v2Fitter.FlowControl.Service import Service
 from v2Fitter.Fitter.FitterCore import FitterCore
 from BsToPhiMuMuFitter.anaSetup import q2bins
@@ -152,7 +153,7 @@ class FitDBPlayer(Service):
                 else:
                     print("WARNING\t: Unable to initialize {0}, record {1} not found in {2}.".format(argName, aliasName, dbfile))
             FitterCore.ArgLooper(args, initFromDBImp, exclude, inverseSel=True)
-            print("Initialized parameters from `{0}`.".format(dbfile))
+            print ("Initialized parameters from `{0}/{1}`.".format(os.path.abspath(os.path.dirname(dbfile)), dbfile))
         finally:
             db.close()
 

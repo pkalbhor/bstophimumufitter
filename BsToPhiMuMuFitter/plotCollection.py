@@ -6,7 +6,7 @@ import os, sys, pdb, copy, re, math, types, functools, shelve
 from array import array
 from math import sqrt
 import ROOT
-
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 import BsToPhiMuMuFitter.cpp
 from v2Fitter.FlowControl.Path import Path
 from v2Fitter.Fitter.FitterCore import FitterCore
@@ -88,12 +88,12 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         #if not frame =='B': self.DrawParams(pdfPlots)
         ####################################
         if pltName=="angular3D_bkgCombA":
-            path=modulePath+"/Plots/SideBandBkg/"
+            path=modulePath+"/"+self.process.work_dir+"/SideBandBkg/"
             if not os.path.exists(path):                                                                                                       
                 os.mkdir(path)   
             os.chdir(path)
         if pltName=="angular3D_sigM" or pltName=="angular3D_sig2D":
-            path=modulePath+"/Plots/SignalFits/"
+            path=modulePath+"/"+self.process.work_dir+"/SignalFits/"
             if not os.path.exists(path):                                                        
                 os.mkdir(path)                                                                 
             os.chdir(path)
@@ -124,7 +124,7 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
         self.DrawParams(pdfPlots)
         ########################################
         if pltName=="angular3D_GEN":
-            path=modulePath+"/Plots/SignalFits/"
+            path=modulePath+"/"+self.process.work_dir+"/SignalFits/"
             if not os.path.exists(path):                                                        
                 os.mkdir(path)                                                                 
             os.chdir(path)
@@ -146,7 +146,7 @@ def plotEfficiency(self, data_name, pdf_name):
 
     #####################################
     cwd=os.getcwd()
-    path=modulePath+"/Plots/Efficiency/"
+    path=modulePath+"/"+self.process.work_dir+"/Efficiency/"
     if not os.path.exists(path):
         os.mkdir(path)  
     os.chdir(path)  
@@ -233,7 +233,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
         afbDB = unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
     sigFrac = {}
     bkgCombFrac = {}
-    for regionName in ["Fit", "SR", "SB", "LSB", "USB"]:
+    for regionName in ["Fit"]:
         dataPlots = [["{0}.{1}".format(dataReader, regionName), plotterCfg_dataStyle, "Data"], ]
         for pIdx, p in enumerate(dataPlots):
             dataPlots[pIdx] = self.initDataPlotCfg(p)
@@ -273,7 +273,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
         ]
 
         plotFuncs = {
-            'B': {'func': Plotter.plotFrameB, 'tag': ""},
+            'B': {'func': Plotter.plotFrameB_fine, 'tag': ""},
             'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
             'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
         }
@@ -294,10 +294,10 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
                     Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}".format(afbDB))
                 elif frame == 'K':
                     Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
-            self.latexQ2()
+            Plotter.latexQ2(self.process.cfg['binKey'])
             
             ##################################
-            path=modulePath+"/Plots/FinalFit/" 
+            path=modulePath+"/"+self.process.work_dir+"/FinalFit/" 
             if not os.path.exists(path):
                 os.mkdir(path)
             os.chdir(path)
@@ -505,7 +505,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     legend.SetBorderSize(0)
     for dbsIdx, dbs in enumerate(dbSetup):
         title = dbs.get('title', None)
-        dbPat = dbs.get('dbPat', self.process.dbplayer.absInputDir + "/fitResults_{binLabel}.db")
+        dbPat = dbs.get('dbPat', modulePath+"/"+self.process.work_dir+ "/fitResults_{binLabel}.db") #self.process.dbplayer.absInputDir
         argAliasInDB = dbs.get('argAliasInDB', {})
         withSystError = dbs.get('withSystError', False)
         statErrorKey = dbs.get('statErrorKey', 'Minuit')
@@ -705,10 +705,10 @@ plotterCfg['plots'] = {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
         'kwargs': {
             'pltName': "angular3D_sigM",
-            'dataPlots': [["sigMCReader.Fit", plotterCfg_styles['mcStyle'], "Simulation"], ],
-            'pdfPlots': [["f_sigM", plotterCfg_styles['sigStyle'], fitCollection.setupSigMFitter['argAliasInDB'], "Total fit"],
+            'dataPlots': [["sigMCReader.Fit", plotterCfg_styles['mcStyleBase'], "Simulation"], ],
+            'pdfPlots': [["f_sigM", plotterCfg_styles['sigStyleBase'], fitCollection.setupSigMFitter['argAliasInDB'], "Total fit"],
                         ],
-            'marks': ['sim']}
+            'marks': {'marks': ['sim']}}
     },
     'angular3D_sigMDCB': {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
@@ -726,7 +726,7 @@ plotterCfg['plots'] = {
             'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
             'pdfPlots': [["f_sig2D", plotterCfg_sigStyle, fitCollection.setupSig2DFitter['argAliasInDB'], None],
                         ],
-            'marks': []}
+            'marks': {'marks': ['sim']}}
     },
     'angular3D_GEN': { #Pritam
         'func': [functools.partial(plotSimpleGEN, frames='LK')],  #plotSimpleGEN #plotSimpleBLK
@@ -745,7 +745,7 @@ plotterCfg['plots'] = {
             'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle, None, "Analytic Bkg."],
                          #["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9)), None, "Smooth Bkg."],
                         ],
-            'marks': []}
+            'marks': None}
     }, #ROOT.RooFit.Range(bMassRegions['Fit']['range'][0], bMassRegions['Fit']['range'][1])
 
     'angular3D_bkgA_KStar': {  #Plot K*0MuMu Fits
@@ -930,20 +930,6 @@ if __name__ == '__main__':
     for b in binKey:
         p.cfg['binKey'] = b
         plotter.cfg['switchPlots'].append('simpleSpectrum')                # Bmass 1D Fit
-        #plotter.cfg['switchPlots'].append('effi')                          # Efficiency
-        #plotter.cfg['switchPlots'].append('angular3D_sigM')
-        #plotter.cfg['switchPlots'].append('angular3D_sigMDCB')             #Plot for Signal Mass with DCB
-        #plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
-        #plotter.cfg['switchPlots'].append('angular3D_final')
-        #plotter.cfg['switchPlots'].append('angular3D_finalAlt')            #SmoothBkg Final Fit
-        #plotter.cfg['switchPlots'].append('angular3D_finalAltSigMAltBkgCombA') #SmoothBkg & DCB Signal Mass Final Fit
-        #plotter.cfg['switchPlots'].append('angular3D_final_AltMM')         #AltBkgM + AltMDCB: Final 1D BMass Fit
-        #plotter.cfg['switchPlots'].append('angular3D_final_AltMMA')        #AltBkgM + SmoothBkgA + AltMDCB: Final 3D Fit
-        #plotter.cfg['switchPlots'].append('angular3D_summary')
-        #plotter.cfg['switchPlots'].append('angular3D_sig2D')               #To Produce RECO Level Plots
-        #plotter.cfg['switchPlots'].append('angular3D_GEN')                 #To Produce Gen Level Plots
-        #plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')    #Summary of Fl and Afb
-        #plotter.cfg['switchPlots'].append('angular2D_RECO_values')         #Summary of Fl and Afb
         dataCollection.effiHistReader=dataCollection.effiHistReaderOneStep
         p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.sigMCGENReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
         p.beginSeq()

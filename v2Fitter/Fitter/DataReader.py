@@ -3,8 +3,9 @@
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
 # Description     : Creating RooDataSet for fitting
-# Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 20 Feb 2019 19:06 17:36
+# Author          : Pritam Kalbhor (physics.pritam@gmail.com)
+# Original Author : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
+# Last Modified   : 04 Aug 2020 19:06 17:36
 
 from v2Fitter.FlowControl.Path import Path
 
@@ -13,7 +14,6 @@ import ROOT
 from ROOT import TChain
 from ROOT import TIter
 from ROOT import RooDataSet
-from BsToPhiMuMuFitter.varCollection import Bmass
 
 class DataReader(Path):
     """Create RooDataSet from a TChain"""
@@ -55,16 +55,14 @@ class DataReader(Path):
     def createDataSet(self, dname, dcut):
         """Return named dataset, create if not exist"""
         if dname in self.dataset.keys():
-            print "\033[0;34;47m Dataset: ", dname, " Already Exists! \033[0m", dcut
+            print "\033[0;34;47m Dataset: ", dname, " Already Exists! \033[0m", dcut, self.dataset[dname].sumEntries()
             return self.dataset[dname]
-            
         tempfile_preload = ROOT.TFile(tempfile.gettempdir()+"/temp.root", 'RECREATE') #Pritam
-        data = RooDataSet(
-            dname,
-            "",
-            self.ch,
-            self.argset,
-            dcut)
+        RooCut = ROOT.RooFit.Cut(dcut)
+        Import = ROOT.RooFit.Import(self.ch)
+        Range  = ROOT.RooFit.CutRange(dname.split(".")[1]) # Not taking effect, need review
+        if self.argset.find("Bmass"): self.argset.find("Bmass").removeRange()
+        data = RooDataSet(dname, "", self.argset, Import, RooCut, Range)
         data.Write(); tempfile_preload.Close() #Pritam
         self.dataset[dname] = data
         print "\033[0;34;47m Creating Dataset: ", dname, ": \033[0m", dcut, data.sumEntries()
@@ -80,14 +78,8 @@ class DataReader(Path):
                     self.dataset[name] = data
                 file_preload.Close()
             self.createDataSet(name, cut)
-        if self.process.cfg['seqKey']=="fitSigMBinned": self.createBHist(cut)
         return self.dataset
     
-    def createBHist(self, cut):
-        h_Bmass=ROOT.TH1D("h_Bmass", "", 18, 4.9, 5.8)
-        self.ch.Draw("Bmass>>h_Bmass", cut)
-        self.cfg['source']['h_Bmass']=h_Bmass
-
     def _runPath(self):
         self.ch = TChain()
         print "Name: ", self.cfg['name']
@@ -104,7 +96,6 @@ class DataReader(Path):
 
     def _addSource(self):
         """Add dataset and arguments to source pool"""
-        print("source: cfg", self.cfg['source'])
         if self.cfg['preloadFile'] and not os.path.exists(self.cfg['preloadFile']):
             file_preload = ROOT.TFile(self.cfg['preloadFile'], 'RECREATE')
             for dname, d in self.dataset.items():
@@ -121,4 +112,3 @@ class DataReader(Path):
             self.cfg['source'][dname] = d
             self.logger.logINFO("{0} events in {1}.".format(d.sumEntries(), dname))
         super(DataReader, self)._addSource()
-        print("source: cfg", self.cfg['source'])

@@ -6,12 +6,11 @@ import types
 from copy import deepcopy
 
 import ROOT
-
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.FitterCore import FitterCore
 from BsToPhiMuMuFitter.StdFitter import StdFitter, flToUnboundFl, afbToUnboundAfb
 from BsToPhiMuMuFitter.EfficiencyFitter import EfficiencyFitter
-from BsToPhiMuMuFitter.BinnedFitter import BinnedFitter
 
 from BsToPhiMuMuFitter.StdProcess import p
 import BsToPhiMuMuFitter.dataCollection as dataCollection
@@ -57,18 +56,6 @@ setupSigMDCBFitter.update({
     'argAliasSaveToDB': True,
 })
 sigMDCBFitter = StdFitter(setupSigMDCBFitter)
-
-setupSigMBinnedFitter = deepcopy(setupTemplateFitter)
-setupSigMBinnedFitter.update({
-    'name': "sigMBinnedFitter",
-    'data': "sigMCReader.Fit",
-    'pdf': "f_sigM",
-    'FitHesse': True,
-    'argPattern': ['sigMGauss[12]_sigma', 'sigMGauss_mean', 'sigM_frac'],
-    'createNLLOpt': [ROOT.RooFit.Range(5.15, 5.55),],
-    'argAliasInDB': {'sigMGauss1_sigma': 'sigMGauss1_sigma_RECO', 'sigMGauss2_sigma': 'sigMGauss2_sigma_RECO', 'sigMGauss_mean': 'sigMGauss_mean_RECO', 'sigM_frac': 'sigM_frac_RECO'},
-})
-sigMBinnedFitter = BinnedFitter(setupSigMBinnedFitter)
 
 setupSigAFitter = deepcopy(setupTemplateFitter)
 setupSigAFitter.update({

@@ -10,15 +10,12 @@ import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN, dataArgsKStar
-from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto,  modulePath, genSel, recBaseSel, ExtraCuts, ExtraCutsKStar
-#from python.datainput import sigMC, dataFilePath, UnfilteredMC, sigMCD
-from BsToPhiMuMuFitter.python.datainput import allBins, sigMC, dataFilePath, UnfilteredMC, sigMCD, KStarSigMC
+from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, modulePath 
+from BsToPhiMuMuFitter.python.datainput import allBins, sigMC, dataFilePath, UnfilteredMC, sigMCD, KStarSigMC, cuts, cuts_noResVeto, genSel, recBaseSel, ExtraCuts, ExtraCutsKStar
 import ROOT
-from ROOT import TChain
-from ROOT import TEfficiency, TH2D
-from ROOT import RooArgList
-from ROOT import RooDataHist
-
+ROOT.PyConfig.IgnoreCommandLineOptions = True
+from ROOT import TChain, TEfficiency, TH2D, RooArgList, RooDataHist
+from __main__ import args as Args
 from BsToPhiMuMuFitter.StdProcess import p
 
 CFG = DataReader.templateConfig()
@@ -54,13 +51,13 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
             )
     
     # Customize preload TFile
-    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{binLabel}.root".format(datasetName=self.cfg['name'], binLabel=q2bins[self.process.cfg['binKey']]['label'])
+    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{Year}_{binLabel}.root".format(datasetName=self.cfg['name'], Year=str(Args.Year), binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
 dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
     'ifile': dataFilePath,
-    'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
+    'preloadFile': modulePath + "/data/preload_dataReader_{Year}_{binLabel}.root",
     'lumi': 35.9,
 })
 dataReader = DataReader(dataReaderCfg)
@@ -72,7 +69,7 @@ sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
     'ifile': sigMC,
-    'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
+    'preloadFile': modulePath + "/data/preload_sigMCReader_{Year}_{binLabel}.root",
     'lumi': 66226.56,
 })
 sigMCReader = DataReader(sigMCReaderCfg)
@@ -85,7 +82,7 @@ KsigMCReaderCfg.update({
     'name': "KsigMCReader",
     'ifile': KStarSigMC,
     'argset': dataArgsKStar,
-    'preloadFile': modulePath + "/data/preload_KsigMCReader_{binLabel}.root",
+    'preloadFile': modulePath + "/data/preload_KsigMCReader_{Year}_{binLabel}.root",
     'lumi': 2765.2853,
 })
 KsigMCReader = DataReader(KsigMCReaderCfg)
@@ -108,13 +105,13 @@ def customizeGEN(self):
         )
     )
     # Customize preload TFile
-    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{binLabel}.root".format(datasetName=self.cfg['name'], binLabel=q2bins[self.process.cfg['binKey']]['label'])
+    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{Year}_{binLabel}.root".format(datasetName=self.cfg['name'], Year=str(Args.Year), binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
 sigMCGENReaderCfg = copy(CFG)
 sigMCGENReaderCfg.update({
     'name': "sigMCGENReader",
     'ifile': UnfilteredMC,
-    'preloadFile': modulePath + "/data/preload_sigMCGENReader_{binLabel}.root",
+    'preloadFile': modulePath + "/data/preload_sigMCGENReader_{Year}_{binLabel}.root",
     'argset': dataArgsGEN,
 })
 sigMCGENReader = DataReader(sigMCGENReaderCfg)
@@ -144,11 +141,11 @@ ThetaLBins = array('d', [-1., -0.7, -0.4, -0.2, 0., 0.2, 0.4, 0.7, 1.])
 ThetaKBins = array('d', [-1., -0.7, -0.4, -0.2, 0., 0.2, 0.4, 0.7, 1.])
 
 def buildTotalEffiHist(self):
-    """Build efficiency histogram for later fitting/plotting"""
+    """Build one step efficiency histograms for later fitting/plotting"""
     if self.process.cfg['binKey'] not in allBins:
         return
     binKey=self.process.cfg['binKey']
-    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/TotalEffHists_Run16_{0}.root".format(q2bins[binKey]['label']), "UPDATE")
+    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/TotalEffHists_{0}_{1}.root".format(str(Args.Year), q2bins[binKey]['label']), "UPDATE")
 
     # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
@@ -252,12 +249,12 @@ def buildTotalEffiHist(self):
 
 
 def buildAccXRecEffiHist(self):
-    """Build efficiency histogram for later fitting/plotting"""
+    """Build two step efficiency histograms for later fitting/plotting"""
     if self.process.cfg['binKey'] not in allBins:
         return
 
     binKey = self.process.cfg['binKey']
-    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_Run16_{0}.root".format(q2bins[binKey]['label']), "UPDATE")
+    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_{0}_{1}.root".format(str(Args.Year), q2bins[binKey]['label']), "UPDATE")
     # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
 
@@ -417,8 +414,6 @@ effiHistReader = ObjProvider({
 })
 
 if __name__ == '__main__':
-    # p.setSequence([dataReader])
-    # p.setSequence([sigMCReader])
     p.setSequence([effiHistReader])
     p.beginSeq()
     p.runSeq()

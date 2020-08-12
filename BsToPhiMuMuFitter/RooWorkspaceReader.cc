@@ -3,14 +3,14 @@
 #include <typeinfo>
 
 void RooWorkspaceReader(){
-std::string a[]={"1A"};//, "1B", "1C", "3", "5A", "5B", "0"};
+std::string a[]={"0"};//, "1B", "1C", "3", "5A", "5B", "0"};
 int n=sizeof(a)/sizeof(a[0]);
 
 RooWorkspace *w;
 std::string b[n];
 for(int i=0; i<n;i++){
     std::string c="wspace";             
-    c.append("_bin"); c.append(a[i]);   //Makes string as 'wspace_bin'
+    c.append("_2016_bin"); c.append(a[i]);   //Makes string as 'wspace_bin'
     char *arr=new char[c.length()+1];   //Allocates size to the array
     strcpy(arr, c.c_str());             //copies string to array
     Option_t *t=arr;

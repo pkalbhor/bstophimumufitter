@@ -7,12 +7,11 @@
 from __future__ import print_function, division
 import os, pdb
 import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 ROOT.gROOT.SetBatch(True)
 
-import BsToPhiMuMuFitter.anaSetup as anaSetup
 from v2Fitter.FlowControl.Process import Process
 from v2Fitter.FlowControl.Logger import VerbosityLevels
-from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
 # Shared global settings
 isDEBUG = True
