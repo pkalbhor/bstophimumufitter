@@ -19,9 +19,17 @@ Create RooWorkspace objects:
 ```bash
 python seqCollection.py -b all -s buildPdfs
 ```
-Create efficiency plots and fit efficiency + RECO level Plots:
+Load data
+```
+python seqCollection.py -b all -s loadMC {Also: -s loadMCGEN, -s loadMCk}
+```
+Fit efficiency plots:
 ```bash
-python seqCollection.py -b all -s fitall
+python seqCollection.py -b all -s fitEff
+```
+Fit reco level plots:
+```
+python seqCollection.py -b all -s fitSig2D
 ```
 Fit GEN level Plots:
 ```bash

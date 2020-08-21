@@ -37,7 +37,7 @@ class DataReader(Path):
         for f in range(list_of_files.GetEntries()):
             print("\t{0}".format(next_file().GetTitle()))
         print("End of the input file list.")
-        return ""
+        return 1
 
     @classmethod
     def templateConfig(cls):
@@ -60,8 +60,8 @@ class DataReader(Path):
         tempfile_preload = ROOT.TFile(tempfile.gettempdir()+"/temp.root", 'RECREATE') #Pritam
         RooCut = ROOT.RooFit.Cut(dcut)
         Import = ROOT.RooFit.Import(self.ch)
-        Range  = ROOT.RooFit.CutRange(dname.split(".")[1]) # Not taking effect, need review
-        if self.argset.find("Bmass"): self.argset.find("Bmass").removeRange()
+        Range  = ROOT.RooFit.CutRange(dname.split(".")[2]) # Not taking effect, need review
+        if self.argset.find("Bmass"): self.argset.find("Bmass").removeRange() # Analysis specific line introduced
         data = RooDataSet(dname, "", self.argset, Import, RooCut, Range)
         data.Write(); tempfile_preload.Close() #Pritam
         self.dataset[dname] = data
@@ -92,6 +92,7 @@ class DataReader(Path):
             self.friend.BuildIndex(*self.cfg['ifriendIndex'])
             self.ch.AddFriend(self.friend)
         self.createDataSets(self.cfg['dataset'])
+        self.__str__()
         pass
 
     def _addSource(self):
@@ -101,7 +102,15 @@ class DataReader(Path):
             for dname, d in self.dataset.items():
                 d.Write()
             file_preload.Close()
-
+        elif os.path.exists(self.cfg['preloadFile']):
+            file_preload = ROOT.TFile(self.cfg['preloadFile'], 'UPDATE')
+            for dname, d in self.dataset.items():
+                if file_preload.Get(dname): 
+                    file_preload.Delete(dname+';*')     # Delete old objects if exists
+                    file_preload.Delete('ProcessID*;*') # Delete old Pids if exists
+                d.Write()
+            file_preload.Close()
+           
         if not 'source' in self.cfg.keys():
             self.cfg['source'] = {}
         #self.cfg['source']['{0}.tree'.format(self.name)] = self.ch

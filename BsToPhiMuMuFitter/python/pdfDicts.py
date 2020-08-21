@@ -79,6 +79,30 @@ f_analyticBkgCombA_format['Poly4_Poly4'] = [ # pdfL: Poly4, pdfK: Poly4
         pdfK="1+bkgCombK_c1*CosThetaK+bkgCombK_c2*pow(CosThetaK,2)+bkgCombK_c3*pow(CosThetaK, 3)+bkgCombK_c4*pow(CosThetaK,4)",
         args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4}")
 ]
+f_analyticBkgCombA_format['Poly6_Poly6'] = [ # pdfL: Poly6, pdfK: Poly6
+    "bkgCombL_c1[-10.,10.]", "bkgCombL_c2[-10.,10.]", "bkgCombL_c3[-10.,10.]", "bkgCombL_c4[-10.,10.]", "bkgCombL_c5[-10.,10.]", "bkgCombL_c6[-10.,10.]",
+    "bkgCombK_c1[-10,10]", "bkgCombK_c2[-10,10]", "bkgCombK_c3[-10,10]", "bkgCombK_c4[-10,10]", "bkgCombK_c5[-10,10]", "bkgCombK_c6[-10,10]",
+    "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
+        pdfL="1.+bkgCombL_c1*CosThetaL+bkgCombL_c2*pow(CosThetaL,2)+bkgCombL_c3*pow(CosThetaL, 3)+bkgCombL_c4*pow(CosThetaL,4)+bkgCombL_c5*pow(CosThetaL,5)+bkgCombL_c6*pow(CosThetaL,6)",
+        pdfK="1+bkgCombK_c1*CosThetaK+bkgCombK_c2*pow(CosThetaK,2)+bkgCombK_c3*pow(CosThetaK, 3)+bkgCombK_c4*pow(CosThetaK,4)+bkgCombK_c5*pow(CosThetaK,5)+bkgCombK_c6*pow(CosThetaK,6)",
+        args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombL_c6, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4, bkgCombK_c5, bkgCombK_c6}")
+]
+f_analyticBkgCombA_format['Poly7_Poly7'] = [ # pdfL: Poly7, pdfK: Poly7
+    "bkgCombL_c1[-10.,10.]", "bkgCombL_c2[-10.,10.]", "bkgCombL_c3[-10.,10.]", "bkgCombL_c4[-10.,10.]", "bkgCombL_c5[-10.,10.]", "bkgCombL_c6[-10.,10.]", "bkgCombL_c7[-10.,10.]",
+    "bkgCombK_c1[-10,10]", "bkgCombK_c2[-10,10]", "bkgCombK_c3[-10,10]", "bkgCombK_c4[-10,10]", "bkgCombK_c5[-10,10]", "bkgCombK_c6[-10,10]", "bkgCombK_c7[-10,10]",
+    "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
+        pdfL="1.+bkgCombL_c1*CosThetaL+bkgCombL_c2*pow(CosThetaL,2)+bkgCombL_c3*pow(CosThetaL, 3)+bkgCombL_c4*pow(CosThetaL,4)+bkgCombL_c5*pow(CosThetaL,5)+bkgCombL_c6*pow(CosThetaL,6)+bkgCombL_c7*pow(CosThetaL,7)",
+        pdfK="1+bkgCombK_c1*CosThetaK+bkgCombK_c2*pow(CosThetaK,2)+bkgCombK_c3*pow(CosThetaK, 3)+bkgCombK_c4*pow(CosThetaK,4)+bkgCombK_c5*pow(CosThetaK,5)+bkgCombK_c6*pow(CosThetaK,6)+bkgCombK_c7*pow(CosThetaK,7)",
+        args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombL_c6, bkgCombL_c7, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4, bkgCombK_c5, bkgCombK_c6, bkgCombK_c7}")
+]
+f_analyticBkgCombA_format['Poly8_Poly8'] = [ # pdfL: Poly8, pdfK: Poly8
+    "bkgCombL_c1[-10.,10.]", "bkgCombL_c2[-10.,10.]", "bkgCombL_c3[-10.,10.]", "bkgCombL_c4[-10.,10.]", "bkgCombL_c5[-10.,10.]", "bkgCombL_c6[-10.,10.]", "bkgCombL_c7[-10.,10.]", "bkgCombL_c8[-10.,10.]",
+    "bkgCombK_c1[-10,10]", "bkgCombK_c2[-10,10]", "bkgCombK_c3[-10,10]", "bkgCombK_c4[-10,10]", "bkgCombK_c5[-10,10]", "bkgCombK_c6[-10,10]", "bkgCombK_c7[-10,10]", "bkgCombK_c8[-10,10]",
+    "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
+        pdfL="1.+bkgCombL_c1*CosThetaL+bkgCombL_c2*pow(CosThetaL,2)+bkgCombL_c3*pow(CosThetaL, 3)+bkgCombL_c4*pow(CosThetaL,4)+bkgCombL_c5*pow(CosThetaL,5)+bkgCombL_c6*pow(CosThetaL,6)+bkgCombL_c7*pow(CosThetaL,7)+bkgCombL_c8*pow(CosThetaL,8)",
+        pdfK="1+bkgCombK_c1*CosThetaK+bkgCombK_c2*pow(CosThetaK,2)+bkgCombK_c3*pow(CosThetaK, 3)+bkgCombK_c4*pow(CosThetaK,4)+bkgCombK_c5*pow(CosThetaK,5)+bkgCombK_c6*pow(CosThetaK,6)+bkgCombK_c7*pow(CosThetaK,7)+bkgCombK_c8*pow(CosThetaK,8)",
+        args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombL_c6, bkgCombL_c7, bkgCombL_c8, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4, bkgCombK_c5, bkgCombK_c6, bkgCombK_c7, bkgCombK_c8}")
+]
 f_analyticBkgCombA_format['Gaus3_Exp'] = [ #pdfL: Gaus+Gaus+Gaus, pdfK: exp()+expt()
     "bkgCombL_c0[0,10]", "bkgCombL_c1[0.65, -1., 1.]", "bkgCombL_c2[0.1, 0.001, 1.0]", "bkgCombL_c3[-0.62,-1., 1.]",
     "bkgCombL_c4[0.1, 0.001, 1.0]", "bkgCombL_c5[0,10]", "bkgCombL_c6[0.0,-1., 1.]", "bkgCombL_c7[0.4, 0.001, 1.0]", "bkgCombL_c8[0,10]",

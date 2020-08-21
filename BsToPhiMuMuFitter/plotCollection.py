@@ -41,8 +41,6 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     wspace.factory("SUM::f_sigMDCB(sigMDCB_frac[0.8,0, 1]*cbs_1, cbs_2)")
     wspace.factory("SUM::model2(tmp_nSig*f_sigMDCB,tmp_nBkg*bkgCombM)")
     
-    #pdb.set_trace()
-    
     if False:
         pdfPlots = [
             [wspace.pdf('model'), plotterCfg_allStyle, None, "Total fit"],
@@ -87,18 +85,18 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         Plotter.latexQ2(self.process.cfg['binKey'])
         #if not frame =='B': self.DrawParams(pdfPlots)
         ####################################
-        if pltName=="angular3D_bkgCombA":
-            path=modulePath+"/"+self.process.work_dir+"/SideBandBkg/"
+        if pltName=="plot_bkgCombA.{0}".format(str(self.process.cfg['args'].Year)):
+            path=os.path.join(modulePath, self.process.work_dir, "SideBandBkg")
             if not os.path.exists(path):                                                                                                       
                 os.mkdir(path)   
             os.chdir(path)
-        if pltName=="angular3D_sigM" or pltName=="angular3D_sig2D":
-            path=modulePath+"/"+self.process.work_dir+"/SignalFits/"
+        if pltName=="plot_sigM.{0}".format(str(self.process.cfg['args'].Year)) or pltName=="plot_sig2D.{0}".format(str(self.process.cfg['args'].Year)):
+            path=os.path.join(modulePath, self.process.work_dir, "SignalFits")
             if not os.path.exists(path):                                                        
                 os.mkdir(path)                                                                 
             os.chdir(path)
         ####################################
-        self.canvasPrint(pltName + plotFuncs[frame]['tag'])
+        self.canvasPrint(pltName.replace('.', '_') + plotFuncs[frame]['tag'])
         Plotter.canvas.cd()
     os.chdir(cwd)
 
@@ -120,8 +118,8 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
     cwd=os.getcwd()
     for frame in frames:
         plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
-        self.latexQ2()
-        self.DrawParams(pdfPlots)
+        Plotter.latexQ2(self.process.cfg['binKey'])
+        #self.DrawParams(pdfPlots)
         ########################################
         if pltName=="angular3D_GEN":
             path=modulePath+"/"+self.process.work_dir+"/SignalFits/"
@@ -678,6 +676,7 @@ types.MethodType(plotSummaryAfbFl, None, Plotter)
 plotterCfg = {
     'name': "plotter",
     'switchPlots': [],
+    'plots': {},
 }
 plotterCfg_dataStyle = ()
 plotterCfg_mcStyle = ()
@@ -687,7 +686,33 @@ plotterCfg_sigStyleNoFill = (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineWidth(2))
 plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4), ROOT.RooFit.DrawOption("L"), ROOT.RooFit.VLines())
 plotterCfg_bkgStyle = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
 plotterCfg_bkgStyle_KStar = (ROOT.RooFit.LineColor(6), ROOT.RooFit.LineStyle(8))
-plotterCfg['plots'] = {
+
+def GetPlotterObject(self):
+    Year=str(self.cfg['args'].Year)
+    plotterCfg['plots']['plot_bkgCombA'] = {
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "plot_bkgCombA.{0}".format(Year),
+            'dataPlots': [["dataReader.{0}.SB".format(Year), plotterCfg_dataStyle, "{0} Data".format(Year)], ],
+            'pdfPlots': [["f_bkgCombA.{0}".format(Year), plotterCfg_bkgStyle, None, "Analytic Bkg."],
+                         #["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9)), None, "Smooth Bkg."],
+                        ],
+            'marks': None},
+    } #ROOT.RooFit.Range(bMassRegions['Fit']['range'][0], bMassRegions['Fit']['range'][1])
+    plotterCfg['plots']['Combined_plot_bkgCombA'] = {
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "Combined_plot_bkgCombA",
+            'dataPlots': [["SimultaneousFitter.dataWithCategories", plotterCfg_dataStyle, "Combined Data"], ],
+            'pdfPlots': [["SimultaneousFitter", plotterCfg_bkgStyle, None, "Analytic Bkg."],],
+            'marks': None},
+    }
+
+    plotter=Plotter(plotterCfg)
+    for plot in self.cfg['args'].list: plotter.cfg['switchPlots'].append(plot)
+    return plotter
+
+"""plotterCfg['plots'] = {
     'simpleSpectrum': {
         'func': [plotSpectrumWithSimpleFit],
         'kwargs': {
@@ -724,7 +749,7 @@ plotterCfg['plots'] = {
         'kwargs': {
             'pltName': "angular3D_sig2D",
             'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_sig2D", plotterCfg_sigStyle, fitCollection.setupSig2DFitter['argAliasInDB'], None],
+            'pdfPlots': [["f_sig2D", plotterCfg_sigStyle, fitCollection.ArgAliasRECO, None],
                         ],
             'marks': {'marks': ['sim']}}
     },
@@ -735,18 +760,8 @@ plotterCfg['plots'] = {
             'dataPlots': [["sigMCGENReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
             'pdfPlots': [["f_sigA", plotterCfg_sigStyle, fitCollection.setupSigGENFitter['argAliasInDB'], None],
                         ],
-            'marks': []}
+            'marks': {'marks': ['sim']}}
     },
-    'angular3D_bkgCombA': {
-        'func': [functools.partial(plotSimpleBLK, frames='LK')],
-        'kwargs': {
-            'pltName': "angular3D_bkgCombA",
-            'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
-            'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle, None, "Analytic Bkg."],
-                         #["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9)), None, "Smooth Bkg."],
-                        ],
-            'marks': None}
-    }, #ROOT.RooFit.Range(bMassRegions['Fit']['range'][0], bMassRegions['Fit']['range'][1])
 
     'angular3D_bkgA_KStar': {  #Plot K*0MuMu Fits
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
@@ -830,7 +845,7 @@ plotterCfg['plots'] = {
             'pltName': "angular3D_finalAltSigMAltBkgCombA",
             'dataReader': "dataReader",
             'pdfPlots': [["f_finalAltMAltBkgCombA", plotterCfg_allStyle, None, "Total Alt Fit"],
-                         ["f_sig3DAltM", plotterCfg_sigStyle, dict(fitCollection.setupSigMDCBFitter['argAliasInDB'].items() + fitCollection.setupSigAFitter['argAliasInDB'].items()), "Alt Sigal"],
+                         ["f_sig3DAltM", plotterCfg_sigStyle, dict(fitCollection.setupSigMDCBFitter['argAliasInDB'].items() + fitCollection.ArgAliasGEN.items()), "Alt Sigal"],
                          ["f_bkgCombAAltA", plotterCfg_bkgStyle, None, "Alt Background"],
                         ],
         }
@@ -842,7 +857,7 @@ plotterCfg['plots'] = {
             'pltName': "angular3D_final_AltMMA",
             'dataReader': "dataReader",
             'pdfPlots': [["f_finalAltM_AltBkgCombM_AltBkgCombA", plotterCfg_allStyle, None, "Total Alt Fit"],
-                         ["f_sig3DAltM", plotterCfg_sigStyle, dict(fitCollection.setupSigMDCBFitter['argAliasInDB'].items() + fitCollection.setupSigAFitter['argAliasInDB'].items()), "Alt Sigal"],
+                         ["f_sig3DAltM", plotterCfg_sigStyle, dict(fitCollection.setupSigMDCBFitter['argAliasInDB'].items() + fitCollection.ArgAliasGEN.items()), "Alt Sigal"],
                          ["f_bkgCombAltM_AltA", plotterCfg_bkgStyle, None, "Alt Background"],
                         ],
         }
@@ -919,12 +934,8 @@ plotterCfg['plots'] = {
             'marks'  : {'marks': ['sim']},
         },
     },
-}
-plotter = Plotter(plotterCfg)
-myplotterCfg=copy.deepcopy(plotterCfg); myplotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
-myplotter = Plotter(myplotterCfg)
-BkgShapeCfg=copy.deepcopy(plotterCfg); BkgShapeCfg['switchPlots'].append('angular3D_bkgCombA')
-Bkgplotter = Plotter(BkgShapeCfg)
+}"""
+
 if __name__ == '__main__':
     binKey =  [key for key in q2bins.keys() if q2bins[key]['label']==sys.argv[1]]
     for b in binKey:

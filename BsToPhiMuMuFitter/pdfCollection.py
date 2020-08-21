@@ -27,16 +27,16 @@ from BsToPhiMuMuFitter.anaSetup import modulePath, q2bins
 from BsToPhiMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL
 import BsToPhiMuMuFitter.cpp
 import BsToPhiMuMuFitter.dataCollection as dataCollection
-from __main__ import args as Args
+#from __main__ import args as Args
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 from ROOT import RooWorkspace, RooEffProd, RooKeysPdf
 
-from BsToPhiMuMuFitter.StdProcess import p
+#from BsToPhiMuMuFitter.StdProcess import p
 
 def getWspace(self):
     """Read workspace"""
-    wspaceName = "wspace.{0}".format(self.cfg.get('wspaceTag', "DEFAULT"))
+    wspaceName = "wspace.{0}.{1}".format(str(self.process.cfg['args'].Year), self.cfg.get('wspaceTag', "DEFAULT"))
     if wspaceName in self.process.sourcemanager.keys():
         wspace = self.process.sourcemanager.get(wspaceName)
     else:
@@ -74,25 +74,28 @@ def buildGenericObj(self, objName, factoryCmd, varNames):
 
 #======================================================================================================
 from BsToPhiMuMuFitter.python.pdfDicts import f_effiSigA_format
-if Args.Year==2016:
-    f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
-    f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm']
-    f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-    f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm']
-    f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
+def GetEffiSigAList(self):
+    Args=self.process.cfg['args']
+    if Args.Year==2016:
+        f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
+        f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm']
+        f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
+        f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm']
+        f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
 
-if Args.Year==2017:
-    f_effiSigA_format['DEFAULT']    = f_effiSigA_format['Poly8_Poly6_XTerm']
-    f_effiSigA_format['belowJpsiA'] = f_effiSigA_format['Gaus3_Poly6_XTerm']
-    f_effiSigA_format['belowJpsiB'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-    f_effiSigA_format['Test1']      = f_effiSigA_format['Gaus3_Poly6_XTerm'] 
+    if Args.Year==2017:
+        f_effiSigA_format['DEFAULT']    = f_effiSigA_format['Poly8_Poly6_XTerm']
+        f_effiSigA_format['belowJpsiA'] = f_effiSigA_format['Gaus3_Poly6_XTerm']
+        f_effiSigA_format['belowJpsiB'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
+        f_effiSigA_format['Test1']      = f_effiSigA_format['Gaus3_Poly6_XTerm'] 
 
-if Args.Year==2018:
-    f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
-    f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm']
-    f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-    f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm']
-    f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
+    if Args.Year==2018:
+        f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
+        f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm']
+        f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
+        f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm']
+        f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
+    return f_effiSigA_format.get(self.process.cfg['binKey'], f_effiSigA_format['DEFAULT'])
 
 setupBuildEffiSigA = {
     'objName': "effi_sigA",
@@ -185,20 +188,21 @@ buildBkgCombMAltM = functools.partial(buildGenericObj, **setupBuildBkgCombMAltM)
 
 #======================================================================================================
 from BsToPhiMuMuFitter.python.pdfDicts import f_analyticBkgCombA_format
-if Args.Year==2016 or Args.Year==2017 or Args.Year==2018:
-    f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Gaus2_Poly4']
-    f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['New']
-    f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Gaus2_Poly4']
-    f_analyticBkgCombA_format['abovePsi2sA']    = f_analyticBkgCombA_format['Lin_Poly3']
-    f_analyticBkgCombA_format['abovePsi2sB']    = f_analyticBkgCombA_format['Poly2_Poly3']
-    f_analyticBkgCombA_format['Test3']          = f_analyticBkgCombA_format['Poly2_Poly3']
-    f_analyticBkgCombA_format['Test2']          = f_analyticBkgCombA_format['QuadGaus_Exp']
-
+def GetAnalyticBkgAList(self):
+    Args=self.process.cfg['args']
+    if Args.Year==2016 or Args.Year==2017 or Args.Year==2018:
+        f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
+        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Poly8_Poly8']
+        #f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Gaus2_Poly4']
+        #f_analyticBkgCombA_format['abovePsi2sA']    = f_analyticBkgCombA_format['Lin_Poly3']
+        #f_analyticBkgCombA_format['abovePsi2sB']    = f_analyticBkgCombA_format['Poly2_Poly3']
+        #f_analyticBkgCombA_format['Test3']          = f_analyticBkgCombA_format['Poly2_Poly3']
+        f_analyticBkgCombA_format['summaryLowQ2']    = f_analyticBkgCombA_format['Poly8_Poly8']
+    return f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
 setupBuildAnalyticBkgCombA = {
     'objName': "f_bkgCombA",
     'varNames': ["CosThetaK", "CosThetaL"],
-    'factoryCmd': [
-    ]
+    'factoryCmd': [  ]
 }
 #======================================================================================================
 
@@ -228,16 +232,18 @@ f_analyticBkgA_KStar_format['Gaus2_Poly4'] = [ # pdfL: Gaus + Gauss, pdfK: Poly4
         args="{CosThetaL, CosThetaK, bkgKStarL_c1, bkgKStarL_c2, bkgKStarL_c3, bkgKStarL_c4, bkgKStarL_c5, bkgKStarK_c1, bkgKStarK_c2, bkgKStarK_c3, bkgKStarK_c4}")
 ]
 
-if Args.Year==2016 or Args.Year==2017 or Args.Year==2018:
-    f_analyticBkgA_KStar_format['DEFAULT']  = f_analyticBkgA_KStar_format['Gaus2_Poly4']
-    f_analyticBkgA_KStar_format['belowJpsiA']  = f_analyticBkgA_KStar_format['QuadGaus_Poly4']
-    #f_analyticBkgA_KStar_format['belowJpsiB']  = f_analyticBkgA_KStar_format['QuadGaus_Poly4']
+def GetAnalyticBkgA_KStarList(self):
+    Args=self.process.cfg['args']
+    if Args.Year==2016 or Args.Year==2017 or Args.Year==2018:
+        f_analyticBkgA_KStar_format['DEFAULT']  = f_analyticBkgA_KStar_format['Gaus2_Poly4']
+        f_analyticBkgA_KStar_format['belowJpsiA']  = f_analyticBkgA_KStar_format['QuadGaus_Poly4']
+        #f_analyticBkgA_KStar_format['belowJpsiB']  = f_analyticBkgA_KStar_format['QuadGaus_Poly4']
+    return f_analyticBkgA_KStar_format.get(self.process.cfg['binKey'], f_analyticBkgA_KStar_format['DEFAULT'])
 
 setupBuildAnalyticBkgA_KStar = {
     'objName': "f_bkgA_KStar",
     'varNames': ["CosThetaK", "CosThetaL"],
-    'factoryCmd': [
-    ]
+    'factoryCmd': [ ]
 }
 
 #"Math::Gaus::f_bkgM_KStar(Bmass, mean_Kstar[5.4, 5.3, 5.5], sigma_KStar[.3, 0, 4])"
@@ -262,18 +268,21 @@ f_BkgM_KStar_format['Double_Crystal_Ball'] = [ # pdfB: Double Crystal Ball
         "SUM::f_bkgM_KStar(bkgM_frac_KStar[0.4, 0.0, 1.0]*cbs_KStar_1, cbs_KStar_2)",
 ]
 
-if Args.Year==2016 or Args.Year==2017 or Args.Year==2018:
-    f_BkgM_KStar_format['DEFAULT'] = f_BkgM_KStar_format['Double_Crystal_Ball']
-    f_BkgM_KStar_format['belowJpsiA'] = f_BkgM_KStar_format['Gaus']
-    f_BkgM_KStar_format['belowJpsiB'] = f_BkgM_KStar_format['Gaus']
-    f_BkgM_KStar_format['belowJpsiC'] = f_BkgM_KStar_format['Gaus2']
+def GetBkgM_KStarList(self):
+    Args=self.process.cfg['args']
+    if Args.Year==2016 or Args.Year==2017 or Args.Year==2018:
+        f_BkgM_KStar_format['DEFAULT'] = f_BkgM_KStar_format['Double_Crystal_Ball']
+        f_BkgM_KStar_format['belowJpsiA'] = f_BkgM_KStar_format['Gaus']
+        f_BkgM_KStar_format['belowJpsiB'] = f_BkgM_KStar_format['Gaus']
+        f_BkgM_KStar_format['belowJpsiC'] = f_BkgM_KStar_format['Gaus2']
+    return f_BkgM_KStar_format.get(self.process.cfg['binKey'], f_BkgM_KStar_format['DEFAULT'])
 
 setupBuildBkgM_KStar = {
     'objName': "f_bkgM_KStar",
     'varNames': ["Bmass"],
-    'factoryCmd': [
-    ]
+    'factoryCmd': [ ]
 }
+
 setupSmoothBkg={'factoryCmd': []}
 SmoothBkgCmd={}
 SmoothBkgCmd['DEFAULT']=[1.0, 1.0, 1.0, 1.0]
@@ -290,26 +299,27 @@ def buildSmoothBkgCombA(self, factoryCmd):
     wspace = self.getWspace()
     Cmd=factoryCmd
     f_bkgCombAAltA = wspace.pdf("f_bkgCombAAltA")
+    frac_bkgCombAAltA = wspace.var("frac_bkgCombAAltA")
     if f_bkgCombAAltA == None:
         f_bkgCombAAltKUp = RooKeysPdf("f_bkgCombAAltKUp",
                                       "f_bkgCombAAltKUp",
                                       CosThetaK,
-                                      self.process.sourcemanager.get('dataReader.USB'),
+                                      self.process.sourcemanager.get('dataReader.{0}.USB'.format(str(self.process.cfg['args'].Year))),
                                       RooKeysPdf.MirrorBoth, Cmd[0])
         f_bkgCombAAltKLo = RooKeysPdf("f_bkgCombAAltKLo",
                                       "f_bkgCombAAltKLo",
                                       CosThetaK,
-                                      self.process.sourcemanager.get('dataReader.LSB'),
+                                      self.process.sourcemanager.get('dataReader.{0}.LSB'.format(str(self.process.cfg['args'].Year))),
                                       RooKeysPdf.MirrorBoth, Cmd[1])
         f_bkgCombAAltLUp = RooKeysPdf("f_bkgCombAAltLUp",
                                       "f_bkgCombAAltLUp",
                                       CosThetaL,
-                                      self.process.sourcemanager.get('dataReader.USB'),
+                                      self.process.sourcemanager.get('dataReader.{0}.USB'.format(str(self.process.cfg['args'].Year))),
                                       RooKeysPdf.MirrorBoth, Cmd[2])
         f_bkgCombAAltLLo = RooKeysPdf("f_bkgCombAAltLLo",
                                       "f_bkgCombAAltLLo",
                                       CosThetaL,
-                                      self.process.sourcemanager.get('dataReader.LSB'),
+                                      self.process.sourcemanager.get('dataReader.{0}.LSB'.format(str(self.process.cfg['args'].Year))),
                                       RooKeysPdf.MirrorBoth, Cmd[3])
         for f in f_bkgCombAAltKLo, f_bkgCombAAltKUp, f_bkgCombAAltLLo, f_bkgCombAAltLUp:
             getattr(wspace, 'import')(f)
@@ -318,7 +328,7 @@ def buildSmoothBkgCombA(self, factoryCmd):
         wspace.factory("SUM::f_bkgCombAAltA(frac_bkgCombAAltA[0.5,0,1]*f_bkgCombAAltALo,f_bkgCombAAltAUp)")
         f_bkgCombAAltA = wspace.pdf("f_bkgCombAAltA")
         frac_bkgCombAAltA = wspace.var("frac_bkgCombAAltA")
-        frac_bkgCombAAltA.setVal(self.process.sourcemanager.get('dataReader.LSB').sumEntries() / (self.process.sourcemanager.get('dataReader.LSB').sumEntries() + self.process.sourcemanager.get('dataReader.USB').sumEntries()))
+        frac_bkgCombAAltA.setVal(self.process.sourcemanager.get('dataReader.{0}.LSB'.format(str(self.process.cfg['args'].Year))).sumEntries() / (self.process.sourcemanager.get('dataReader.{0}.LSB'.format(str(self.process.cfg['args'].Year))).sumEntries() + self.process.sourcemanager.get('dataReader.{0}.USB'.format(str(self.process.cfg['args'].Year))).sumEntries()))
         frac_bkgCombAAltA.setConstant(True)
 
     self.cfg['source']['frac_bkgCombAAltA'] = frac_bkgCombAAltA
@@ -392,20 +402,24 @@ CFG_WspaceReader.update({
     'obj': OrderedDict([
     ])  # Empty by default loads all Functions and Pdfs
 })
-stdWspaceReader = WspaceReader(CFG_WspaceReader); stdWspaceReader.name="stdWspaceReader"
+
 def customizeWspaceReader(self):
-    self.cfg['fileName'] = "{0}/input/wspace_{2}_{1}.root".format(modulePath, q2bins[self.process.cfg['binKey']]['label'], str(Args.Year))
+    self.cfg['fileName'] = "{0}/input/wspace_{2}_{1}.root".format(modulePath, q2bins[self.process.cfg['binKey']]['label'], str(self.process.cfg['args'].Year))
     self.cfg['wspaceTag'] = sharedWspaceTagString.format(binLabel=q2bins[self.process.cfg['binKey']]['label'])
-stdWspaceReader.customize = types.MethodType(customizeWspaceReader, stdWspaceReader)
+
+def GetWspaceReader(self):
+    stdWspaceReader = WspaceReader(CFG_WspaceReader); stdWspaceReader.name="stdWspaceReader.{0}".format(str(self.cfg['args'].Year))
+    stdWspaceReader.customize = types.MethodType(customizeWspaceReader, stdWspaceReader)
+    return stdWspaceReader
 
 CFG_PDFBuilder = ObjProvider.templateConfig()
 stdPDFBuilder = ObjProvider(copy(CFG_PDFBuilder)); stdPDFBuilder.name="stdPDFBuilder"
 def customizePDFBuilder(self):
     """Customize pdf for q2 bins"""
-    setupBuildAnalyticBkgCombA['factoryCmd'] = f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
-    setupBuildAnalyticBkgA_KStar['factoryCmd'] = f_analyticBkgA_KStar_format.get(self.process.cfg['binKey'], f_analyticBkgA_KStar_format['DEFAULT'])
-    setupBuildBkgM_KStar['factoryCmd'] = f_BkgM_KStar_format.get(self.process.cfg['binKey'], f_BkgM_KStar_format['DEFAULT'])
-    setupBuildEffiSigA['factoryCmd'] = f_effiSigA_format.get(self.process.cfg['binKey'], f_effiSigA_format['DEFAULT'])
+    setupBuildAnalyticBkgCombA['factoryCmd']   = GetAnalyticBkgAList(self) 
+    setupBuildAnalyticBkgA_KStar['factoryCmd'] = GetAnalyticBkgA_KStarList(self)
+    setupBuildBkgM_KStar['factoryCmd']         = GetBkgM_KStarList(self) 
+    setupBuildEffiSigA['factoryCmd']           = GetEffiSigAList(self) 
     buildAnalyticBkgCombA = functools.partial(buildGenericObj, **setupBuildAnalyticBkgCombA)
     buildAnalyticBkgA_KStar = functools.partial(buildGenericObj, **setupBuildAnalyticBkgA_KStar)
     buildBkgM_KStar = functools.partial(buildGenericObj, **setupBuildBkgM_KStar)

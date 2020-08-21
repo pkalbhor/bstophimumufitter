@@ -38,7 +38,6 @@ class EfficiencyFitter(FitterCore):
 
     def _preFitSteps(self):
         print("""Prefit uncorrelated term""")
-        #pdb.set_trace()
         args = self.pdf.getParameters(self.data)
         if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
         self.ToggleConstVar(args, isConst=True)
@@ -55,10 +54,11 @@ class EfficiencyFitter(FitterCore):
             self.ToggleConstVar(args, isConst=False, targetArgs=argPats)
             
             theList = ROOT.RooLinkedList()
+            Err     = ROOT.RooFit.Minos(True)
             theSave = ROOT.RooFit.Save() #Python discards temporary objects
             Verbose   = ROOT.RooFit.Verbose(0)
             PrintLevel= ROOT.RooFit.PrintLevel(-1)
-            theList.Add(theSave);  theList.Add(Verbose); theList.Add(PrintLevel)
+            theList.Add(theSave);  theList.Add(Verbose); theList.Add(PrintLevel); theList.Add(Err)
             Res=pdf.chi2FitTo(hdata, theList)
             Res.Print("v")
 
@@ -75,8 +75,8 @@ class EfficiencyFitter(FitterCore):
 
         args.find('effi_norm').setConstant(False)
         Res2D=self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True), ROOT.RooFit.Save(), ROOT.RooFit.PrintLevel(-1))
-        Res2D.Print("v")
-        #args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
+        Res2D.Print()
+        args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
         args.find('effi_norm').setConstant(True)
 
         # Fix uncorrelated term and for later update with xTerms in main fit step
@@ -90,7 +90,7 @@ class EfficiencyFitter(FitterCore):
         FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, args)
 
     def _runFitSteps(self):
-        h2_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
+        h2_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec.{0}".format(self.process.cfg['args'].Year))
         effi_sigA_formula = self.pdf.formula().GetExpFormula().Data()
         args = self.pdf.getParameters(self.data)
         args_it = args.createIterator()
@@ -116,18 +116,26 @@ class EfficiencyFitter(FitterCore):
         minuit.SetPrintLevel(-1) #Pritam
         for xIdx in range(nPar):
             minuit.DefineParameter(xIdx, "x{0}".format(xIdx), 0., 1E-4, -1E+1, 1E+1)
-        minuit.Command("MINI")
-        minuit.Command("MINI")
-        minuit.Command("MINOS")
-        parVal = ROOT.Double(0)
-        parErr = ROOT.Double(0)
+        MigStatus=minuit.Migrad ()
+        MinosStatus=minuit.Command("MINOS")
+        
+        print """    Floating Parameter  InitialValue    FinalValue +/-  Error     GblCorr.
+  --------------------  ------------  --------------------------  --------"""
+        parVal, parErr = ROOT.Double(0), ROOT.Double(0)
+        eplus, eminus, eparab, gcc = ROOT.Double(0), ROOT.Double(0), ROOT.Double(0), ROOT.Double(0)
         for xIdx in range(nPar):
             minuit.GetParameter(xIdx, parVal, parErr)
+            minuit.mnerrs(xIdx, eplus, eminus, eparab, gcc)
             arg = args.find("x{0}".format(xIdx))
+            print "{0:>21}".format('x'+str(xIdx)), "  " if arg.getVal()<0 else "   ", \
+                  "{:.4e}".format(arg.getVal()), \
+                  "" if parVal<0 else " ", "{:.4e} +/-".format(parVal), \
+                  "{:.4e}".format(parErr), \
+                  " {:.4e}".format(gcc)
+
             arg.setVal(parVal)
             arg.setError(parErr)
-        minuit.Print()
-        print "Status: ", minuit.GetStatus()
+        print "TMinuit Status: ", minuit.GetStatus(), MigStatus, MinosStatus
         # Check if efficiency is positive definite
         f2_max_x, f2_max_y = ROOT.Double(0), ROOT.Double(0)
         f2_min_x, f2_min_y = ROOT.Double(0), ROOT.Double(0)
@@ -166,7 +174,7 @@ class EfficiencyFitter(FitterCore):
         ####################################
         canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
         os.chdir(cwd)
-        print "Eff Chi2: ", type(fitter), fitter.GetChi2()
+        print "2D Efficiency Chi^2: ", fitter.GetChi2()
 
     @staticmethod
     def isPosiDef(formula2D):

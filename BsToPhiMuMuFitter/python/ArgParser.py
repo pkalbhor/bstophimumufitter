@@ -9,6 +9,7 @@ def SetParser(add_help=True):
     parser.add_argument("--list", nargs="+", default=["effi"])
     parser.add_argument('-y', '--Year', dest='Year', type=int, default=2016, choices=[2016, 2017, 2018], help="Year of the dataset to process")
     parser.add_argument('--NoImport', help='Import variables from database (Default: False)', action='store_true')
+    parser.add_argument('--SimFit', help='Fitting over 3 year data (Default: False)', action='store_true')
     return parser
 
 def add_help(parser):

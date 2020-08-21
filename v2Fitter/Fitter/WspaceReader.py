@@ -46,7 +46,7 @@ class WspaceReader(Path):
             self.ifile = self.process.filemanager.open(str(hex(id(self))), fileName, 'READ') #Open Wspace File #Pritam
 
         # Load wspace
-        wspaceName = "wspace.{0}".format(self.cfg['wspaceTag'])
+        wspaceName = "wspace.{0}.{1}".format(str(self.process.cfg['args'].Year), self.cfg['wspaceTag'])
         # print("sourcemanager: ", self.process.sourcemanager.keys())
         if wspaceName in self.process.sourcemanager.keys():
             self.wspace = self.process.sourcemanager.get(wspaceName)
@@ -83,7 +83,7 @@ class WspaceReader(Path):
                     if argName in self.process.sourcemanager:
                         self.cfg['source'][argName] = self.process.sourcemanager.get(argName)
                     else:
-                        self.cfg['source'][argName] = arg
+                        self.cfg['source'][argName+".{0}".format(str(self.process.cfg['args'].Year))] = arg
                 FitterCore.ArgLooper(iArgs, bookOne)
 
             if self.cfg['obj']:

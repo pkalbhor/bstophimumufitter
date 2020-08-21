@@ -6,17 +6,18 @@ import re, pdb, types, functools, itertools, math
 from array import array
 from copy import copy
 
+import ROOT
+ROOT.PyConfig.IgnoreCommandLineOptions = True
 import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN, dataArgsKStar
 from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, modulePath 
-from BsToPhiMuMuFitter.python.datainput import allBins, sigMC, dataFilePath, UnfilteredMC, sigMCD, KStarSigMC, cuts, cuts_noResVeto, genSel, recBaseSel, ExtraCuts, ExtraCutsKStar
-import ROOT
-ROOT.PyConfig.IgnoreCommandLineOptions = True
+from BsToPhiMuMuFitter.python.datainput import genSel, ExtraCuts, ExtraCutsKStar
+
 from ROOT import TChain, TEfficiency, TH2D, RooArgList, RooDataHist
-from __main__ import args as Args
-from BsToPhiMuMuFitter.StdProcess import p
+#from __main__ import args as Args
+#from BsToPhiMuMuFitter.StdProcess import p
 
 CFG = DataReader.templateConfig()
 CFG.update({
@@ -44,50 +45,14 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
                     "({0}) && ({1}) && ({2}) && ({3})".format(
                         val['cutString'],
                         q2bins[self.process.cfg['binKey']]['cutString'],
-                        cuts[-1] if self.process.cfg['binKey'] not in ['jpsi', 'psi2s'] else cuts_noResVeto,
+                        self.process.cfg['cuts'][-1] if self.process.cfg['binKey'] not in ['jpsi', 'psi2s'] else cuts_noResVeto,
                         "1" if not extraCuts else extraCuts,
                     )
                 )
             )
     
     # Customize preload TFile
-    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{Year}_{binLabel}.root".format(datasetName=self.cfg['name'], Year=str(Args.Year), binLabel=q2bins[self.process.cfg['binKey']]['label'])
-
-dataReaderCfg = copy(CFG)
-dataReaderCfg.update({
-    'name': "dataReader",
-    'ifile': dataFilePath,
-    'preloadFile': modulePath + "/data/preload_dataReader_{Year}_{binLabel}.root",
-    'lumi': 35.9,
-})
-dataReader = DataReader(dataReaderCfg)
-customizeData = functools.partial(customizeOne, targetBMassRegion=['^Full$', '^Fit$', '^SR$', '^.{0,1}SB$'], extraCuts=ExtraCuts)
-dataReader.customize = types.MethodType(customizeData, dataReader)
-
-# sigMCReader
-sigMCReaderCfg = copy(CFG)
-sigMCReaderCfg.update({
-    'name': "sigMCReader",
-    'ifile': sigMC,
-    'preloadFile': modulePath + "/data/preload_sigMCReader_{Year}_{binLabel}.root",
-    'lumi': 66226.56,
-})
-sigMCReader = DataReader(sigMCReaderCfg)
-customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCuts)
-sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
-
-# KStar0MuMu-sigMCReader
-KsigMCReaderCfg = copy(CFG)
-KsigMCReaderCfg.update({
-    'name': "KsigMCReader",
-    'ifile': KStarSigMC,
-    'argset': dataArgsKStar,
-    'preloadFile': modulePath + "/data/preload_KsigMCReader_{Year}_{binLabel}.root",
-    'lumi': 2765.2853,
-})
-KsigMCReader = DataReader(KsigMCReaderCfg)
-customizeKSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCutsKStar)
-KsigMCReader.customize = types.MethodType(customizeKSigMC, KsigMCReader)
+    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{binLabel}.root".format(datasetName=self.cfg['name'].split('.')[0], binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
 # sigMCGENReader
 def customizeGEN(self):
@@ -105,29 +70,74 @@ def customizeGEN(self):
         )
     )
     # Customize preload TFile
-    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{Year}_{binLabel}.root".format(datasetName=self.cfg['name'], Year=str(Args.Year), binLabel=q2bins[self.process.cfg['binKey']]['label'])
+    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{binLabel}.root".format(datasetName=self.cfg['name'].split('.')[0], binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
-sigMCGENReaderCfg = copy(CFG)
-sigMCGENReaderCfg.update({
-    'name': "sigMCGENReader",
-    'ifile': UnfilteredMC,
-    'preloadFile': modulePath + "/data/preload_sigMCGENReader_{Year}_{binLabel}.root",
-    'argset': dataArgsGEN,
-})
-sigMCGENReader = DataReader(sigMCGENReaderCfg)
-sigMCGENReader.customize = types.MethodType(customizeGEN, sigMCGENReader)
+def GetDataReader(self, seq):
+    if seq is 'dataReader':
+        dataReaderCfg = copy(CFG)
+        dataReaderCfg.update({
+            'name': "dataReader.{Year}".format(Year=self.cfg['args'].Year),
+            'ifile': self.cfg['dataFilePath'],
+            'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
+            'lumi': 35.9,
+        })
+        dataReader = DataReader(dataReaderCfg)
+        customizeData = functools.partial(customizeOne, targetBMassRegion=['^Full$', '^Fit$', '^SR$', '^.{0,1}SB$'], extraCuts=ExtraCuts)
+        dataReader.customize = types.MethodType(customizeData, dataReader)
+        return dataReader
+
+    # sigMCReader
+    if seq is 'sigMCReader':
+        sigMCReaderCfg = copy(CFG)
+        sigMCReaderCfg.update({
+            'name': "sigMCReader.{Year}".format(Year=self.cfg['args'].Year),
+            'ifile': self.cfg['sigMC'],
+            'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
+            'lumi': 66226.56,
+        })
+        sigMCReader = DataReader(sigMCReaderCfg)
+        customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCuts)
+        sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
+        return sigMCReader
+
+    # KStar0MuMu-sigMCReader
+    if seq is 'KsigMCReader':
+        KsigMCReaderCfg = copy(CFG)
+        KsigMCReaderCfg.update({
+            'name': "KsigMCReader.{Year}".format(Year=self.cfg['args'].Year),
+            'ifile': KStarSigMC,
+            'argset': dataArgsKStar,
+            'preloadFile': modulePath + "/data/preload_KsigMCReader_{binLabel}.root",
+            'lumi': 2765.2853,
+        })
+        KsigMCReader = DataReader(KsigMCReaderCfg)
+        customizeKSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCutsKStar)
+        KsigMCReader.customize = types.MethodType(customizeKSigMC, KsigMCReader)
+        return KsigMCReader
+
+    if seq is 'sigMCGENReader':
+        sigMCGENReaderCfg = copy(CFG)
+        sigMCGENReaderCfg.update({
+            'name': "sigMCGENReader.{Year}".format(Year=self.cfg['args'].Year),
+            'ifile': self.cfg['UnfilteredMC'],
+            'preloadFile': modulePath + "/data/preload_sigMCGENReader_{binLabel}.root",
+            'argset': dataArgsGEN,
+        })
+        sigMCGENReader = DataReader(sigMCGENReaderCfg)
+        sigMCGENReader.customize = types.MethodType(customizeGEN, sigMCGENReader)
+        return sigMCGENReader
 
 setupEfficiencyBuildProcedure = {}
 setupEfficiencyBuildProcedure['acc'] = {
-    'ifiles': UnfilteredMC,
+    'ifiles': None,
     'baseString': None,
     'cutString' : None,
     'fillXY': "genCosThetaK:genCosThetaL",  # Y:X
     'weight': None
 }
 setupEfficiencyBuildProcedure['rec'] = {
-    'ifiles': sigMCReader.cfg['ifile'],
-    'dfiles': sigMCD,
+    'ifiles': None,
+    'dfiles': None,
     'baseString': None,
     'cutString': None,
     'fillXY': "CosThetaK:CosThetaL",  # Y:X
@@ -142,10 +152,10 @@ ThetaKBins = array('d', [-1., -0.7, -0.4, -0.2, 0., 0.2, 0.4, 0.7, 1.])
 
 def buildTotalEffiHist(self):
     """Build one step efficiency histograms for later fitting/plotting"""
-    if self.process.cfg['binKey'] not in allBins:
+    if self.process.cfg['binKey'] not in self.process.cfg['allBins']:
         return
     binKey=self.process.cfg['binKey']
-    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/TotalEffHists_{0}_{1}.root".format(str(Args.Year), q2bins[binKey]['label']), "UPDATE")
+    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/TotalEffHists_{0}_{1}.root".format(str(self.process.cfg['args'].Year), q2bins[binKey]['label']), "UPDATE")
 
     # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
@@ -153,11 +163,13 @@ def buildTotalEffiHist(self):
     if h2_accXrec == None or forceRebuild:
         # Fill histograms
         setupEfficiencyBuildProcedure['acc'].update({
+            'ifiles'    : self.process.cfg['UnfilteredMC'],
             'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
             'cutString' : "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel)})
         setupEfficiencyBuildProcedure['rec'].update({
+            'ifiles'    : self.process.cfg['sigMC'],
             'baseString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel),
-            'cutString' : "({0}) && ({1}) && ({2})".format(cuts_antiResVeto if binKey in ['jpsi', 'psi2s'] else cuts[-1], q2bins[binKey]['cutString'], 1 if ExtraCuts==None else ExtraCuts)})
+            'cutString' : "({0}) && ({1}) && ({2})".format(self.process.cfg['cuts'][-1], q2bins[binKey]['cutString'], 1 if ExtraCuts==None else ExtraCuts)})
 
         label='accXrec'
         treein = TChain()
@@ -242,10 +254,10 @@ def buildTotalEffiHist(self):
 
     # Register the chosen one to sourcemanager
     h2_accXrec = fin.Get("h2_accXrec1_{0}".format(self.process.cfg['binKey']))
-    self.cfg['source']['effiHistReader.h2_accXrec'] = h2_accXrec
-    self.cfg['source']['effiHistReader.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec)) # Effi 2D RooDataHist
-    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey'])) #Effi of CosThetaL
-    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(self.process.cfg['binKey'])) # Effi of CosThetaK
+    self.cfg['source']['effiHistReader.h2_accXrec.{0}'.format(str(self.process.cfg['args'].Year))] = h2_accXrec
+    self.cfg['source']['effiHistReader.accXrec.{0}'.format(str(self.process.cfg['args'].Year))] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec)) # Effi 2D RooDataHist
+    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX.{0}'.format(str(self.process.cfg['args'].Year))] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey'])) #Effi of CosThetaL
+    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY.{0}'.format(str(self.process.cfg['args'].Year))] = fin.Get("h_accXrec_{0}_ProjectionY".format(self.process.cfg['binKey'])) # Effi of CosThetaK
 
 
 def buildAccXRecEffiHist(self):
@@ -254,7 +266,7 @@ def buildAccXRecEffiHist(self):
         return
 
     binKey = self.process.cfg['binKey']
-    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_{0}_{1}.root".format(str(Args.Year), q2bins[binKey]['label']), "UPDATE")
+    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_{0}_{1}.root".format(str(self.process.cfg['args'].Year), q2bins[binKey]['label']), "UPDATE")
     # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
 
@@ -265,11 +277,14 @@ def buildAccXRecEffiHist(self):
 
         # Fill histograms
         setupEfficiencyBuildProcedure['acc'].update({
+            'ifiles'    : self.process.cfg['UnfilteredMC'],
             'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
             'cutString' : "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel)})
         setupEfficiencyBuildProcedure['rec'].update({
+            'ifiles'    : self.process.cfg['sigMC'],
+            'dfiles'    : self.process.cfg['sigMCD'],
             'baseString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel),
-            'cutString' : "({0}) && ({1}) && ({2})".format(cuts_antiResVeto if binKey in ['jpsi', 'psi2s'] else cuts[-1], q2bins[binKey]['cutString'], 1 if ExtraCuts==None else ExtraCuts)})
+            'cutString' : "({0}) && ({1}) && ({2})".format(cuts_antiResVeto if binKey in ['jpsi', 'psi2s'] else self.process.cfg['cuts'][-1], q2bins[binKey]['cutString'], 1 if ExtraCuts==None else ExtraCuts)})
 
         LBins=accXEffThetaLBins if not binKey=="belowJpsiA" else ThetaLBins
         KBins=accXEffThetaKBins if not binKey=="belowJpsiA" else ThetaKBins
@@ -394,10 +409,11 @@ def buildAccXRecEffiHist(self):
 
     # Register the chosen one to sourcemanager
     #  h2_accXrec = fin.Get("h2_accXrec_{0}".format(self.process.cfg['binKey']))
-    self.cfg['source'][self.name + '.h2_accXrec'] = h2_accXrec
-    self.cfg['source'][self.name + '.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec))
-    self.cfg['source'][self.name + '.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey']))
-    self.cfg['source'][self.name + '.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(self.process.cfg['binKey']))
+    Year=str(self.process.cfg['args'].Year)
+    self.cfg['source'][self.name + '.h2_accXrec.{0}'.format(Year)] = h2_accXrec
+    self.cfg['source'][self.name + '.accXrec.{0}'.format(Year)] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec))
+    self.cfg['source'][self.name + '.h_accXrec_fine_ProjectionX.{0}'.format(Year)] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey']))
+    self.cfg['source'][self.name + '.h_accXrec_fine_ProjectionY.{0}'.format(Year)] = fin.Get("h_accXrec_{0}_ProjectionY".format(self.process.cfg['binKey']))
 
 effiHistReaderOneStep = ObjProvider({
     'name': "effiHistReaderOneStep",

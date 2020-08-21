@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 sts=4 fdm=indent fdl=0 fdn=1 ft=python et:
 
-import functools, pdb
+import functools, pdb, time
 from array import array
 
 import ROOT
@@ -141,6 +141,7 @@ class Plotter(Path):
                 raise RuntimeError("pdfPlot not found in source manager.")
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
+        if self.process.cfg['args'].SimFit: p[1]=(ROOT.RooFit.ProjWData(ROOT.RooArgSet(self.process.sourcemanager.get("SimultaneousFitter.category")), self.process.sourcemanager.get("SimultaneousFitter.dataWithCategories")),)+p[1] 
         return p
 
     def initDataPlotCfg(self, p):
@@ -181,6 +182,8 @@ class Plotter(Path):
                         ROOT.RooFit.Binning(binning),
                         *p[1])
         for pIdx, p in enumerate(pdfPlots):
+            pdb.set_trace()
+            time.sleep(5) # somehow object loading need some time, 
             p[0].plotOn(cloned_frame,
                         ROOT.RooFit.Name("pdfP{0}".format(pIdx)),
                         *p[1])

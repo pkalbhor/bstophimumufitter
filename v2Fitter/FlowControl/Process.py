@@ -24,9 +24,9 @@ class Process:
         # Register services
         self._services = OrderedDict()
 
-        #self.addService('logger', Logger("runtime.log"))
-        #self.addService('filemanager', FileManager())
-        #self.addService('sourcemanager', SourceManager())
+        self.addService('logger', Logger("runtime.log"))
+        self.addService('filemanager', FileManager())
+        self.addService('sourcemanager', SourceManager())
 
     def __str__(self):
         return self._sequence.__str__()
@@ -48,7 +48,8 @@ class Process:
     def addService(self, name, obj):
         """Put object to the dictionary of services."""
         if name in self._services.keys():
-            print("WARNING\t: Overwritting service with key={0}".format(name))
+            print("WARNING\t: NOT Overwritting service with key={0}".format(name))
+            return 0
         setattr(self, name, obj)
         self._services[name] = obj
 
@@ -62,7 +63,7 @@ class Process:
     def beginSeq_registerServices(self):
         """Initialize all services."""
         if not 'dbplayer' in self._services.keys(): 
-            dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, "plots_"+str(self.cfg['args'].Year)))
+            dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, self.work_dir))
             self.addService("dbplayer", dbplayer)
         self.addService('logger', Logger("runtime.log"))
         self.addService('filemanager', FileManager())
@@ -78,9 +79,9 @@ class Process:
 
     def beginSeq(self):
         """Initialize all services. Start logging."""
-        if not os.path.exists(self.work_dir):
+        if not os.path.exists(os.path.join(self.cwd, self.work_dir)):
             os.makedirs(self.work_dir)
-        os.chdir(self.work_dir)
+        os.chdir(os.path.join(self.cwd, self.work_dir))
         self.beginSeq_registerServices()
         ROOT.gRandom.SetSeed(0)
         self.logger.logINFO("New process initialized with random seed {0}".format(ROOT.gRandom.GetSeed()))
