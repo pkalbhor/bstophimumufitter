@@ -18,7 +18,7 @@ def GetInputFiles(self):
     path="/eos/home-c/ckar/BSTOPHIMUMU/FileForGroup/"
     Args=self.cfg['args']
     if Args.Year==2016:
-        self.cfg['allBins']      = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "abovePsi2sA", "summary", "summaryLowQ2", "Test3"]
+        self.cfg['allBins']      = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "summary", "summaryLowQ2", "Test3"]
         self.cfg['sigMC']        = [path+"sel_BsToPhiMuMu_OfficialMC_signal_2016Mini_Presel_mc.lite_cut_bdt_dcacut_s02.root/tree"]
         self.cfg['dataFilePath'] = [path+"sel_Combine_2016_Mini_Presel_data_cut_bdt_dcacut-s02.root/tree"]
         self.cfg['UnfilteredMC'] = [path+"sel_BsToPhiMuMu_2016MC_Nofilter_mc.lite_genonly.root/gentree"]       
@@ -29,7 +29,7 @@ def GetInputFiles(self):
         self.cfg['KStarSigMC']   = [path+"sel_BdTokstarMuMu_OfficialMC_signal_2016Mini_Presel_mc.lite_cut_bdt_dcacut_s02.root/tree"]
 
     if Args.Year==2017:
-        self.cfg['allBins']      = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "abovePsi2sA", "summary", "summaryLowQ2", "Test3"]
+        self.cfg['allBins']      = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "summary", "summaryLowQ2", "Test3"]
         self.cfg['sigMC']        = [path+"sel_BsToPhiMuMu_OfficialMC_signal_2017Mini_Presel_mc.lite_cut_bdt_dcacut_s02.root/tree"]
         self.cfg['dataFilePath'] = [path+"sel_Combine_2017_Mini_Presel_data_cut_bdt_dcacut-s02.root/tree"]
         self.cfg['UnfilteredMC'] = [path+"sel_BsToPhiMuMu_NofilterMC_signal_2017_mc.lite_genonly.root/gentree"]       
@@ -40,7 +40,7 @@ def GetInputFiles(self):
         self.cfg['KStarSigMC']   = [path+"sel_BdTokstarMuMu_OfficialMC_signal_2017Mini_Presel_mc.lite_cut_bdt_dcacut_s02.root/tree"]
 
     if Args.Year==2018:
-        self.cfg['allBins']      = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "abovePsi2sA", "summary", "summaryLowQ2", "Test3"]
+        self.cfg['allBins']      = ["belowJpsiA", "belowJpsiB", "belowJpsiC", "betweenPeaks", "summary", "summaryLowQ2", "Test3"]
         self.cfg['sigMC']        = [path+"sel_BsToPhiMuMu_OfficialMC_signal_2018Mini_Presel_mc.lite_cut_bdt_dcacut_s02.root/tree"]
         self.cfg['dataFilePath'] = [path+"sel_Combine_2018_Mini_Presel_data_cut_bdt_dcacut-s02.root/tree"]
         self.cfg['UnfilteredMC'] = [path+"sel_BsToPhiMuMu_NofilterMC_signal_2018_mc.lite_genonly.root/gentree"]       

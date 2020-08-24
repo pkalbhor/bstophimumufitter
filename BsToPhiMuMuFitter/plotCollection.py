@@ -121,13 +121,13 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
         Plotter.latexQ2(self.process.cfg['binKey'])
         #self.DrawParams(pdfPlots)
         ########################################
-        if pltName=="angular3D_GEN":
-            path=modulePath+"/"+self.process.work_dir+"/SignalFits/"
+        if pltName=="plot_sigMCGEN.{0}".format(str(self.process.cfg['args'].Year)):
+            path=os.path.join(modulePath, self.process.work_dir, "SignalFits")
             if not os.path.exists(path):                                                        
                 os.mkdir(path)                                                                 
             os.chdir(path)
         ######################################33
-        self.canvasPrint(pltName + plotFuncs[frame]['tag'])
+        self.canvasPrint(pltName.replace('.', '_') + plotFuncs[frame]['tag'])
         Plotter.canvas.cd()
     os.chdir(cwd)
 types.MethodType(plotSimpleGEN, None, Plotter)
@@ -144,7 +144,7 @@ def plotEfficiency(self, data_name, pdf_name):
 
     #####################################
     cwd=os.getcwd()
-    path=modulePath+"/"+self.process.work_dir+"/Efficiency/"
+    path=os.path.join(modulePath, self.process.work_dir, "Efficiency")
     if not os.path.exists(path):
         os.mkdir(path)  
     os.chdir(path)  
@@ -446,7 +446,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     """ Check carefully the keys in 'dbSetup' """
     if marks is None:
         marks = []
-    binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2sA', 'abovePsi2sB'] #, 'summaryLowQ2']
+    binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'Test3']
 
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
     xxErr = array('d', map(lambda t: (t[1] - t[0]) / 2, [q2bins[binKey]['q2range'] for binKey in binKeys]))
@@ -503,7 +503,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     legend.SetBorderSize(0)
     for dbsIdx, dbs in enumerate(dbSetup):
         title = dbs.get('title', None)
-        dbPat = dbs.get('dbPat', modulePath+"/"+self.process.work_dir+ "/fitResults_{binLabel}.db") #self.process.dbplayer.absInputDir
+        dbPat = dbs.get('dbPat', os.path.join(modulePath, self.process.work_dir, "fitResults_{binLabel}.db")) #self.process.dbplayer.absInputDir
         argAliasInDB = dbs.get('argAliasInDB', {})
         withSystError = dbs.get('withSystError', False)
         statErrorKey = dbs.get('statErrorKey', 'Minuit')
@@ -689,16 +689,46 @@ plotterCfg_bkgStyle_KStar = (ROOT.RooFit.LineColor(6), ROOT.RooFit.LineStyle(8))
 
 def GetPlotterObject(self):
     Year=str(self.cfg['args'].Year)
+    plotterCfg['plots']['plot_sig2D']= {
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "plot_sig2D.{0}".format(Year),
+            'dataPlots': [["sigMCReader.{0}.Fit".format(Year), plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [["f_sig2D.{0}".format(Year), plotterCfg_sigStyle, fitCollection.ArgAliasRECO, None], ],
+            'marks': {'marks': ['sim']}}
+    }
+    plotterCfg['plots']['plot_sigMCGEN']= {
+        'func': [functools.partial(plotSimpleGEN, frames='LK')],
+        'kwargs': {
+            'pltName': "plot_sigMCGEN.{0}".format(Year),
+            'dataPlots': [["sigMCGENReader.{0}.Fit".format(Year), plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [["f_sigA.{0}".format(Year), plotterCfg_sigStyle, fitCollection.ArgAliasGEN, None], ],
+            'marks': {'marks': ['sim']}}
+    }
     plotterCfg['plots']['plot_bkgCombA'] = {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
         'kwargs': {
             'pltName': "plot_bkgCombA.{0}".format(Year),
             'dataPlots': [["dataReader.{0}.SB".format(Year), plotterCfg_dataStyle, "{0} Data".format(Year)], ],
-            'pdfPlots': [["f_bkgCombA.{0}".format(Year), plotterCfg_bkgStyle, None, "Analytic Bkg."],
-                         #["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9)), None, "Smooth Bkg."],
-                        ],
+            'pdfPlots': [["f_bkgCombA.{0}".format(Year), plotterCfg_bkgStyle, None, "Analytic Bkg."], ],
             'marks': None},
-    } #ROOT.RooFit.Range(bMassRegions['Fit']['range'][0], bMassRegions['Fit']['range'][1])
+    }
+    plotterCfg['plots']['summary_RECO2GEN'] = {
+        'func': [plotSummaryAfbFl],
+        'kwargs': {
+            'pltName': "summary_RECO2GEN",
+            'dbSetup': [{'title': "RECO",
+                         'argAliasInDB': {'unboundFl': 'unboundFl_RECO', 'unboundAfb': 'unboundAfb_RECO'},
+                         'legendOpt': "LPE",
+                         },
+                        {'title': "GEN",
+                         'argAliasInDB': {'unboundFl': 'unboundFl_GEN', 'unboundAfb': 'unboundAfb_GEN'},
+                         'fillColor': 4,
+                         'legendOpt': "LPE",
+                         },
+                        ],
+            'marks'  : {'marks': ['sim']}, },
+    }
     plotterCfg['plots']['Combined_plot_bkgCombA'] = {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
         'kwargs': {
@@ -707,9 +737,30 @@ def GetPlotterObject(self):
             'pdfPlots': [["SimultaneousFitter", plotterCfg_bkgStyle, None, "Analytic Bkg."],],
             'marks': None},
     }
+    plotterCfg['plots']['Combined_plot_sig2D'] = {
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "Combined_plot_sig2D",
+            'dataPlots': [["SimultaneousFitter.dataWithCategories", plotterCfg_dataStyle, "Combined Data"], ],
+            'pdfPlots': [["SimultaneousFitter", plotterCfg_bkgStyle, None, "Analytic Bkg."],],
+            'marks': None},
+    }
+    plotterCfg['plots']['Combined_plot_sigMCGEN'] = {
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "Combined_plot_sigMCGEN",
+            'dataPlots': [["SimultaneousFitter.dataWithCategories", plotterCfg_dataStyle, "Combined Data"], ],
+            'pdfPlots': [["SimultaneousFitter", plotterCfg_bkgStyle, None, "Analytic Bkg."],],
+            'marks': None},
+    }
 
     plotter=Plotter(plotterCfg)
-    for plot in self.cfg['args'].list: plotter.cfg['switchPlots'].append(plot)
+    if self.cfg['args'].SimFit and (self.cfg['args'].seqKey=='fitSig2D'):
+        plotter.cfg['switchPlots'].append('Combined_plot_sig2D')
+    elif self.cfg['args'].SimFit and self.cfg['args'].seqKey=='fitSigMCGEN':
+        plotter.cfg['switchPlots'].append('Combined_plot_sigMCGEN')
+    else:
+        for plot in self.cfg['args'].list: plotter.cfg['switchPlots'].append(plot)
     return plotter
 
 """plotterCfg['plots'] = {
@@ -743,24 +794,6 @@ def GetPlotterObject(self):
             'pdfPlots': [["f_sigMDCB", plotterCfg_sigStyle, fitCollection.setupSigMDCBFitter['argAliasInDB'], "Total fit"],
                         ],
             'marks': ['sim']}
-    },
-   'angular3D_sig2D': {
-        'func': [functools.partial(plotSimpleBLK, frames='LK')],
-        'kwargs': {
-            'pltName': "angular3D_sig2D",
-            'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_sig2D", plotterCfg_sigStyle, fitCollection.ArgAliasRECO, None],
-                        ],
-            'marks': {'marks': ['sim']}}
-    },
-    'angular3D_GEN': { #Pritam
-        'func': [functools.partial(plotSimpleGEN, frames='LK')],  #plotSimpleGEN #plotSimpleBLK
-        'kwargs': {
-            'pltName': "angular3D_GEN",
-            'dataPlots': [["sigMCGENReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_sigA", plotterCfg_sigStyle, fitCollection.setupSigGENFitter['argAliasInDB'], None],
-                        ],
-            'marks': {'marks': ['sim']}}
     },
 
     'angular3D_bkgA_KStar': {  #Plot K*0MuMu Fits
@@ -915,23 +948,6 @@ def GetPlotterObject(self):
                          },
                         ],
             'drawSM': True,
-        },
-    },
-    'angular2D_summary_RECO2GEN': {
-        'func': [plotSummaryAfbFl],
-        'kwargs': {
-            'pltName': "angular2D_summary_RECO2GEN",
-            'dbSetup': [{'title': "RECO",
-                         'argAliasInDB': {'unboundFl': 'unboundFl_RECO', 'unboundAfb': 'unboundAfb_RECO'},
-                         'legendOpt': "LPE",
-                         },
-                        {'title': "GEN",
-                         'argAliasInDB': {'unboundFl': 'unboundFl_GEN', 'unboundAfb': 'unboundAfb_GEN'},
-                         'fillColor': 4,
-                         'legendOpt': "LPE",
-                         },
-                        ],
-            'marks'  : {'marks': ['sim']},
         },
     },
 }"""

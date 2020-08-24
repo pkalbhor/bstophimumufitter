@@ -51,12 +51,12 @@ predefined_sequence['fitEff']    = ['effiHistReader', 'stdWspaceReader', 'effiFi
 predefined_sequence['fitSig2D']  = (['sigMCReader', 'stdWspaceReader'], ['SimultaneousFitter_sig2D', 'plotter'] if args.SimFit else ['sig2DFitter'])
 predefined_sequence['fitSigMCGEN']=(['sigMCGENReader', 'stdWspaceReader'], ['SimulFitter_sigGEN', 'plotter'] if args.SimFit else ['sigAFitter'])
 predefined_sequence['fitBkgCombA']=(['dataReader', 'stdWspaceReader'], ['SimulFitter_bkgCombA', 'plotter'] if args.SimFit else ['bkgCombAFitter'])
-predefined_sequence['createplots']=['dataReader', 'stdWspaceReader', 'plotter']
+predefined_sequence['createplots']=['dataReader', 'sigMCReader', 'sigMCGENReader', 'stdWspaceReader', 'plotter']
 #'effiHistReader', 'KsigMCReader', 'sigMCReader', 'sigMCGENReader', 
 
 def Instantiate(self, seq):
-    #Intialize all the objects here
-    # DataReader, WSpaceReader, StdFitter, ObjectProvider, 
+    """All objects are initalized here"""
+    # Classes in use are: DataReader, WSpaceReader, StdFitter, ObjectProvider, EfficiencyFitter, Plotter
     from BsToPhiMuMuFitter.dataCollection import GetDataReader
     import BsToPhiMuMuFitter.pdfCollection  as pdfCollection
     from BsToPhiMuMuFitter.fitCollection import GetFitterObjects
@@ -98,14 +98,14 @@ if __name__ == '__main__':
 
     if (not args.SimFit) and (type(predefined_sequence[args.seqKey]) is tuple):
         predefined_sequence[args.seqKey]=predefined_sequence[args.seqKey][0]+predefined_sequence[args.seqKey][1]
-    if args.SimFit:
+    if args.SimFit or args.SimFitPlots:
         p.name="SimultaneousFitProcess"; p.work_dir="plots_simultaneous"
 
     for b in p.cfg['bins']:
         p.cfg['binKey'] = b
         try:
             if args.SimFit:
-                print "INFO: Processing {0} year data".format('simultaneously over three')
+                print "INFO: Processing simultaneously over three year data"
                 for Year in [2016, 2017, 2018]:
                     p.cfg['args'].Year=Year
                     GetInputFiles(p)

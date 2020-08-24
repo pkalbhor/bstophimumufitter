@@ -192,7 +192,7 @@ def GetAnalyticBkgAList(self):
     Args=self.process.cfg['args']
     if Args.Year==2016 or Args.Year==2017 or Args.Year==2018:
         f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
-        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Poly8_Poly8']
+        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Poly6_Poly6']
         #f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Gaus2_Poly4']
         #f_analyticBkgCombA_format['abovePsi2sA']    = f_analyticBkgCombA_format['Lin_Poly3']
         #f_analyticBkgCombA_format['abovePsi2sB']    = f_analyticBkgCombA_format['Poly2_Poly3']
@@ -420,10 +420,10 @@ def customizePDFBuilder(self):
     setupBuildAnalyticBkgA_KStar['factoryCmd'] = GetAnalyticBkgA_KStarList(self)
     setupBuildBkgM_KStar['factoryCmd']         = GetBkgM_KStarList(self) 
     setupBuildEffiSigA['factoryCmd']           = GetEffiSigAList(self) 
-    buildAnalyticBkgCombA = functools.partial(buildGenericObj, **setupBuildAnalyticBkgCombA)
+    buildAnalyticBkgCombA   = functools.partial(buildGenericObj, **setupBuildAnalyticBkgCombA)
     buildAnalyticBkgA_KStar = functools.partial(buildGenericObj, **setupBuildAnalyticBkgA_KStar)
-    buildBkgM_KStar = functools.partial(buildGenericObj, **setupBuildBkgM_KStar)
-    buildEffiSigA = functools.partial(buildGenericObj, **setupBuildEffiSigA)
+    buildBkgM_KStar         = functools.partial(buildGenericObj, **setupBuildBkgM_KStar)
+    buildEffiSigA           = functools.partial(buildGenericObj, **setupBuildEffiSigA)
     
     setupSmoothBkg['factoryCmd'] = SmoothBkgCmd.get(self.process.cfg['binKey'], SmoothBkgCmd['DEFAULT'])
     buildSmoothBkg = functools.partial(buildSmoothBkgCombA, **setupSmoothBkg)

@@ -120,7 +120,6 @@ class Plotter(Path):
 
     @staticmethod
     def DrawWithResidue(frame1):
-        Plotter.canvas.cd()
         frame2 = frame1.emptyClone("frame_for_residue")
         hresid = frame1.pullHist(frame1.getObject(0).GetName(), frame1.getObject(1).GetName()) #residHist() #Get Pull
         frame2.addPlotable(hresid, "P")
@@ -141,7 +140,6 @@ class Plotter(Path):
                 raise RuntimeError("pdfPlot not found in source manager.")
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
-        if self.process.cfg['args'].SimFit: p[1]=(ROOT.RooFit.ProjWData(ROOT.RooArgSet(self.process.sourcemanager.get("SimultaneousFitter.category")), self.process.sourcemanager.get("SimultaneousFitter.dataWithCategories")),)+p[1] 
         return p
 
     def initDataPlotCfg(self, p):
@@ -182,15 +180,12 @@ class Plotter(Path):
                         ROOT.RooFit.Binning(binning),
                         *p[1])
         for pIdx, p in enumerate(pdfPlots):
-            pdb.set_trace()
-            time.sleep(5) # somehow object loading need some time, 
-            p[0].plotOn(cloned_frame,
-                        ROOT.RooFit.Name("pdfP{0}".format(pIdx)),
-                        *p[1])
-        p0 = cloned_frame.findObject("pdfP0" if pdfPlots else "dataP0").GetHistogram()
+            p[0].plotOn(cloned_frame, ROOT.RooFit.Name("pdfP{0}".format(pIdx)), *p[1])
+        #p0 = cloned_frame.findObject("pdfP0" if pdfPlots else "dataP0").GetHistogram()
         #cloned_frame.SetMaximum(scaleYaxis * p0.GetMaximum())
         cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
         #cloned_frame.Draw()
+        Plotter.canvas.cd()
         Plotter.DrawWithResidue(cloned_frame)
         
         # Legend

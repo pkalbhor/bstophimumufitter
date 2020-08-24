@@ -91,57 +91,76 @@ class EfficiencyFitter(FitterCore):
 
     def _runFitSteps(self):
         h2_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec.{0}".format(self.process.cfg['args'].Year))
-        effi_sigA_formula = self.pdf.formula().GetExpFormula().Data()
-        args = self.pdf.getParameters(self.data)
-        args_it = args.createIterator()
-        arg = args_it.Next()
         nPar = 0
-        Formula=effi_sigA_formula
-        while arg:
-            if any(re.match(pat, arg.GetName()) for pat in ["effi_norm", "hasXTerm", r"^l(\d{1,2})$", r"^k\d+$"]):
-                Formula = Formula.replace(arg.GetName()+"*", "({0})*".format(arg.getVal()))
-                Formula = Formula.replace(arg.GetName()+")", "({0}))".format(arg.getVal()))
-                Formula = Formula.replace(arg.GetName()+",", "({0}),".format(arg.getVal()))
-            elif re.match(r"^x\d+$", arg.GetName()):
-                nPar = nPar + 1
+        def GetTFunction(nPar):
+            nonlocal nPar
+            args = self.pdf.getParameters(self.data)
+            args_it = args.createIterator()
             arg = args_it.Next()
-        effi_sigA_formula = Formula
-        effi_sigA_formula = re.sub(r"x(\d{1,2})", r"[\1]", effi_sigA_formula)
-        effi_sigA_formula = re.sub(r"CosThetaL", r"x", effi_sigA_formula)
-        effi_sigA_formula = re.sub(r"CosThetaK", r"y", effi_sigA_formula)
-        f2_effi_sigA = ROOT.TF2("f2_effi_sigA", effi_sigA_formula, -1, 1, -1, 1)
+            effi_sigA_formula = self.pdf.formula().GetExpFormula().Data()
+            Formula=effi_sigA_formula
+            while arg:
+                if any(re.match(pat, arg.GetName()) for pat in ["effi_norm", "hasXTerm", r"^l(\d{1,2})$", r"^k\d+$"]):
+                    Formula = Formula.replace(arg.GetName()+"*", "({0})*".format(arg.getVal()))
+                    Formula = Formula.replace(arg.GetName()+")", "({0}))".format(arg.getVal()))
+                    Formula = Formula.replace(arg.GetName()+",", "({0}),".format(arg.getVal()))
+                elif re.match(r"^x\d+$", arg.GetName()):
+                    nPar = nPar + 1
+                arg = args_it.Next()
+            effi_sigA_formula = Formula
+            effi_sigA_formula = re.sub(r"x(\d{1,2})", r"[\1]", effi_sigA_formula)
+            effi_sigA_formula = re.sub(r"CosThetaL", r"x", effi_sigA_formula)
+            effi_sigA_formula = re.sub(r"CosThetaK", r"y", effi_sigA_formula)
+            f2_effi_sigA = ROOT.TF2("f2_effi_sigA", effi_sigA_formula, -1, 1, -1, 1)
+            return f2_effi_sigA
 
-        fitter = ROOT.EfficiencyFitter()
-        minuit = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
-        minuit.SetPrintLevel(-1) #Pritam
-        for xIdx in range(nPar):
-            minuit.DefineParameter(xIdx, "x{0}".format(xIdx), 0., 1E-4, -1E+1, 1E+1)
-        MigStatus=minuit.Migrad ()
-        MinosStatus=minuit.Command("MINOS")
+        if False:
+            self.fitter = ROOT.StdFitter()
+            minuit=self.fitter.Init(self.pdf, self.data)
+            minuit.setPrintLevel(0)
+            self._nll = self.fitter.GetNLL()
+            migrad=self.fitter.FitMigrad()
+            self.fitter.FitHesse()
+            self.fitter.FitMinos(self.pdf.getParameters(self.data))
+            minuit.Print()
+            FitterCore.ArgLooper(self._nll.getParameters(self.data), lambda p: p.Print())
+            f2_effi_sigA=GetTFunction(nPar)
+        else:
+            f2_effi_sigA=GetTFunction(nPar)
+            pdb.set_trace()
+            fitter = ROOT.EfficiencyFitter()
+            print type(h2_accXrec), type(f2_effi_sigA)
+            self.minimizer = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
+            self.minimizer.SetPrintLevel(-1) #Pritam
+            for xIdx in range(nPar):
+                self.minimizer.DefineParameter(xIdx, "x{0}".format(xIdx), 0., 1E-4, -1E+1, 1E+1)
+            MigStatus=self.minimizer.Migrad ()
+            MinosStatus=self.minimizer.Command("MINOS")
         
-        print """    Floating Parameter  InitialValue    FinalValue +/-  Error     GblCorr.
+            print """    Floating Parameter  InitialValue    FinalValue +/-  Error     GblCorr.
   --------------------  ------------  --------------------------  --------"""
-        parVal, parErr = ROOT.Double(0), ROOT.Double(0)
-        eplus, eminus, eparab, gcc = ROOT.Double(0), ROOT.Double(0), ROOT.Double(0), ROOT.Double(0)
-        for xIdx in range(nPar):
-            minuit.GetParameter(xIdx, parVal, parErr)
-            minuit.mnerrs(xIdx, eplus, eminus, eparab, gcc)
-            arg = args.find("x{0}".format(xIdx))
-            print "{0:>21}".format('x'+str(xIdx)), "  " if arg.getVal()<0 else "   ", \
-                  "{:.4e}".format(arg.getVal()), \
-                  "" if parVal<0 else " ", "{:.4e} +/-".format(parVal), \
-                  "{:.4e}".format(parErr), \
-                  " {:.4e}".format(gcc)
+            parVal, parErr = ROOT.Double(0), ROOT.Double(0)
+            eplus, eminus, eparab, gcc = ROOT.Double(0), ROOT.Double(0), ROOT.Double(0), ROOT.Double(0)
+            for xIdx in range(nPar):
+                self.minimizer.GetParameter(xIdx, parVal, parErr)
+                self.minimizer.mnerrs(xIdx, eplus, eminus, eparab, gcc)
+                arg = args.find("x{0}".format(xIdx))
+                print "{0:>21}".format('x'+str(xIdx)), "  " if arg.getVal()<0 else "   ", \
+                      "{:.4e}".format(arg.getVal()), \
+                      "" if parVal<0 else " ", "{:.4e} +/-".format(parVal), \
+                      "{:.4e}".format(parErr), \
+                      " {:.4e}".format(gcc)
 
-            arg.setVal(parVal)
-            arg.setError(parErr)
-        print "TMinuit Status: ", minuit.GetStatus(), MigStatus, MinosStatus
-        # Check if efficiency is positive definite
-        f2_max_x, f2_max_y = ROOT.Double(0), ROOT.Double(0)
-        f2_min_x, f2_min_y = ROOT.Double(0), ROOT.Double(0)
-        f2_effi_sigA.GetMaximumXY(f2_max_x, f2_max_y)
-        f2_effi_sigA.GetMinimumXY(f2_min_x, f2_min_y)
-        self.logger.logINFO("Sanitary check: Efficiency ranges from {0:.2e} to {1:.2e}".format(f2_effi_sigA.Eval(f2_min_x, f2_min_y), f2_effi_sigA.Eval(f2_max_x, f2_max_y)))
+                arg.setVal(parVal)
+                arg.setError(parErr)
+            # Check if efficiency is positive definite
+            f2_max_x, f2_max_y = ROOT.Double(0), ROOT.Double(0)
+            f2_min_x, f2_min_y = ROOT.Double(0), ROOT.Double(0)
+            f2_effi_sigA.GetMaximumXY(f2_max_x, f2_max_y)
+            f2_effi_sigA.GetMinimumXY(f2_min_x, f2_min_y)
+            self.logger.logINFO("Sanitary check: Efficiency ranges from {0:.2e} to {1:.2e}".format(f2_effi_sigA.Eval(f2_min_x, f2_min_y), f2_effi_sigA.Eval(f2_max_x, f2_max_y)))
+            print "2D Efficiency Chi^2: ", fitter.GetChi2()
+            print "TMinuit Status: ", self.minimizer.GetStatus(), MigStatus, MinosStatus
 
         # Plot comparison between fitting result to data
         setStyle()
@@ -162,19 +181,20 @@ class EfficiencyFitter(FitterCore):
         h2_effi_2D_comp.SetTitleOffset(1.5, "Z")
         h2_effi_2D_comp.SetZTitle("#varepsilon_{fit}/#varepsilon_{measured}")
         h2_effi_2D_comp.Draw("LEGO2")
+        #h2_accXrec.Draw("LEGO2"); f2_effi_sigA.Draw("SURF SAME")
         latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-        latex.DrawLatexNDC(.08, .89, "#chi^{{2}}={0:.2f}".format(fitter.GetChi2()))
+        #latex.DrawLatexNDC(.08, .89, "#chi^{{2}}={0:.2f}".format(fitter.GetChi2()))
         
         ####################################
         cwd=os.getcwd()
-        path=modulePath+"/"+self.process.work_dir+"/Efficiency/"
+        path=os.path.join(modulePath, self.process.work_dir, "Efficiency")
         if not os.path.exists(path):
             os.mkdir(path)
         os.chdir(path)
         ####################################
         canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
         os.chdir(cwd)
-        print "2D Efficiency Chi^2: ", fitter.GetChi2()
+
 
     @staticmethod
     def isPosiDef(formula2D):

@@ -52,7 +52,7 @@ def GetFitterObjects(self, seq):
             'FitMinos': [True, ()],
             'argPattern': ['unboundAfb', 'unboundFl'],
             'createNLLOpt': [],
-            'argAliasInDB': ArgAlias,
+            'argAliasInDB': ArgAliasRECO,
         })
         return StdFitter(setupSig2DFitter)
     if seq is 'sigAFitter':
@@ -261,7 +261,8 @@ setupSimultaneousFitter.update({
     'data'      : ["sigMCReader.2016.Fit", "sigMCReader.2017.Fit", "sigMCReader.2018.Fit"],
     'pdf'       : ["f_sig2D.2016", "f_sig2D.2017", "f_sig2D.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
-    'fitToCmds' : [],
+    'argAliasInDB': ArgAliasRECO,
+    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit2', 'minimize'), ROOT.RooFit.Minos(1)],],
 })
 SimultaneousFitter_sig2D = SimultaneousFitter(setupSimultaneousFitter)
 
@@ -271,7 +272,8 @@ setupSimulFitter_sigGEN.update({
     'data'      : ["sigMCGENReader.2016.Fit", "sigMCGENReader.2017.Fit", "sigMCGENReader.2018.Fit"],
     'pdf'       : ["f_sigA.2016", "f_sigA.2017", "f_sigA.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
-    'fitToCmds' : [],
+    'argAliasInDB': ArgAliasGEN,
+    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.Minimizer('Minuit', 'migradimproved')], ],
 })
 SimulFitter_sigGEN = SimultaneousFitter(setupSimulFitter_sigGEN)
 

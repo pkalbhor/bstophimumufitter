@@ -7,6 +7,7 @@
 import ROOT, os, pdb
 from v2Fitter.Fitter.FitterCore import FitterCore
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
+from BsToPhiMuMuFitter.Plotter import Plotter
 from BsToPhiMuMuFitter.varCollection import CosThetaK, CosThetaL, Bmass
 
 class SimultaneousFitter(FitterCore):
@@ -62,7 +63,7 @@ Following functions to be overloaded to customize the full procedure...
         for pdf, data, Year in zip(self.pdf, self.data, ['2016', '2017', '2018']):
             args = pdf.getParameters(ROOT.RooArgSet(CosThetaK, CosThetaL, Bmass))
             os.chdir(os.path.join(self.process.cwd, "plots_{0}".format(Year)))
-            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
+            if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, aliasDict=self.cfg['argAliasInDB']) #, exclude=self.cfg['argPattern'])
             self.ToggleConstVar(args, True)
             self.ToggleConstVar(args, False, self.cfg['argPattern'])
         os.chdir(cwd)
@@ -71,66 +72,88 @@ Following functions to be overloaded to customize the full procedure...
         if len(self.cfg['fitToCmds']) == 0:
             self.minimizer.fitTo(self.dataWithCategories)
         else:
-            for cmd in self.cfg['fitToCmds']:
-                self.minimizer.fitTo(self.dataWithCategories, *cmd)
+            if True:
+                for cmd in self.cfg['fitToCmds']:
+                    self.minimizer.fitTo(self.dataWithCategories, *cmd)
+            else:
+                self.fitter = ROOT.StdFitter()
+                self.fitter.Init(self.minimizer, self.dataWithCategories)
+                self._nll = self.fitter.GetNLL()
+                self.fitter.FitMigrad()
+                self.fitter.FitHesse()
 
     def _postFitSteps(self):
         """ Abstract: Do something after main fit loop"""
         for pdf, data in zip(self.pdf, self.data):
             self.ToggleConstVar(pdf.getParameters(data), True)
-        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.minimizer.getParameters(self.dataWithCategories))
+        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.minimizer.getParameters(self.dataWithCategories), self.cfg['argAliasInDB'])
+    
         self.cfg['source']["{0}.dataWithCategories".format(self.name)]=self.dataWithCategories
         self.cfg['source'][self.name] = self.minimizer
         self.cfg['source']["{0}.category".format(self.name)] = self.category
-        
-        """
-        frame1 = CosThetaL.frame(ROOT.RooFit.Bins(30), ROOT.RooFit.Title("2016 sample"))
-        self.dataWithCategories.plotOn(frame1, ROOT.RooFit.Cut("SimultaneousFitter.category==SimultaneousFitter.category::cat16"))
         sampleSet = ROOT.RooArgSet(self.category)
-        self.minimizer.plotOn(frame1, ROOT.RooFit.Slice(self.category, "cat16"), ROOT.RooFit.Components(
-    self.pdf[0].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
+        self.cfg['source']['ProjWData'] = ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories)
+        
+        #Attach ProjWData Argument to plotter for getting combined fit
+        self.process._sequence[1].cfg['plots'][self.process._sequence[1].cfg['switchPlots'][0]]['kwargs']['pdfPlots'][0][1]=(ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
+
+        frameL = CosThetaL.frame(ROOT.RooFit.Bins(30)) 
+        frameK = CosThetaK.frame(ROOT.RooFit.Bins(30)) 
         c1=ROOT.TCanvas()
-        frame1.Draw()
-        c1.SaveAs("Simultaneous_2016_{0}.pdf".format(self.process.cfg['args'].binKey))        
+        for ID, Category, Year in zip([0, 1, 2], self.cfg['category'], ['2016', '2017', '2018']):
+            CopyFrameL = frameL.Clone()
+            self.dataWithCategories.plotOn(CopyFrameL, ROOT.RooFit.Cut("{0}=={0}::{1}".format(self.category.GetName(), Category)))
+            self.minimizer.plotOn(CopyFrameL, ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components(
+    self.pdf[ID].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
+            #CopyFrameL.Draw()
+            CopyFrameL.SetMaximum(1.5 * CopyFrameL.GetMaximum())
+            c1.Clear()
+            Plotter.DrawWithResidue(CopyFrameL)
+            Plotter.latexQ2(self.process.cfg['binKey'])
+            Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries("{0}=={0}::{1}".format(self.category.GetName(), Category))) )
+            Plotter.latexCMSSim()
+            Plotter.latexCMSExtra()
+            c1.SaveAs("Simultaneous_Cosl_{0}_{1}_{2}.pdf".format(Year, self.process.cfg['args'].seqKey, self.process.cfg['args'].binKey))
 
-        frame2 = CosThetaL.frame(ROOT.RooFit.Bins(30), ROOT.RooFit.Title("2017 sample"))
-        self.dataWithCategories.plotOn(frame2, ROOT.RooFit.Cut("SimultaneousFitter.category==SimultaneousFitter.category::cat17"))
-        self.minimizer.plotOn(frame2, ROOT.RooFit.Slice(self.category, "cat17"), ROOT.RooFit.Components(
-    self.pdf[1].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
-        frame2.Draw()
-        c1.SaveAs("Simultaneous_2017_{0}.pdf".format(self.process.cfg['args'].binKey))        
+            CopyFrameK = frameK.Clone()
+            self.dataWithCategories.plotOn(CopyFrameK, ROOT.RooFit.Cut("{0}=={0}::{1}".format(self.category.GetName(), Category)))
+            self.minimizer.plotOn(CopyFrameK, ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components(
+    self.pdf[ID].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
+            #CopyFrameK.Draw()
+            CopyFrameK.SetMaximum(1.5 * CopyFrameK.GetMaximum())
+            c1.Clear()
+            Plotter.DrawWithResidue(CopyFrameK)
+            Plotter.latexQ2(self.process.cfg['binKey'])
+            Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries("{0}=={0}::{1}".format(self.category.GetName(), Category))) )
+            Plotter.latexCMSSim()
+            Plotter.latexCMSExtra()
+            c1.SaveAs("Simultaneous_CosK_{0}_{1}_{2}.pdf".format(Year, self.process.cfg['args'].seqKey, self.process.cfg['args'].binKey))
 
-        frame3 = CosThetaL.frame(ROOT.RooFit.Bins(30), ROOT.RooFit.Title("2018 sample"))
-        self.dataWithCategories.plotOn(frame3, ROOT.RooFit.Cut("SimultaneousFitter.category==SimultaneousFitter.category::cat18"))
-        self.minimizer.plotOn(frame3, ROOT.RooFit.Slice(self.category, "cat18"), ROOT.RooFit.Components(
-    self.pdf[2].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
-        frame3.Draw()
-        c1.SaveAs("Simultaneous_2018_{0}.pdf".format(self.process.cfg['args'].binKey))   """     
+        self.dataWithCategories.plotOn(frameL)
+        self.minimizer.plotOn(frameL, ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
+        frameL.SetMaximum(1.5 * frameL.GetMaximum())
+        c1.Clear()
+        #if self.process.cfg['args'].seqKey=='fitSigMCGEN' or self.process.cfg['args'].seqKey=='fitSig2D': 
+        #    PlotParams()
+        Plotter.DrawWithResidue(frameL)
+        Plotter.latexQ2(self.process.cfg['binKey'])
+        Plotter.latexCMSSim()
+        Plotter.latexCMSExtra()
+        Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries()) )
+        c1.SaveAs("Combined_{0}_cosl_{1}.pdf".format(self.process.cfg['args'].seqKey, self.process.cfg['args'].binKey))
 
-        #Plotting combined plots
-        def PlotParams():
-            from BsToPhiMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, flToUnboundFl, afbToUnboundAfb; import math
-            args=self.minimizer.getParameters(self.dataWithCategories)
-            unboundFl=args.find('unboundFl').getVal(); unboundFlError=args.find('unboundFl').getError();
-            FlError=(unboundFlToFl(unboundFl+unboundFlError)-unboundFlToFl(unboundFl-unboundFlError))/2.
-            flDB=unboundFlToFl(args.find('unboundFl').getVal());
-            
-            unboundAfb=args.find('unboundAfb').getVal(); unboundAfbError=args.find('unboundAfb').getError(); print unboundAfbError
-            l1=(unboundAfbToAfb((unboundAfb+unboundAfbError), flDB)-unboundAfbToAfb((unboundAfb-unboundAfbError), flDB))/2.                        
-            l2=(unboundAfbToAfb(unboundAfb, (flDB+FlError))-unboundAfbToAfb(unboundAfb, (flDB-FlError)))/2.
-            AfbError=math.sqrt((l1*l1)+(l2*l2))                                #Error
-            afbDB=unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB) #Value
-            ROOT.TLatex().DrawLatexNDC(.45, 0.84, r"#scale[0.8]{{F_{{l}} = {0}\pm {1}}}".format(round(flDB, 5), round(FlError, 5)))
-            ROOT.TLatex().DrawLatexNDC(.45, 0.79, r"#scale[0.8]{{A_{{6}}= {0}\pm {1}}}".format(round(afbDB, 5), round(AfbError, 5)))
-
-        frame4 = CosThetaL.frame(ROOT.RooFit.Bins(30), ROOT.RooFit.Title("Combined sample"))
-        self.dataWithCategories.plotOn(frame4)
-        self.minimizer.plotOn(frame4, ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
-        frame4.SetMaximum(1.5 * frame4.GetMaximum())
-        frame4.Draw()
-        if self.process.cfg['args'].seqKey=='fitSigMCGEN' or self.process.cfg['args'].seqKey=='fitSig2D': 
-            PlotParams()
-        c1.SaveAs("Combined_{0}_{1}.pdf".format(self.process.cfg['args'].seqKey, self.process.cfg['args'].binKey))
+        self.dataWithCategories.plotOn(frameK)
+        self.minimizer.plotOn(frameK, ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
+        frameK.SetMaximum(1.5 * frameK.GetMaximum())
+        c1.Clear()
+        #if self.process.cfg['args'].seqKey=='fitSigMCGEN' or self.process.cfg['args'].seqKey=='fitSig2D': 
+        #    PlotParams()
+        Plotter.DrawWithResidue(frameK)
+        Plotter.latexQ2(self.process.cfg['binKey'])
+        Plotter.latexCMSSim()
+        Plotter.latexCMSExtra()
+        Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries()) )
+        c1.SaveAs("Combined_{0}_cosK_{1}.pdf".format(self.process.cfg['args'].seqKey, self.process.cfg['args'].binKey))
 
     @classmethod
     def templateConfig(cls):
