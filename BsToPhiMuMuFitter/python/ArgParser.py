@@ -17,5 +17,35 @@ def SetParser(add_help=True):
 def add_help(parser):
     parser.add_argument('-h', '--help', action='help', default='==SUPPRESS==', help=('show this help message and exit'))
 
+def GetBatchTaskParser():
+    import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
+    import BsToPhiMuMuFitter.script.batchTask_sigMCValidation as batchTask_sigMCValidation
+    parentParser=SetParser(False)
+    parser = AbsBatchTaskWrapper.BatchTaskParser
+    parser._add_container_actions(parentParser) # Connect with main parser
+    parser.add_argument(
+        '-t', '--nToy',
+        dest="nSetOfToys",
+        type=int,
+        default=5,
+        help="Number of subsamples to produce"    )
+ 
+    BatchTaskSubparserPostproc = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('postproc')
+    BatchTaskSubparserPostproc.add_argument(
+        '--forceHadd',
+        dest='forceHadd',
+        action='store_true',
+        help="Force recreate summary root file."
+    )
+    BatchTaskSubparserPostproc.add_argument(
+        '--drawGEN',
+        dest='drawGEN',
+        action='store_false',
+        help="Draw a line for GEN level value"
+    )
+    BatchTaskSubparserPostproc.set_defaults(func=batchTask_sigMCValidation.func_postproc, )
+    add_help(parser)
+    return parser
+ 
 modulePath=os.path.abspath(os.path.dirname('seqCollection.py'))
 

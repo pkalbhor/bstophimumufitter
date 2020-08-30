@@ -51,9 +51,9 @@ class AbsBatchTaskWrapper:
         #transfer_output_files = job$(Process),job$(Process).tar.gz
         templateJdl = """
 getenv      = True
-log         = log/log.$(Cluster).$(Process)
-output      = log/out.$(Cluster).$(Process)
-error       = log/err.$(Cluster).$(Process)
+log         = log/log.$(Cluster).{binKey}
+output      = log/out.$(Cluster).{binKey}
+error       = log/err.$(Cluster).{binKey}
 +JobFlavour = "{JobFlavour}"
 
 initialdir  = {initialdir}
@@ -64,7 +64,8 @@ when_to_transfer_output = ON_EXIT
 """.format(
         initialdir=self.task_dir,
         JobFlavour=self.cfg['queue'],
-        executable="{executable}",)
+        executable="{executable}",
+        binKey="{binKey}")
         return templateJdl
 
     @abc.abstractmethod
@@ -88,16 +89,14 @@ when_to_transfer_output = ON_EXIT
         else:
             p.work_dir = os.path.join(self.task_dir, self.cfg['work_dir'][jobId])
         
-        for binKey in p.cfg['bins']:
-            p.cfg['binKey']=binKey
-            p.setSequence(p._sequence)
-            try:
-                p.beginSeq()
-                p.runSeq()
-            finally:
-                p.endSeq()
-                p.reset()
-                for obj in p._sequence: obj.reset()
+        p.setSequence(p._sequence)
+        try:
+            p.beginSeq()
+            p.runSeq()
+        finally:
+            p.endSeq()
+            p.reset()
+            for obj in p._sequence: obj.reset()
 
             # HTCondor does not transfer output directory but only file
             os.chdir(self.task_dir)
@@ -147,7 +146,7 @@ def submitTask(args):
         with tempfile.NamedTemporaryFile() as tmp:
             tmp.write(jdl)
             tmp.flush()
-            print jdl
+            print(jdl)
             call("condor_submit {0}".format(tmp.name), shell=True)
     else:
         print(jdl)

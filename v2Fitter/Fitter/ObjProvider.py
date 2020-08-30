@@ -28,7 +28,7 @@ class ObjProvider(Path):
             if not key in self.process.sourcemanager.keys():
                 for builder in builders:
                     builder(self)
-                    if self.cfg['source'].has_key(key):
+                    if self.cfg['source'].__contains__(key):
                         break
             else:
                 self.logger.logDEBUG("Skipped booked object {0}.".format(key))

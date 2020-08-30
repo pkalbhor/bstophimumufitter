@@ -58,7 +58,7 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     fitter.Print("v")
     Plotter.plotFrameB(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
     self.canvasPrint(pltName)
-types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
+types.MethodType(plotSpectrumWithSimpleFit, Plotter)
 
 def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
     for pIdx, plt in enumerate(dataPlots):
@@ -100,7 +100,7 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         Plotter.canvas.cd()
     os.chdir(cwd)
 
-types.MethodType(plotSimpleBLK, None, Plotter)
+types.MethodType(plotSimpleBLK, Plotter)
 
 def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Pritam
     for pIdx, plt in enumerate(dataPlots):
@@ -130,7 +130,7 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
         self.canvasPrint(pltName.replace('.', '_') + plotFuncs[frame]['tag'])
         Plotter.canvas.cd()
     os.chdir(cwd)
-types.MethodType(plotSimpleGEN, None, Plotter)
+types.MethodType(plotSimpleGEN, Plotter)
 
 def plotEfficiency(self, data_name, pdf_name):
     pltName = "effi"
@@ -153,7 +153,7 @@ def plotEfficiency(self, data_name, pdf_name):
     binningL = ROOT.RooBinning(len(dataCollection.accXEffThetaLBins) - 1, dataCollection.accXEffThetaLBins)
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
 
-    data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
+    data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec.{0}".format(self.process.cfg['args'].Year))
     Plotter.canvas.cd()
     #data_accXrec.Scale(100)
     #data_accXrec.SetMinimum(0)
@@ -163,7 +163,7 @@ def plotEfficiency(self, data_name, pdf_name):
     data_accXrec.SetTitleOffset(1.8, "Z")
     data_accXrec.SetZTitle("Efficiency [%]")
     data_accXrec.Draw("LEGO2")
-    h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(20), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(20)))
+    h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(40), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(40)))
     h2_effi_sigA_fine.Scale(100)
     h2_effi_sigA_fine.SetLineColor(2)
     h2_effi_sigA_fine.Draw("SURF SAME dm(1,10) pa(2,1,1) ci(1,4,8) a(0,0,0)")
@@ -176,10 +176,10 @@ def plotEfficiency(self, data_name, pdf_name):
     
     #Cos_L Efficiency
     cloned_frameL = Plotter.frameL.emptyClone("cloned_frameL")
-    h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX")
+    h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX.{0}".format(self.process.cfg['args'].Year))
     data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_accXrec_fine_ProjectionX", "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
     data_accXrec_fine_ProjectionX.plotOn(cloned_frameL, ROOT.RooFit.Rescale(100), ROOT.RooFit.MarkerStyle(7))
-    pdfL = self.process.sourcemanager.get("effi_cosl")
+    pdfL = self.process.sourcemanager.get("effi_cosl.{0}".format(self.process.cfg['args'].Year))
     pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill) 
     cloned_frameL.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
@@ -194,10 +194,10 @@ def plotEfficiency(self, data_name, pdf_name):
     #Cos_K Efficiency 
     Plotter.canvas.cd()
     cloned_frameK = Plotter.frameK.emptyClone("cloned_frameK")
-    h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY") 
+    h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY.{0}".format(self.process.cfg['args'].Year)) 
     data_accXrec_fine_ProjectionY = ROOT.RooDataHist("data_accXrec_fine_ProjectionY", "", ROOT.RooArgList(CosThetaK), ROOT.RooFit.Import(h_accXrec_fine_ProjectionY))
     data_accXrec_fine_ProjectionY.plotOn(cloned_frameK, ROOT.RooFit.Rescale(100), ROOT.RooFit.MarkerStyle(7))
-    pdfK = self.process.sourcemanager.get("effi_cosK")
+    pdfK = self.process.sourcemanager.get("effi_cosK.{0}".format(self.process.cfg['args'].Year))
     pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill)#, ROOT.RooFit.LineWidth(2))
     cloned_frameK.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
@@ -213,7 +213,8 @@ def plotEfficiency(self, data_name, pdf_name):
     Plotter.canvas.cd()
     os.chdir(cwd)
 
-types.MethodType(plotEfficiency, None, Plotter)
+#types.MethodType(plotEfficiency, Plotter)
+setattr(Plotter, 'plotEfficiency', plotEfficiency)
 
 def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
     """Specification of plotSimpleBLK for post-fit plots"""
@@ -302,7 +303,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
             ##################################
             self.canvasPrint(pltName + '_' + regionName + plotFuncs[frame]['tag'])
         os.chdir(cwd)
-types.MethodType(plotPostfitBLK, None, Plotter)
+types.MethodType(plotPostfitBLK, Plotter)
 
 def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
     """Specification of plotSimpleBLK for post-fit plots with KStar"""
@@ -440,7 +441,7 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
             ##################################
             self.canvasPrint(pltName + '_' + regionName + plotFuncs[frame]['tag'])
         os.chdir(cwd)
-types.MethodType(plotPostfitBLK_WithKStar, None, Plotter)
+types.MethodType(plotPostfitBLK_WithKStar, Plotter)
 
 def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     """ Check carefully the keys in 'dbSetup' """
@@ -671,7 +672,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
     self.canvasPrint(pltName + '_fl', False)
-types.MethodType(plotSummaryAfbFl, None, Plotter)
+types.MethodType(plotSummaryAfbFl, Plotter)
 
 plotterCfg = {
     'name': "plotter",
@@ -683,12 +684,18 @@ plotterCfg_mcStyle = ()
 plotterCfg_allStyle = (ROOT.RooFit.LineColor(1),)
 plotterCfg_sigStyleNoFill = (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineWidth(2))
 #plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillColor(4), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines()); 
-plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4), ROOT.RooFit.DrawOption("L"), ROOT.RooFit.VLines())
+plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4), ROOT.RooFit.DrawOption("L"))
 plotterCfg_bkgStyle = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
 plotterCfg_bkgStyle_KStar = (ROOT.RooFit.LineColor(6), ROOT.RooFit.LineStyle(8))
 
 def GetPlotterObject(self):
     Year=str(self.cfg['args'].Year)
+    plotterCfg['plots']['effi']= {
+        'func': [plotEfficiency],
+        'kwargs': {
+            'data_name': "effiHistReader.accXrec.{0}".format(Year),
+            'pdf_name': "effi_sigA.{0}".format(Year)}
+    }
     plotterCfg['plots']['plot_sig2D']= {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
         'kwargs': {
@@ -771,12 +778,7 @@ def GetPlotterObject(self):
             'dataPlots': [["dataReader.Fit", plotterCfg_dataStyle, None], ],
             'marks': []}
     },
-    'effi': {
-        'func': [plotEfficiency],
-        'kwargs': {
-            'data_name': "effiHistReader.accXrec",
-            'pdf_name': "effi_sigA"}
-    },
+
     'angular3D_sigM': {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
         'kwargs': {

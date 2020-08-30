@@ -55,7 +55,7 @@ class DataReader(Path):
     def createDataSet(self, dname, dcut):
         """Return named dataset, create if not exist"""
         if dname in self.dataset.keys():
-            print "\033[0;34;47m Dataset: ", dname, " Already Exists! \033[0m", dcut, self.dataset[dname].sumEntries()
+            print("\033[0;34;47m Dataset: ", dname, " Already Exists! \033[0m", dcut, self.dataset[dname].sumEntries())
             return self.dataset[dname]
         tempfile_preload = ROOT.TFile(tempfile.gettempdir()+"/temp.root", 'RECREATE') #Pritam
         RooCut = ROOT.RooFit.Cut(dcut)
@@ -65,7 +65,7 @@ class DataReader(Path):
         data = RooDataSet(dname, "", self.argset, Import, RooCut, Range)
         data.Write(); tempfile_preload.Close() #Pritam
         self.dataset[dname] = data
-        print "\033[0;34;47m Creating Dataset: ", dname, ": \033[0m", dcut, data.sumEntries()
+        print("\033[0;34;47m Creating Dataset: ", dname, ": \033[0m", dcut, data.sumEntries())
         return data
 
     def createDataSets(self, dataset):
@@ -82,7 +82,7 @@ class DataReader(Path):
     
     def _runPath(self):
         self.ch = TChain()
-        print "Name: ", self.cfg['name']
+        print("Name: ", self.cfg['name'])
         for f in self.cfg['ifile']:
             self.ch.Add(f)
         if len(self.cfg['ifriend']) > 0:

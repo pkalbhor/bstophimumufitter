@@ -107,7 +107,7 @@ def createBmassTemplate(name, lowerBd, upperBd):
     }
     return template
 
-bMassRegions['Full'] = createBmassTemplate("Full", 4.5, 6.0) # Cut off below 4.68
+bMassRegions['Full'] = createBmassTemplate("Full", 4.7, 6.0) # Cut off below 4.68
 bMassRegions['Fit']  = createBmassTemplate("Fit",  5.1, 5.6)
 bMassRegions['SR']   = createBmassTemplate("SR",   5.1, 5.6)
 bMassRegions['LSB']  = createBmassTemplate("LSB",  4.7, 5.1) #("LSB", 5.143, 5.223)

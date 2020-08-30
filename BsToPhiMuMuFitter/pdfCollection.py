@@ -51,7 +51,8 @@ def getWspace(self):
     return wspace
 
 
-ObjProvider.getWspace = types.MethodType(getWspace, None, ObjProvider)
+#ObjProvider.getWspace = types.MethodType(getWspace, ObjProvider)
+setattr(ObjProvider, 'getWspace', getWspace) 
 
 #########################
 # Now start define PDFs #
@@ -78,22 +79,23 @@ def GetEffiSigAList(self):
     Args=self.process.cfg['args']
     if Args.Year==2016:
         f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
-        f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm']
+        f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
         f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-        f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm']
+        f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
         f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
 
     if Args.Year==2017:
-        f_effiSigA_format['DEFAULT']    = f_effiSigA_format['Poly8_Poly6_XTerm']
-        f_effiSigA_format['belowJpsiA'] = f_effiSigA_format['Gaus3_Poly6_XTerm']
-        f_effiSigA_format['belowJpsiB'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-        f_effiSigA_format['Test1']      = f_effiSigA_format['Gaus3_Poly6_XTerm'] 
+        f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
+        f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
+        f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
+        f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm_v2'] 
+        f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
 
     if Args.Year==2018:
         f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
-        f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm']
+        f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
         f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-        f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm']
+        f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
         f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
     return f_effiSigA_format.get(self.process.cfg['binKey'], f_effiSigA_format['DEFAULT'])
 

@@ -33,8 +33,8 @@ Kpeta       = RooRealVar("Kpeta", "#K_{+}(#eta)", -10, 10)
 Kmeta       = RooRealVar("Kmeta", "#K_{-}(#eta)", -10, 10)
 mtrkqual    = RooRealVar("mtrkqual", "#K_{-}(TrackQual)", 0, 1)
 ptrkqual    = RooRealVar("ptrkqual", "#K_{+}(TrackQual)", 0, 1)
-dr0         = RooRealVar("dr0", "#Delta_{0}(R)", 0, 100)
-dr1         = RooRealVar("dr1", "#Delta_{1}(R)", 0, 100)
+dr0         = RooRealVar("dr0", "#Delta_{0}(R)", 0, 10000)
+dr1         = RooRealVar("dr1", "#Delta_{1}(R)", 0, 10000)
 Kptrkdcasigbs = RooRealVar("Kptrkdcasigbs", "#K_{+}(dca)", 0, 500)
 Kmtrkdcasigbs = RooRealVar("Kmtrkdcasigbs", "#K_{-}(dca)", 0, 500)
 
@@ -57,7 +57,7 @@ PsiPTriggersdr0 = RooRealVar("PsiPTriggersdr0", "PsiPTriggersdr0", 0, 1e8)
 PsiPTriggersdr1 = RooRealVar("PsiPTriggersdr1", "PsiPTriggersdr1", 0, 1e8)
 
 TriggerBase = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1)
-VarSet = RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Mumumasserr, Phimass, Bdt)
+VarSet = RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass, Bdt)
 dataArgs = RooArgSet(VarSet, TriggerBase, "RooArgSet for Data and MC")
 
 #For producing K*0mumu DataSet

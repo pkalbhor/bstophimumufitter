@@ -8,13 +8,8 @@ from copy import copy, deepcopy
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True # supress ROOT parser options
 from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
-import BsToPhiMuMuFitter.python.ArgParser as ArgParser
-parentParser=ArgParser.SetParser(False)      # Mandatory for passing commandline options to other modules
-args=parentParser.parse_known_args()[0]
 
 import BsToPhiMuMuFitter.StdFitter as StdFitter
-from BsToPhiMuMuFitter.StdProcess import p
-from BsToPhiMuMuFitter.python.datainput import allBins
 import BsToPhiMuMuFitter.cpp
 import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
@@ -81,27 +76,28 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
     getSubData = AbsToyStudier.getSubData_random
 
 # Define Process
-setupSigMCStudier = deepcopy(AbsToyStudier.AbsToyStudier.templateConfig())
-setupSigMCStudier.update({
-    'name': "sigMCStudier",
-    'data': "sigMCReader.Fit",
-    'fitter': fitCollection.sig2DFitter,
-    'nSetOfToys': 5,
-})
-sigMCStudier = SigMCStudier(setupSigMCStudier)
-fitCollection.sig2DFitter.cfg['data'] = "sigMCValidation.Fit"
+def GetToyObject(self):
+    setupSigMCStudier = deepcopy(AbsToyStudier.AbsToyStudier.templateConfig())
+    setupSigMCStudier.update({
+        'name': "sigMCStudier.{0}".format(self.cfg['args'].Year),
+        'data': "sigMCReader.{0}.Fit".format(self.cfg['args'].Year),
+        'fitter': fitCollection.GetFitterObjects(self, 'sig2DFitter'),
+        'nSetOfToys': 5,
+    })
+    sigMCStudier = SigMCStudier(setupSigMCStudier)
+    sigMCStudier.cfg['fitter'].cfg['data'] = "sigMCValidation.{0}.Fit".format(self.cfg['args'].Year)
+    return sigMCStudier
 
 # Customize batch task
 import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
 class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
     def createJdl(self, parser_args):
         jdl = self.createJdlBase()
-        for BinKey in parser_args.binKey:
-            jdl += """
+        jdl += """
 arguments = -b {binKey} -t {nSetOfToys} run $(Process)
 queue {nJobs}
 """
-            jdl = jdl.format(binKey=q2bins[BinKey]['label'], nSetOfToys=parser_args.nSetOfToys, nJobs=self.cfg['nJobs'], executable=os.path.abspath(__file__),)
+        jdl = jdl.format(binKey=q2bins[parser_args.process.cfg['binKey']]['label'], nSetOfToys=parser_args.nSetOfToys, nJobs=self.cfg['nJobs'], executable=os.path.abspath(__file__),)
         return jdl
 
 setupBatchTask = deepcopy(BatchTaskWrapper.templateCfg())
@@ -223,7 +219,7 @@ if __name__ == '__main__':
         p.cfg['args'] = args
         wrappedTask = BatchTaskWrapper(
             "myBatchTask",
-            modulePath+"/batchTask_sigMCValidation",
+            os.path.join(modulePath, "batchTask_sigMCValidation"),
             cfg=setupBatchTask)
     else:
         wrapper = None

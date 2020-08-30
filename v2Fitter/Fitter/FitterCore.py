@@ -27,7 +27,7 @@ Following functions to be overloaded to customize the full procedure...
 
     def _bookPdfData(self):
         self.pdf = self.process.sourcemanager.get(self.cfg['pdf'])
-        if not hasattr(self.cfg['data'], "__iter__"):
+        if type(self.cfg['data']) is str:
             self.data = self.process.sourcemanager.get(self.cfg['data'])
         elif len(self.cfg['data']) <= 1:
             self.data = self.process.sourcemanager.get(self.cfg['data'][0])

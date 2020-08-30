@@ -144,7 +144,7 @@ setupFinalFitter.update({
     'createNLLOpt': [ROOT.RooFit.Extended(True), ],
     'FitHesse': True,
     'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
-    'argAliasInDB': dict(setupSigMFitter['argAliasInDB'].items() + ArgAliasGEN.items()),
+    'argAliasInDB': {**setupSigMFitter['argAliasInDB'], **ArgAliasGEN},
     'argAliasSaveToDB': False,
 })
 finalFitter = StdFitter(setupFinalFitter)
@@ -158,7 +158,7 @@ setupFinalFitter_AltM.update({
     'createNLLOpt': [ROOT.RooFit.Extended(True), ],
     'FitHesse': True,
     'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
-    'argAliasInDB': dict(setupSigMDCBFitter['argAliasInDB'].items() + ArgAliasGEN.items()),
+    'argAliasInDB': {**setupSigMDCBFitter['argAliasInDB'], **ArgAliasGEN},
     'argAliasSaveToDB': False,
 })
 finalFitter_AltM = StdFitter(setupFinalFitter_AltM)
@@ -171,7 +171,7 @@ setupFinal_AltM_AltBkgCombM_AltA_Fitter.update({
     'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombMAltM_c[\d]+'],
     'createNLLOpt': [ROOT.RooFit.Extended(True),],
     'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
-    'argAliasInDB': dict(setupSigMDCBFitter['argAliasInDB'].items() + ArgAliasGEN.items()),
+    'argAliasInDB': {**setupSigMDCBFitter['argAliasInDB'], **ArgAliasGEN},
     'argAliasSaveToDB': False,
 })
 final_AltM_AltBkgCombM_AltA_Fitter = StdFitter(setupFinal_AltM_AltBkgCombM_AltA_Fitter)
@@ -184,7 +184,7 @@ setupFinalMFitter.update({
     'argPattern': ['nSig', 'nBkgComb', r'bkgCombM_c[\d]+'],
     'createNLLOpt': [ROOT.RooFit.Extended(True), ],
     'FitMinos': [True, ('nSig', 'nBkgComb')],
-    'argAliasInDB': dict(setupSigMFitter['argAliasInDB'].items()),
+    'argAliasInDB': setupSigMFitter['argAliasInDB'],
     'argAliasSaveToDB': False,
 })
 finalMFitter = StdFitter(setupFinalMFitter)
@@ -197,7 +197,7 @@ setupFinalMDCBFitter.update({
     'argPattern': ['nSig', 'nBkgComb', r'bkgCombM_c[\d]+'],
     'createNLLOpt': [ROOT.RooFit.Extended(True), ],
     'FitMinos': [True, ('nSig', 'nBkgComb')],
-    'argAliasInDB': dict(setupSigMDCBFitter['argAliasInDB'].items()),
+    'argAliasInDB': setupSigMDCBFitter['argAliasInDB'],
     'argAliasSaveToDB': False,
 })
 finalMDCBFitter = StdFitter(setupFinalMDCBFitter)
@@ -210,7 +210,7 @@ setupFinalMDCB_AltBkgCombM_Fitter.update({
     'argPattern': ['nSig', 'nBkgComb', r'bkgCombMAltM_c[\d]+'],
     'createNLLOpt': [ROOT.RooFit.Extended(True), ],
     'FitMinos': [True, ('nSig', 'nBkgComb')],
-    'argAliasInDB': dict(setupSigMDCBFitter['argAliasInDB'].items()),
+    'argAliasInDB': setupSigMDCBFitter['argAliasInDB'],
     'argAliasSaveToDB': False,
 })
 finalMDCB_AltBkgCombM_Fitter = StdFitter(setupFinalMDCB_AltBkgCombM_Fitter)
@@ -247,7 +247,7 @@ setupFinalFitter_WithKStar.update({
     'createNLLOpt': [ROOT.RooFit.Extended(True), ],
     'FitHesse': True,
     'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
-    'argAliasInDB': dict(setupSigMFitter['argAliasInDB'].items() + ArgAliasGEN.items()),
+    'argAliasInDB': {**setupSigMFitter['argAliasInDB'], **ArgAliasGEN},
     'argAliasSaveToDB': False,
 })
 finalFitter_WithKStar = StdFitter(setupFinalFitter_WithKStar)
@@ -262,7 +262,7 @@ setupSimultaneousFitter.update({
     'pdf'       : ["f_sig2D.2016", "f_sig2D.2017", "f_sig2D.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
     'argAliasInDB': ArgAliasRECO,
-    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit2', 'minimize'), ROOT.RooFit.Minos(1)],],
+    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit2', 'migradimproved'), ROOT.RooFit.Minos(1)],],
 })
 SimultaneousFitter_sig2D = SimultaneousFitter(setupSimultaneousFitter)
 
@@ -273,7 +273,7 @@ setupSimulFitter_sigGEN.update({
     'pdf'       : ["f_sigA.2016", "f_sigA.2017", "f_sigA.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
     'argAliasInDB': ArgAliasGEN,
-    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.Minimizer('Minuit', 'migradimproved')], ],
+    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.Minimizer('Minuit', 'minimize')], ],
 })
 SimulFitter_sigGEN = SimultaneousFitter(setupSimulFitter_sigGEN)
 

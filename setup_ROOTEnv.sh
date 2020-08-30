@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# Setup pyROOT
-export SCRAM_ARCH=slc7_amd64_gcc48
-. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.18.04/x86_64-centos7-gcc48-opt/bin/thisroot.sh
-#. /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.20.00/x86_64-centos7-gcc48-opt/bin/thisroot.sh
+# Setup pyROOT, 
+# Compatible with python3 and ROOT 6.23 or higher
+export SCRAM_ARCH=slc7_amd64_gcc820
+source /cvmfs/sft.cern.ch/lcg/views/dev3python3/latest/x86_64-centos7-gcc8-opt/setup.sh
 
 # Inject to PYTHONPATH
 SOURCE="${BASH_SOURCE[0]}"
@@ -15,14 +15,15 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 export PYTHONPATH=${PYTHONPATH}:${DIR}
 
+alias python='python3'
 alias runallsteps="${DIR}/BsToPhiMuMuFitter/bash/RunAllSteps"
 alias createpdfs="${DIR}/BsToPhiMuMuFitter/bash/pdfCollection.sh"
 alias runfitsteps="${DIR}/BsToPhiMuMuFitter/bash/seqCollection.sh"
 alias createplots="${DIR}/BsToPhiMuMuFitter/bash/plotCollection.sh"
-alias TotalClean="${DIR}/BsToPhiMuMuFitter/bash/TotalClean.sh"
-alias JunkClean="${DIR}/BsToPhiMuMuFitter/bash/JunkClean.sh"
+alias TotalClean="${DIR}/BsToPhiMuMuFitter/bash/TotalClean.sh"      #Clean all files created using any command
+alias JunkClean="${DIR}/BsToPhiMuMuFitter/bash/JunkClean.sh"        #Clean old libraries
 
-echo -e ">>>> Help <<<< \nCommand: runallsteps\t --> Usage: Run all steps sequestially to produce fit plots\n" 
+echo -e ">>>> Help <<<< \nRun \npython3 seqCollection.py -h \nfor exploring further options \n" 
 #var=$(python ${DIR}/BsToPhiMuMuFitter/python/ArgCompletion.py)
 #TotList=$(echo "$var" | grep bin1A)
 #dirlist=$(echo "$var" | grep seqCollection.py)

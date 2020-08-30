@@ -1,9 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
 import sys, os, pdb
 import ROOT
+
+#Supress Info messages for RooClasses
+#ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = kUnset;")
+ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
+
 # Standard fitting procedures
 predefined_sequence = {}
 def SetSequences():
@@ -37,8 +42,8 @@ def SetSequences():
                                         dataCollection.sigMCReader, dataCollection.sigMCGENReader, 
                                         dataCollection.dataReader, pdfCollection.stdWspaceReader, plotCollection.plotter]
 
-from BsToPhiMuMuFitter.python.ArgParser import SetParser
-parser=SetParser()
+from BsToPhiMuMuFitter.python.ArgParser import SetParser, GetBatchTaskParser
+parser=GetBatchTaskParser()
 args = parser.parse_known_args()[0]
 import BsToPhiMuMuFitter.fitCollection  as fitCollection
 predefined_sequence['loadData']  = ['dataReader']
@@ -48,11 +53,12 @@ predefined_sequence['loadMCk']   = ['KsigMCReader']
 predefined_sequence['buildPdfs'] = ['dataReader', 'stdWspaceReader', 'stdPDFBuilder']
 predefined_sequence['buildEff']  = ['effiHistReader']
 predefined_sequence['fitEff']    = ['effiHistReader', 'stdWspaceReader', 'effiFitter']
-predefined_sequence['fitSig2D']  = (['sigMCReader', 'stdWspaceReader'], ['SimultaneousFitter_sig2D', 'plotter'] if args.SimFit else ['sig2DFitter'])
+predefined_sequence['fitSig2D']  = (['sigMCReader', 'stdWspaceReader'], ['SimultaneousFitter_sig2D'] if args.SimFit else ['sig2DFitter'])
 predefined_sequence['fitSigMCGEN']=(['sigMCGENReader', 'stdWspaceReader'], ['SimulFitter_sigGEN', 'plotter'] if args.SimFit else ['sigAFitter'])
 predefined_sequence['fitBkgCombA']=(['dataReader', 'stdWspaceReader'], ['SimulFitter_bkgCombA', 'plotter'] if args.SimFit else ['bkgCombAFitter'])
-predefined_sequence['createplots']=['dataReader', 'sigMCReader', 'sigMCGENReader', 'stdWspaceReader', 'plotter']
+predefined_sequence['createplots']=['effiHistReader', 'dataReader', 'sigMCReader', 'sigMCGENReader', 'stdWspaceReader', 'plotter']
 #'effiHistReader', 'KsigMCReader', 'sigMCReader', 'sigMCGENReader', 
+predefined_sequence['sigMCValidation'] = ['stdWspaceReader', 'sigMCReader', 'sigMCStudier']
 
 def Instantiate(self, seq):
     """All objects are initalized here"""
@@ -81,6 +87,8 @@ def Instantiate(self, seq):
             sequence.append(fitCollection.SimulFitter_sigGEN)
         if s is 'SimulFitter_bkgCombA':
             sequence.append(fitCollection.SimulFitter_bkgCombA)
+        if s is 'sigMCStudier':
+            sequence.append(batchTask_sigMCValidation.GetToyObject(self))
     return sequence
 
 if __name__ == '__main__':
@@ -100,12 +108,14 @@ if __name__ == '__main__':
         predefined_sequence[args.seqKey]=predefined_sequence[args.seqKey][0]+predefined_sequence[args.seqKey][1]
     if args.SimFit or args.SimFitPlots:
         p.name="SimultaneousFitProcess"; p.work_dir="plots_simultaneous"
+    if args.seqKey=='sigMCValidation':
+        p.name='sigMCValidationProcess'
 
     for b in p.cfg['bins']:
         p.cfg['binKey'] = b
         try:
             if args.SimFit:
-                print "INFO: Processing simultaneously over three year data"
+                print ("INFO: Processing simultaneously over three year data")
                 for Year in [2016, 2017, 2018]:
                     p.cfg['args'].Year=Year
                     GetInputFiles(p)
@@ -116,8 +126,24 @@ if __name__ == '__main__':
                 sequence=Instantiate(p, predefined_sequence[args.seqKey][1])
                 p.setSequence(sequence)
                 p.beginSeq()
+            elif p.name=='sigMCValidationProcess':
+                print("INFO: Processing {0} year data".format(args.Year))
+                from BsToPhiMuMuFitter.anaSetup import modulePath
+                import BsToPhiMuMuFitter.script.batchTask_sigMCValidation as batchTask_sigMCValidation
+                wrappedTask = batchTask_sigMCValidation.BatchTaskWrapper(
+                    "myBatchTask",
+                    os.path.join(modulePath, "batchTask_sigMCValidation"),
+                    cfg=batchTask_sigMCValidation.setupBatchTask)
+                parser.set_defaults(
+                    wrapper=wrappedTask,
+                    process=p)
+                p.cfg['args'] = args = parser.parse_args()   
+                sequence=Instantiate(p, predefined_sequence[args.seqKey])
+                p.setSequence(sequence)
+                args.func(args) 
+                continue
             else:
-                print "INFO: Processing {0} year data".format(str(args.Year))
+                print("INFO: Processing {0} year data".format(str(args.Year)))
                 sequence=Instantiate(p, predefined_sequence[args.seqKey])
                 p.setSequence(sequence)
                 p.beginSeq()

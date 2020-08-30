@@ -31,11 +31,11 @@ xTerm2 = "\
 
 pdfL1A = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2)) + l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLc=9
 pdfK1A = "1+k1*CosThetaK+k2*pow(CosThetaK,2)+k3*pow(CosThetaK,3)+k4*pow(CosThetaK,4)+k5*pow(CosThetaK,5)+k6*pow(CosThetaK,6)"; nK1A=7
-f_effiSigA_format['Gaus3_Poly6_XTerm'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(1, nLc/3+1)] \
-    + ["l{0}[0,-.5,.5]".format(3*i-1) for i in range(1, nLc/3+1)] \
-    + ["l{0}[.2,.01,5.]".format(3*i) for i in range(1, nLc/3+1)] \
+f_effiSigA_format['Gaus3_Poly6_XTerm'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(1, nLc//3 + 1)] \
+    + ["l{0}[0,-.5,.5]".format(3*i-1) for i in range(1, nLc//3+1)] \
+    + ["l{0}[.2,.01,5.]".format(3*i) for i in range(1, nLc//3+1)] \
     + ["k{0}[-10,10]".format(i) for i in range(1, nK1A)] \
-    + ["effi_norm[1,0,1000]", "hasXTerm[0]"] + ["x{0}[-4,4]".format(i) for i in range(n)] \
+    + ["effi_norm[1,0,1000]", "hasXTerm[0]"] + ["x{0}[-20,20]".format(i) for i in range(n)] \
     + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL1A, args="{CosThetaL,"+', '.join(["l{0}".format(i) for i in range(1, nLc+1)]) + "}")] \
     + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK1A, args="{CosThetaK,"+', '.join(["k{0}".format(i) for i in range(1, nK1A)]) + "}")] \
     + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(n)]) + "}")] \
@@ -48,7 +48,7 @@ f_effiSigA_format['Gaus3_Poly6_XTerm'] = ["l{0}[.1,0,10]".format(3*i-2) for i in
 pdfL1B = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2)) + l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLB=9
 f_effiSigA_format['Gaus3_Poly6_XTerm_v2'] = ["l1[.1,0,10]", "l2[0,-0.5,0.5]", "l3[0.2,.01,5.]", "l4[0.2,0,10]", "l5[.2,-0.5,0.5]", "l6[.2,0.01,5.0]", "l7[0.1,0,10]", "l8[0,-.5,.5]", "l9[.2,.01,5.]"] \
     + ["k{0}[-10,10]".format(i) for i in range(1, nK)] \
-    + ["effi_norm[1,0,1000]", "hasXTerm[0]"] + ["x{0}[-4,4]".format(i) for i in range(n)] \
+    + ["effi_norm[1,0,1000]", "hasXTerm[0]"] + ["x{0}[-20,20]".format(i) for i in range(n)] \
     + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL1B, args="{CosThetaL,"+', '.join(["l{0}".format(i) for i in range(1, nLB+1)]) + "}")] \
     + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, nK)]) + "}")] \
     + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(n)]) + "}")] \

@@ -35,9 +35,10 @@ class StdFitter(FitterCore):
     def _bookMinimizer(self):
         """_bookMinimizer from StdFitter"""
         ###
+        import ctypes
         def myfunc(iArg):
-            lo=ROOT.Double(0)
-            hi=ROOT.Double(1)
+            lo=ctypes.c_double(0.)
+            hi=ctypes.c_double(1.) 
             self.data.getRange(iArg, lo, hi)
             iArg.setRange(lo, hi)
         FitterCore.ArgLooper(self.data.get(), myfunc)
@@ -47,7 +48,8 @@ class StdFitter(FitterCore):
         self.fitter = ROOT.StdFitter()
         for opt in self.cfg.get("createNLLOpt", []):
             self.fitter.addNLLOpt(opt)
-        self.fitter.Init(self.pdf, self.data)
+        minuit=self.fitter.Init(self.pdf, self.data)
+        minuit.setStrategy(2)
         self._nll = self.fitter.GetNLL()
 
     def _preFitSteps_initFromDB(self):
@@ -124,7 +126,7 @@ class StdFitter(FitterCore):
                 'nll': migradResult.minNll(),
             }
         }
-        print "Migrad Result: ", self.fitResult
+        print("Migrad Result: ", self.fitResult)
 
     def FitHesse(self):
         """Hesse"""

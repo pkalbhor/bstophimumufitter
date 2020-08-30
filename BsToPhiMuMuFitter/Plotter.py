@@ -58,11 +58,11 @@ class Plotter(Path):
     def DrawParams(self, pdfPlots):
         x=0.45; y=0.84
         args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL)) #N3 Lines by Pritam
-        unboundFl=args.find('unboundFl').getVal(); unboundFlError=args.find('unboundFl').getError(); print unboundFlError
+        unboundFl=args.find('unboundFl').getVal(); unboundFlError=args.find('unboundFl').getError()
         FlError=(unboundFlToFl(unboundFl+unboundFlError)-unboundFlToFl(unboundFl-unboundFlError))/2.
-        flDB=unboundFlToFl(args.find('unboundFl').getVal()); print type(flDB)
+        flDB=unboundFlToFl(args.find('unboundFl').getVal())
         
-        unboundAfb=args.find('unboundAfb').getVal(); unboundAfbError=args.find('unboundAfb').getError(); print unboundAfbError
+        unboundAfb=args.find('unboundAfb').getVal(); unboundAfbError=args.find('unboundAfb').getError()
         l1=(unboundAfbToAfb((unboundAfb+unboundAfbError), flDB)-unboundAfbToAfb((unboundAfb-unboundAfbError), flDB))/2.
         l2=(unboundAfbToAfb(unboundAfb, (flDB+FlError))-unboundAfbToAfb(unboundAfb, (flDB-FlError)))/2.
         AfbError=math.sqrt((l1*l1)+(l2*l2))                                #Error
@@ -139,7 +139,7 @@ class Plotter(Path):
                 self.logger.logERROR(errorMsg)
                 raise RuntimeError("pdfPlot not found in source manager.")
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
-        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
+        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
         return p
 
     def initDataPlotCfg(self, p):

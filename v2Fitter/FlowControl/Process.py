@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
@@ -68,7 +68,7 @@ class Process:
         self.addService('logger', Logger("runtime.log"))
         self.addService('filemanager', FileManager())
         self.addService('sourcemanager', SourceManager())
-        
+
         for seq_obj in self._sequence:
             if seq_obj.logger is None: setattr(seq_obj, "logger", self.logger)
         for key, s in self._services.items():

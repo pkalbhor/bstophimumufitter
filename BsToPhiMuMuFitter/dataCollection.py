@@ -184,8 +184,8 @@ def buildTotalEffiHist(self):
         treeinPassed.Draw(">>accEvtList", setupEfficiencyBuildProcedure['rec']['cutString'])
         accEvtList = ROOT.gDirectory.Get("accEvtList")
 
-        LBins=accXEffThetaLBins if not binKey=="belowJpsiA" else ThetaLBins
-        KBins=accXEffThetaKBins if not binKey=="belowJpsiA" else ThetaKBins
+        LBins=accXEffThetaLBins #if not binKey=="belowJpsiA" else ThetaLBins
+        KBins=accXEffThetaKBins #if not binKey=="belowJpsiA" else ThetaKBins
         h2_total = TH2D("h2_{0}_{1}_total".format(label, binKey), "", len(LBins)-1, LBins, len(KBins)-1, KBins)
         h2_passed = h2_total.Clone("h2_{0}_{1}_passed".format(label, binKey))
         h2_fine_total = TH2D("h2_{0}_fine_{1}_total".format(label, binKey), "", 20, -1, 1, 20, -1, 1)
@@ -199,9 +199,9 @@ def buildTotalEffiHist(self):
         for hist in h2_passed, h2_fine_passed:
             treeinPassed.Draw("{0}>>{1}".format(setupEfficiencyBuildProcedure['rec']['fillXY'], hist.GetName()), "", "goff")
 
-        print "\033[0;34;47m Total: \033[0m", accEvtList.GetN(),"/",totEvtList.GetN()
-        print "\033[0;34;47m Base String: \033[0m", setupEfficiencyBuildProcedure['acc']['baseString']
-        print "\033[0;34;47m Cut String : \033[0m", setupEfficiencyBuildProcedure['rec']['cutString']
+        print("\033[0;34;47m Total: \033[0m", accEvtList.GetN(),"/",totEvtList.GetN())
+        print("\033[0;34;47m Base String: \033[0m", setupEfficiencyBuildProcedure['acc']['baseString'])
+        print("\033[0;34;47m Cut String : \033[0m", setupEfficiencyBuildProcedure['rec']['cutString'])
 
         h2_eff = TEfficiency(h2_passed, h2_total)
         h2_eff_fine = TEfficiency(h2_fine_passed, h2_fine_total)
@@ -286,8 +286,8 @@ def buildAccXRecEffiHist(self):
             'baseString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel),
             'cutString' : "({0}) && ({1}) && ({2})".format(cuts_antiResVeto if binKey in ['jpsi', 'psi2s'] else self.process.cfg['cuts'][-1], q2bins[binKey]['cutString'], 1 if ExtraCuts==None else ExtraCuts)})
 
-        LBins=accXEffThetaLBins if not binKey=="belowJpsiA" else ThetaLBins
-        KBins=accXEffThetaKBins if not binKey=="belowJpsiA" else ThetaKBins
+        LBins=accXEffThetaLBins #if not binKey=="belowJpsiA" else ThetaLBins
+        KBins=accXEffThetaKBins #if not binKey=="belowJpsiA" else ThetaKBins
         for h2, label in (h2_acc, 'acc'), (h2_rec, 'rec'):
             if h2 == None or forceRebuild:
                 treein = TChain("tree")
@@ -353,8 +353,8 @@ def buildAccXRecEffiHist(self):
                     for hist in h2_passed, h2_fine_passed:
                         treein.Draw("{0}>>{1}".format(setupEfficiencyBuildProcedure[label]['fillXY'], hist.GetName()), "", "goff")
                     print("{2}: {0}/{1}".format(accEvtList.GetN(), totEvtList.GetN(), label))
-                print "Base String: ", setupEfficiencyBuildProcedure[label]['baseString']
-                print "Cut String:  ", setupEfficiencyBuildProcedure[label]['cutString']
+                print("Base String: ", setupEfficiencyBuildProcedure[label]['baseString'])
+                print("Cut String:  ", setupEfficiencyBuildProcedure[label]['cutString'])
                 h2_eff = TEfficiency(h2_passed, h2_total)
                 h2_eff_fine = TEfficiency(h2_fine_passed, h2_fine_total)
 
@@ -381,7 +381,7 @@ def buildAccXRecEffiHist(self):
                 if h_rec_fine.GetTotalHistogram().GetBinContent(b) == 0 or h_rec_fine.GetPassedHistogram().GetBinContent(b) == 0:
                     h_accXrec_fine.SetBinContent(b, 0)
                     h_accXrec_fine.SetBinError(b, 1)
-                    print ">> Empty reco eff bin #", b
+                    print(">> Empty reco eff bin #", b)
                 else:
                     h_accXrec_fine.SetBinContent(b, h_acc_fine.GetEfficiency(b) * h_rec_fine.GetEfficiency(b))
                     h_accXrec_fine.SetBinError(b, h_accXrec_fine.GetBinContent(b) * math.sqrt(1 / h_acc_fine.GetTotalHistogram().GetBinContent(b) + 1 / h_acc_fine.GetPassedHistogram().GetBinContent(b) + 1 / h_rec_fine.GetTotalHistogram().GetBinContent(b) + 1 / h_rec_fine.GetPassedHistogram().GetBinContent(b)))
@@ -395,7 +395,7 @@ def buildAccXRecEffiHist(self):
             if h2_rec.GetTotalHistogram().GetBinContent(iL, iK) == 0 or h2_rec.GetPassedHistogram().GetBinContent(iL, iK) == 0 or h2_acc.GetTotalHistogram().GetBinContent(iL, iK) == 0 or h2_acc.GetPassedHistogram().GetBinContent(iL, iK) == 0:
                 h2_accXrec.SetBinContent(iL, iK, 0)
                 h2_accXrec.SetBinError(iL, iK, 1)
-                print ">> Empty recoORacc eff bin #", iL, iK
+                print(">> Empty recoORacc eff bin #", iL, iK)
             else:
                 iLK = h2_acc.GetGlobalBin(iL, iK)
                 h2_accXrec.SetBinContent(iL, iK, h2_acc.GetEfficiency(iLK) * h2_rec.GetEfficiency(iLK))
