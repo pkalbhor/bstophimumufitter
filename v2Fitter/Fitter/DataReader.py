@@ -105,10 +105,13 @@ class DataReader(Path):
         elif os.path.exists(self.cfg['preloadFile']):
             file_preload = ROOT.TFile(self.cfg['preloadFile'], 'UPDATE')
             for dname, d in self.dataset.items():
-                if file_preload.Get(dname): 
+                if file_preload.Get(dname) and False: 
                     file_preload.Delete(dname+';*')     # Delete old objects if exists
                     file_preload.Delete('ProcessID*;*') # Delete old Pids if exists
-                d.Write()
+                    d.Write()
+                elif not file_preload.Get(dname):
+                    print("Freshly booking an object")
+                    d.Write()
             file_preload.Close()
            
         if not 'source' in self.cfg.keys():

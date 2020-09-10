@@ -192,15 +192,34 @@ buildBkgCombMAltM = functools.partial(buildGenericObj, **setupBuildBkgCombMAltM)
 from BsToPhiMuMuFitter.python.pdfDicts import f_analyticBkgCombA_format
 def GetAnalyticBkgAList(self):
     Args=self.process.cfg['args']
-    if Args.Year==2016 or Args.Year==2017 or Args.Year==2018:
+    if Args.Year==2016:
+        f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
+        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Poly6_Poly3']
+        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Gaus2Poly4_Poly3'] #['GausPoly_Exp']
+        f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Gaus2Poly4_Poly3']
+        f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Poly4_Poly4']
+        f_analyticBkgCombA_format['abovePsi2s']     = f_analyticBkgCombA_format['Poly6_Poly4']
+        f_analyticBkgCombA_format['summary']        = f_analyticBkgCombA_format['Poly6_Poly4']
+        f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Gaus2Poly4_Poly3']
+        return f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
+    if Args.Year==2017:
         f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
         f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Poly6_Poly6']
-        #f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Gaus2_Poly4']
-        #f_analyticBkgCombA_format['abovePsi2sA']    = f_analyticBkgCombA_format['Lin_Poly3']
-        #f_analyticBkgCombA_format['abovePsi2sB']    = f_analyticBkgCombA_format['Poly2_Poly3']
-        #f_analyticBkgCombA_format['Test3']          = f_analyticBkgCombA_format['Poly2_Poly3']
-        f_analyticBkgCombA_format['summaryLowQ2']    = f_analyticBkgCombA_format['Poly8_Poly8']
-    return f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
+        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Gaus2Poly4_Poly3']
+        f_analyticBkgCombA_format['abovePsi2s']     = f_analyticBkgCombA_format['Poly3_Poly3']
+        f_analyticBkgCombA_format['summary']        = f_analyticBkgCombA_format['Poly6_Poly4']
+        f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Gaus2Poly4_Poly3']
+        return f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
+    if Args.Year==2018:
+        f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
+        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Poly3_Poly3']
+        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Gaus2Poly4_Poly4']
+        f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Gaus2Poly4_Poly3']
+        f_analyticBkgCombA_format['abovePsi2s']     = f_analyticBkgCombA_format['Poly4_Poly4']
+        f_analyticBkgCombA_format['summary']        = f_analyticBkgCombA_format['Poly6_Poly4']#['Gaus2Poly2_Exp'] #['GausPoly_Exp']
+        f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Gaus2Poly4_Poly4']
+        return f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
+      
 setupBuildAnalyticBkgCombA = {
     'objName': "f_bkgCombA",
     'varNames': ["CosThetaK", "CosThetaL"],
@@ -217,6 +236,14 @@ f_analyticBkgA_KStar_format['Poly4_Poly4'] = [ # pdfL: Poly4, pdfK: Poly4
         pdfK="1+bkgKStarK_c1*CosThetaK+bkgKStarK_c2*pow(CosThetaK,2)+bkgKStarK_c3*pow(CosThetaK, 3)+bkgKStarK_c4*pow(CosThetaK,4)",
         args="{CosThetaL, CosThetaK, bkgKStarL_c1, bkgKStarL_c2, bkgKStarL_c3, bkgKStarL_c4, bkgKStarK_c1, bkgKStarK_c2, bkgKStarK_c3, bkgKStarK_c4}")
 ]
+f_analyticBkgA_KStar_format['Poly6_Poly4'] = [ # pdfL: Poly6, pdfK: Poly4
+    "bkgKStarL_c1[-10.,10.]", "bkgKStarL_c2[-10.,10.]", "bkgKStarL_c3[-10.,10.]", "bkgKStarL_c4[-10.,10.]", "bkgKStarL_c5[-10.,10.]", "bkgKStarL_c6[-10.,10.]",
+    "bkgKStarK_c1[-10,10]", "bkgKStarK_c2[-10,10]", "bkgKStarK_c3[-10,10]", "bkgKStarK_c4[-10,10]",
+    "EXPR::f_bkgA_KStar('({pdfL})*({pdfK})', {args})".format(
+        pdfL="1.+bkgKStarL_c1*CosThetaL+bkgKStarL_c2*pow(CosThetaL,2)+bkgKStarL_c3*pow(CosThetaL, 3)+bkgKStarL_c4*pow(CosThetaL,4)+bkgKStarL_c5*pow(CosThetaL,5)+bkgKStarL_c6*pow(CosThetaL,6)",
+        pdfK="1+bkgKStarK_c1*CosThetaK+bkgKStarK_c2*pow(CosThetaK,2)+bkgKStarK_c3*pow(CosThetaK, 3)+bkgKStarK_c4*pow(CosThetaK,4)",
+        args="{CosThetaL, CosThetaK, bkgKStarL_c1, bkgKStarL_c2, bkgKStarL_c3, bkgKStarL_c4, bkgKStarL_c5, bkgKStarL_c6, bkgKStarK_c1, bkgKStarK_c2, bkgKStarK_c3, bkgKStarK_c4}")
+]
 f_analyticBkgA_KStar_format['QuadGaus_Poly4'] = [ # pdfL: Quad + Gauss, pdfK: Poly4
     "bkgKStarL_c1[0.01,1]", "bkgKStarL_c2[0.1,20]", "bkgKStarL_c3[-1,1]", "bkgKStarL_c4[0.05,1]",
     "bkgKStarK_c1[-10,10]", "bkgKStarK_c2[-10,10]", "bkgKStarK_c3[-10,10]", "bkgKStarK_c4[-10,10]",
@@ -226,21 +253,67 @@ f_analyticBkgA_KStar_format['QuadGaus_Poly4'] = [ # pdfL: Quad + Gauss, pdfK: Po
         args="{CosThetaL, CosThetaK, bkgKStarL_c1, bkgKStarL_c2, bkgKStarL_c3, bkgKStarL_c4, bkgKStarK_c1, bkgKStarK_c2, bkgKStarK_c3, bkgKStarK_c4}")
 ]
 f_analyticBkgA_KStar_format['Gaus2_Poly4'] = [ # pdfL: Gaus + Gauss, pdfK: Poly4
-    "bkgKStarL_c1[-3,3]", "bkgKStarL_c2[0.1, 0.01, 0.5]", "bkgKStarL_c3[-3,3]", "bkgKStarL_c4[0.1, 0.01, 1.0]", "bkgKStarL_c5[0,10]",
+    "bkgKStarL_c1[-3,3]", "bkgKStarL_c2[0.1, 0.01, 0.9]", "bkgKStarL_c3[-3,3]", "bkgKStarL_c4[0.1, 0.01, 5.0]", "bkgKStarL_c5[-10,10]",
     "bkgKStarK_c1[-10,10]", "bkgKStarK_c2[-10,10]", "bkgKStarK_c3[-10,10]", "bkgKStarK_c4[-10,10]",
     "EXPR::f_bkgA_KStar('({pdfL})*({pdfK})', {args})".format(
-        pdfL="exp(-0.5*pow((CosThetaL-bkgKStarL_c1)/bkgKStarL_c2,2))+bkgKStarL_c5*exp(-0.5*pow((CosThetaL-bkgKStarL_c3)/bkgKStarL_c4,2))",
+        pdfL="bkgKStarL_c1*exp(-0.5*pow((CosThetaL-bkgKStarL_c3)/bkgKStarL_c2,2))+bkgKStarL_c5*exp(-0.5*pow((CosThetaL-bkgKStarL_c3)/bkgKStarL_c4,2))",
         pdfK="1+bkgKStarK_c1*CosThetaK+bkgKStarK_c2*pow(CosThetaK,2)+bkgKStarK_c3*pow(CosThetaK, 3)+bkgKStarK_c4*pow(CosThetaK,4)",
         args="{CosThetaL, CosThetaK, bkgKStarL_c1, bkgKStarL_c2, bkgKStarL_c3, bkgKStarL_c4, bkgKStarL_c5, bkgKStarK_c1, bkgKStarK_c2, bkgKStarK_c3, bkgKStarK_c4}")
 ]
 
+f_analyticBkgA_KStar_format['Gaus2_Poly4_DM'] = [ # pdfL: Gaus + Gauss, pdfK: Poly4
+    "RooGaussian::Gauss1L(CosThetaL, bkgKStarL_c1[-.2,-.5, .5], bkgKStarL_c2[.02, .0001, 4.])",
+    "RooGaussian::Gauss2L(CosThetaL, bkgKStarL_c3[ .2, .0, .8], bkgKStarL_c4[.02, .0001, 4.])",
+    "bkgKStarK_c1[-10,10]", "bkgKStarK_c2[-10,10]", "bkgKStarK_c3[-10,10]", "bkgKStarK_c4[-10,10]",
+    "EXPR::pdfK('({pdfK})', {args})".format(
+        pdfK="1+bkgKStarK_c1*CosThetaK+bkgKStarK_c2*pow(CosThetaK,2)+bkgKStarK_c3*pow(CosThetaK, 3)+bkgKStarK_c4*pow(CosThetaK,4)",
+        args="{CosThetaK, bkgKStarK_c1, bkgKStarK_c2, bkgKStarK_c3, bkgKStarK_c4}"),
+    "SUM::Gauss2(bkgA_frac1_KStar[.1,0.,39.]*Gauss1L, Gauss2L)",
+    "PROD::f_bkgA_KStar(Gauss2, pdfK)"
+]
+f_analyticBkgA_KStar_format['Gaus3_Poly4_DM'] = [ # pdfL: Gaus + Gauss + Gauss, pdfK: Poly4
+    "RooGaussian::Gauss1L(CosThetaL, bkgKStarL_c1[ .0,-.5, .5], bkgKStarL_c2[.02, .0001, 4.])",
+    "RooGaussian::Gauss2L(CosThetaL, bkgKStarL_c3[ .2,-.5, .8], bkgKStarL_c4[.02, .0001, 4.])",
+    "RooGaussian::Gauss3L(CosThetaL, bkgKStarL_c5[-.1,-.7, .2], bkgKStarL_c6[.08, .0001, 4.])",
+    "bkgKStarK_c1[-10,10]", "bkgKStarK_c2[-10,10]", "bkgKStarK_c3[-10,10]", "bkgKStarK_c4[-10,10]",
+    "EXPR::pdfK('({pdfK})', {args})".format(
+        pdfK="1+bkgKStarK_c1*CosThetaK+bkgKStarK_c2*pow(CosThetaK,2)+bkgKStarK_c3*pow(CosThetaK, 3)+bkgKStarK_c4*pow(CosThetaK,4)",
+        args="{CosThetaK, bkgKStarK_c1, bkgKStarK_c2, bkgKStarK_c3, bkgKStarK_c4}"),
+    "SUM::Gauss3(bkgA_frac1_KStar[.1,0.,29.]*Gauss1L, bkgA_frac2_KStar[.5,0.,29.]*Gauss2L, Gauss3L)",
+    "PROD::f_bkgA_KStar(Gauss3, pdfK)"
+]
 def GetAnalyticBkgA_KStarList(self):
     Args=self.process.cfg['args']
-    if Args.Year==2016 or Args.Year==2017 or Args.Year==2018:
-        f_analyticBkgA_KStar_format['DEFAULT']  = f_analyticBkgA_KStar_format['Gaus2_Poly4']
-        f_analyticBkgA_KStar_format['belowJpsiA']  = f_analyticBkgA_KStar_format['QuadGaus_Poly4']
-        #f_analyticBkgA_KStar_format['belowJpsiB']  = f_analyticBkgA_KStar_format['QuadGaus_Poly4']
-    return f_analyticBkgA_KStar_format.get(self.process.cfg['binKey'], f_analyticBkgA_KStar_format['DEFAULT'])
+    if Args.Year==2016:
+        f_analyticBkgA_KStar_format['DEFAULT']     = f_analyticBkgA_KStar_format['Gaus2_Poly4']
+        f_analyticBkgA_KStar_format['belowJpsiA']  = f_analyticBkgA_KStar_format['Gaus2_Poly4']
+        f_analyticBkgA_KStar_format['belowJpsiB']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['belowJpsiC']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['betweenPeaks']= f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['abovePsi2s']  = f_analyticBkgA_KStar_format['Poly6_Poly4']
+        f_analyticBkgA_KStar_format['summary']     = f_analyticBkgA_KStar_format['Poly6_Poly4']
+        f_analyticBkgA_KStar_format['summaryLowQ2']= f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        return f_analyticBkgA_KStar_format.get(self.process.cfg['binKey'], f_analyticBkgA_KStar_format['DEFAULT'])
+    if Args.Year==2017:
+        f_analyticBkgA_KStar_format['DEFAULT']     = f_analyticBkgA_KStar_format['Gaus2_Poly4']
+        f_analyticBkgA_KStar_format['belowJpsiA']  = f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
+        f_analyticBkgA_KStar_format['belowJpsiB']  = f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
+        f_analyticBkgA_KStar_format['belowJpsiC']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['betweenPeaks']= f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['abovePsi2s']  = f_analyticBkgA_KStar_format['Poly6_Poly4']
+        f_analyticBkgA_KStar_format['summary']     = f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
+        f_analyticBkgA_KStar_format['summaryLowQ2']= f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        return f_analyticBkgA_KStar_format.get(self.process.cfg['binKey'], f_analyticBkgA_KStar_format['DEFAULT'])
+    if Args.Year==2018:
+        f_analyticBkgA_KStar_format['DEFAULT']     = f_analyticBkgA_KStar_format['Gaus2_Poly4']
+        f_analyticBkgA_KStar_format['belowJpsiA']  = f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
+        f_analyticBkgA_KStar_format['belowJpsiB']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['belowJpsiC']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['betweenPeaks']= f_analyticBkgA_KStar_format['Poly6_Poly4']
+        f_analyticBkgA_KStar_format['abovePsi2s']  = f_analyticBkgA_KStar_format['Poly6_Poly4']
+        f_analyticBkgA_KStar_format['summary']     = f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
+        f_analyticBkgA_KStar_format['summaryLowQ2']= f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
+        return f_analyticBkgA_KStar_format.get(self.process.cfg['binKey'], f_analyticBkgA_KStar_format['DEFAULT'])
 
 setupBuildAnalyticBkgA_KStar = {
     'objName': "f_bkgA_KStar",
@@ -258,26 +331,96 @@ f_BkgM_KStar_format['Gaus'] = [
         pdfK="bkgMKStar_c4*exp(-0.5*pow((Bmass-bkgMKStar_c5)/bkgMKStar_c6,2))",
         args="{Bmass, bkgMKStar_c1, bkgMKStar_c2, bkgMKStar_c3, bkgMKStar_c4, bkgMKStar_c5, bkgMKStar_c6}")
 ]
+f_BkgM_KStar_format['Gaus2_Poly5'] = [
+    "RooGaussian::gauss1(Bmass, bkgMKStar_c1[5.36, 5.25, 5.45], bkgMKStar_c2[.02, .001, 4.])",
+    "RooGaussian::gauss2(Bmass, bkgMKStar_c3[5.4, 5.25, 5.45], bkgMKStar_c4[.02, .001, 4.])",
+    "bkgMKStar_c5[-10,10]", "bkgMKStar_c6[-10,10]", "bkgMKStar_c7[-10,10]", "bkgMKStar_c8[-14,14]", "bkgMKStar_c9[-10,10]",
+    "EXPR::Poly6_KStar('1+bkgMKStar_c5*Bmass+bkgMKStar_c6*pow(Bmass,2)+bkgMKStar_c7*pow(Bmass, 3)+bkgMKStar_c8*pow(Bmass,4)+bkgMKStar_c9*pow(Bmass,5)', {Bmass, bkgMKStar_c5, bkgMKStar_c6, bkgMKStar_c7, bkgMKStar_c8, bkgMKStar_c9})",
+    #"SUM::f_bkgM_KStar(bkgM_frac1_KStar[0.4, 0.0, 1.0]*gauss1, bkgM_frac2_KStar[0.5, 0.0, 1.0]*gauss2, Poly6_KStar)",
+    "PROD::f_bkgM_KStar(gauss1, gauss2, Poly6_KStar)",
+]
+f_BkgM_KStar_format['Gaus2_Poly6'] = [
+    "RooGaussian::gauss1(Bmass, bkgMKStar_c1[5.36, 5.25, 5.45], bkgMKStar_c2[.02, .001, 4.])",
+    "RooGaussian::gauss2(Bmass, bkgMKStar_c3[5.4, 5.25, 5.45], bkgMKStar_c4[.02, .001, 4.])",
+    "bkgMKStar_c5[-10,10]", "bkgMKStar_c6[-10,10]", "bkgMKStar_c7[-10,10]", "bkgMKStar_c8[-14,14]", "bkgMKStar_c9[-10,10]", "bkgMKStar_c10[-10,10]",
+    "EXPR::Poly6_KStar('1+bkgMKStar_c5*Bmass+bkgMKStar_c6*pow(Bmass,2)+bkgMKStar_c7*pow(Bmass, 3)+bkgMKStar_c8*pow(Bmass,4)+bkgMKStar_c9*pow(Bmass,5)+bkgMKStar_c10*pow(Bmass,6)', {Bmass, bkgMKStar_c5, bkgMKStar_c6, bkgMKStar_c7, bkgMKStar_c8, bkgMKStar_c9, bkgMKStar_c10})",
+    #"SUM::f_bkgM_KStar(bkgM_frac1_KStar[0.4, 0.0, 1.0]*gauss1, bkgM_frac2_KStar[0.5, 0.0, 1.0]*gauss2, Poly6_KStar)",
+    "PROD::f_bkgM_KStar(gauss1, gauss2, Poly6_KStar)",
+]
 f_BkgM_KStar_format['Gaus2'] = [
     "RooGaussian::gauss1(Bmass, bkgMKStar_c1[5.36, 5.25, 5.45], bkgMKStar_c2[.02, .001, 4.])",
     "RooGaussian::gauss2(Bmass, bkgMKStar_c3[5.4, 5.25, 5.45], bkgMKStar_c4[.02, .001, 4.])",
     "SUM::f_bkgM_KStar(bkgM_frac_KStar[0.4, 0.0, 1.0]*gauss1, gauss2)",
 ]
+f_BkgM_KStar_format['Gaus3'] = [
+    "RooGaussian::gauss1(Bmass, bkgMKStar_c1[5.36, 5.25, 5.45], bkgMKStar_c2[.02, .001, 4.])",
+    "RooGaussian::gauss2(Bmass, bkgMKStar_c3[5.4, 5.25, 5.45], bkgMKStar_c4[.02, .001, 4.])",
+    "RooGaussian::gauss3(Bmass, bkgMKStar_c5[5.4, 5.25, 5.45], bkgMKStar_c6[.02, .001, 4.])",
+    #"SUM::f_bkgM_KStar(bkgM_frac1_KStar[0.4, 0.0, 1.0]*gauss1, bkgM_frac2_KStar[0.4, 0.0, 1.0]*gauss2, gauss3)",
+    "PROD::f_bkgM_KStar(gauss1, gauss2, gauss3)",
+]
 f_BkgM_KStar_format['Double_Crystal_Ball'] = [ # pdfB: Double Crystal Ball
-        "cbs_mean_KStar[5.4, 5.28, 5.5]",
-        "RooCBShape::cbs_KStar_1(Bmass, cbs_mean_KStar, cbs1_sigma_KStar[0.0268, 0.0001, 0.60], cbs1_alpha_KStar[0.89, -6.0, 6.0], cbs1_n_KStar[4, 0, 1000])",
-        "RooCBShape::cbs_KStar_2(Bmass, cbs_mean_KStar, cbs2_sigma_KStar[0.0296, 0.0001, 0.60], cbs2_alpha_KStar[-0.87,-9.4, 9.6], cbs2_n_KStar[133, 0, 1000])",
-        "SUM::f_bkgM_KStar(bkgM_frac_KStar[0.4, 0.0, 1.0]*cbs_KStar_1, cbs_KStar_2)",
+        "{cbs_mean_KStar}",
+        "RooCBShape::cbs_KStar_1(Bmass, cbs_mean_KStar, {cbs1_sigma_KStar}, {cbs1_alpha_KStar}, {cbs1_n_KStar})",
+        "RooCBShape::cbs_KStar_2(Bmass, cbs_mean_KStar, {cbs2_sigma_KStar}, {cbs2_alpha_KStar}, {cbs2_n_KStar})",
+        "SUM::f_bkgM_KStar({bkgM_frac_KStar}*cbs_KStar_1, cbs_KStar_2)",
+]
+f_BkgM_KStar_format['DCB_Gaus'] = [ # pdfB: Double Crystal Ball + Gauss
+        "{cbs_mean_KStar}",
+        "RooCBShape::cbs_KStar_1(Bmass, cbs_mean_KStar, {cbs1_sigma_KStar}, {cbs1_alpha_KStar}, {cbs1_n_KStar})",
+        "RooCBShape::cbs_KStar_2(Bmass, cbs_mean_KStar, {cbs2_sigma_KStar}, {cbs2_alpha_KStar}, {cbs2_n_KStar})",
+        "RooGaussian::gauss1(Bmass, bkgMKStar_c1[5.40, 5.25, 5.45], bkgMKStar_c2[.009, .00001, 4.])",
+        "SUM::f_bkgM_KStar({bkgM_frac_KStar}*cbs_KStar_1, bkgM_frac1_KStar[.1,0.,1.]*gauss1, cbs_KStar_2)",
 ]
 
-def GetBkgM_KStarList(self):
+def InitParams_KStar(self):
+    """Initializing parameters for each bin and each year"""
     Args=self.process.cfg['args']
-    if Args.Year==2016 or Args.Year==2017 or Args.Year==2018:
-        f_BkgM_KStar_format['DEFAULT'] = f_BkgM_KStar_format['Double_Crystal_Ball']
-        f_BkgM_KStar_format['belowJpsiA'] = f_BkgM_KStar_format['Gaus']
-        f_BkgM_KStar_format['belowJpsiB'] = f_BkgM_KStar_format['Gaus']
-        f_BkgM_KStar_format['belowJpsiC'] = f_BkgM_KStar_format['Gaus2']
-    return f_BkgM_KStar_format.get(self.process.cfg['binKey'], f_BkgM_KStar_format['DEFAULT'])
+    params={
+            'cbs_mean_KStar'  : 'cbs_mean_KStar[5.3733, 5.28, 5.5]',    'cbs1_sigma_KStar'  : 'cbs1_sigma_KStar[0.0929, 0.0001, 0.60]',
+            'cbs1_alpha_KStar': 'cbs1_alpha_KStar[1.04, -6.0, 6.0]',    'cbs1_n_KStar'      : 'cbs1_n_KStar[121, 0, 1000]',
+            'cbs2_sigma_KStar': 'cbs2_sigma_KStar[0.0406, 0.0001, 0.6]','cbs2_alpha_KStar'  : 'cbs2_alpha_KStar[-0.506,-9.4, 9.6]',
+            'cbs2_n_KStar'    : 'cbs2_n_KStar[127, 0, 1000]',           'bkgM_frac_KStar'   : 'bkgM_frac_KStar[0.237, 0.0, 1.0]'
+            }
+    if Args.Year==2016:
+        if self.process.cfg['binKey'] is 'summary':
+            return {
+            'cbs_mean_KStar': 'cbs_mean_KStar[5.40108, 5.38, 5.43]', 'cbs1_sigma_KStar': 'cbs1_sigma_KStar[0.0671412, 0.0001, 0.60]',
+            'cbs1_alpha_KStar': 'cbs1_alpha_KStar[1.32481, -6.0, 6.0]', 'cbs1_n_KStar': 'cbs1_n_KStar[1.98694, 0, 500]',
+            'cbs2_sigma_KStar': 'cbs2_sigma_KStar[0.0431308, 0.0001, 0.60]', 'cbs2_alpha_KStar': 'cbs2_alpha_KStar[-.372776,-19.4, 19.6]',
+            'cbs2_n_KStar': 'cbs2_n_KStar[122.213, 0, 1000]', 'bkgM_frac_KStar': 'bkgM_frac_KStar[.620647, 0.0, 1.0]'
+            }
+        else:
+            return params
+    elif Args.Year==2017:
+        if self.process.cfg['binKey'] is 'belowJpsiA':
+            return params
+        else:
+            return params
+    elif Args.Year==2018:
+        if self.process.cfg['binKey'] is 'belowJpsiA':
+            return params
+        else:
+            return params
+    else:
+        return params
+    
+def GetBkgM_KStarList(self):
+    """Return list containing PDF for current bin/year"""
+    Args=self.process.cfg['args']
+    if Args.Year==2016 or Args.Year==2017:
+        f_BkgM_KStar_format['DEFAULT']    = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['DCB_Gaus']]
+        f_BkgM_KStar_format['belowJpsiA'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        f_BkgM_KStar_format['belowJpsiC'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        f_BkgM_KStar_format['summaryLowQ2']=[var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        return f_BkgM_KStar_format.get(self.process.cfg['binKey'], f_BkgM_KStar_format['DEFAULT'])
+    if Args.Year==2018:
+        f_BkgM_KStar_format['DEFAULT']    = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['DCB_Gaus']]
+        f_BkgM_KStar_format['belowJpsiA'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        f_BkgM_KStar_format['belowJpsiC'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        f_BkgM_KStar_format['summary']    = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        f_BkgM_KStar_format['summaryLowQ2']=[var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        return f_BkgM_KStar_format.get(self.process.cfg['binKey'], f_BkgM_KStar_format['DEFAULT'])
 
 setupBuildBkgM_KStar = {
     'objName': "f_bkgM_KStar",
@@ -384,8 +527,10 @@ def buildFinal(self):
             f_final = wspace.obj(p)
         self.cfg['source'][p] = f_final
 
-    variations2 = [("f_final_WithKStar", "f_sig3D", "f_bkgComb", "f_bkg_KStar")]
-    wspace.factory("nBkgKStar[{0}, 0, 1000]".format(20)) #(self.process.sourcemanager.get('KsigMCReader.Fit').sumEntries()*35.9/2765.2853))
+    variations2 = [("f_final_WithKStar", "f_sig3D", "f_bkgComb", "f_bkg_KStar"),
+                   ("f_final_AltM_WithKStar", "f_sig3DAltM", "f_bkgComb", "f_bkg_KStar")]
+    wspace.factory("KStarFrac[0.0674]") #(self.process.sourcemanager.get('KsigMCReader.Fit').sumEntries()*35.9/2765.2853))
+    wspace.factory("prod::nBkgKStar(KStarFrac, nSig)")
     for p, pSig, pBkg, kBkg in variations2:
         f_final2 = wspace.obj(p)
         if f_final2 == None:

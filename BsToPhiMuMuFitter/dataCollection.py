@@ -105,7 +105,7 @@ def GetDataReader(self, seq):
         KsigMCReaderCfg = copy(CFG)
         KsigMCReaderCfg.update({
             'name': "KsigMCReader.{Year}".format(Year=self.cfg['args'].Year),
-            'ifile': KStarSigMC,
+            'ifile': self.cfg['KStarSigMC'],
             'argset': dataArgsKStar,
             'preloadFile': modulePath + "/data/preload_KsigMCReader_{binLabel}.root",
             'lumi': 2765.2853,
@@ -152,8 +152,6 @@ ThetaKBins = array('d', [-1., -0.7, -0.4, -0.2, 0., 0.2, 0.4, 0.7, 1.])
 
 def buildTotalEffiHist(self):
     """Build one step efficiency histograms for later fitting/plotting"""
-    if self.process.cfg['binKey'] not in self.process.cfg['allBins']:
-        return
     binKey=self.process.cfg['binKey']
     fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/TotalEffHists_{0}_{1}.root".format(str(self.process.cfg['args'].Year), q2bins[binKey]['label']), "UPDATE")
 
@@ -427,6 +425,15 @@ effiHistReader = ObjProvider({
     'obj': {
         'effiHistReader.h2_accXrec': [buildAccXRecEffiHist, ],
     }
+})
+import BsToPhiMuMuFitter.script.latex.makeTables as makeTables
+FinalDataResult = ObjProvider({
+    'name': "FinalDataResult",
+    'obj': {'FinalDataResult': [makeTables.table_dataresAFBFL, ], }
+})
+EffiTable = ObjProvider({
+    'name': "EffiTable",
+    'obj': {'EffiTable': [makeTables.EffiTable, ], }
 })
 
 if __name__ == '__main__':

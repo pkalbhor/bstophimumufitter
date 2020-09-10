@@ -81,20 +81,23 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
     ############################--------TEST---------###########################
     cwd=os.getcwd()
     for frame in frames:
-        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks, legend=True)
         Plotter.latexQ2(self.process.cfg['binKey'])
         #if not frame =='B': self.DrawParams(pdfPlots)
         ####################################
-        if pltName=="plot_bkgCombA.{0}".format(str(self.process.cfg['args'].Year)):
-            path=os.path.join(modulePath, self.process.work_dir, "SideBandBkg")
+        def chdir(path):
             if not os.path.exists(path):                                                                                                       
                 os.mkdir(path)   
             os.chdir(path)
-        if pltName=="plot_sigM.{0}".format(str(self.process.cfg['args'].Year)) or pltName=="plot_sig2D.{0}".format(str(self.process.cfg['args'].Year)):
+        if pltName=="plot_bkgCombA.{0}".format(self.process.cfg['args'].Year):
+            path=os.path.join(modulePath, self.process.work_dir, "SideBandBkg")
+            chdir(path)
+        if pltName in [plt.format(self.process.cfg['args'].Year) for plt in ["plot_sigM.{}", "plot_sig2D.{}", "plot_sigMDCB.{}"]]:
             path=os.path.join(modulePath, self.process.work_dir, "SignalFits")
-            if not os.path.exists(path):                                                        
-                os.mkdir(path)                                                                 
-            os.chdir(path)
+            chdir(path)
+        if pltName=="plot_bkgA_KStar.{}".format(self.process.cfg['args'].Year):
+            path=os.path.join(modulePath, self.process.work_dir, "KStarPlots")
+            chdir(path)       
         ####################################
         self.canvasPrint(pltName.replace('.', '_') + plotFuncs[frame]['tag'])
         Plotter.canvas.cd()
@@ -296,17 +299,106 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
             Plotter.latexQ2(self.process.cfg['binKey'])
             
             ##################################
-            path=modulePath+"/"+self.process.work_dir+"/FinalFit/" 
+            path=os.path.join(modulePath, self.process.work_dir, "FinalFit") 
             if not os.path.exists(path):
                 os.mkdir(path)
             os.chdir(path)
             ##################################
-            self.canvasPrint(pltName + '_' + regionName + plotFuncs[frame]['tag'])
+            self.canvasPrint(pltName.replace('.','_') + '_' + regionName + plotFuncs[frame]['tag'])
         os.chdir(cwd)
 types.MethodType(plotPostfitBLK, Plotter)
 
+def SimplotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
+    """Specification of plotSimpleBLK for post-fit plots"""
+    for pIdx, plt in enumerate(pdfPlots):
+        pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
+
+    # Calculate normalization and then draw
+    args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL))
+    nSigDB = args.find('nSig').getVal()
+    nSigErrorDB = args.find('nSig').getError()
+    nBkgCombDB = args.find('nBkgComb').getVal()
+    nBkgCombErrorDB = args.find('nBkgComb').getError()
+    if 'L' in frames or 'K' in frames:
+        flDB = unboundFlToFl(args.find('unboundFl').getVal())
+        afbDB = unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
+    sigFrac = {}
+    bkgCombFrac = {}
+    for regionName in ["Fit"]:
+        dataPlots = [["{0}.{1}".format(dataReader, regionName), plotterCfg_dataStyle, "Data"], ]
+        for pIdx, p in enumerate(dataPlots):
+            dataPlots[pIdx] = self.initDataPlotCfg(p)
+
+        # Bind the 'Bmass' defined in PDF with 'getObservables' to createIntegral
+        obs = pdfPlots[1][0].getObservables(dataPlots[0][0])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
+        sigFrac[regionName] = pdfPlots[1][0].createIntegral(
+            obs,
+            ROOT.RooFit.NormSet(obs),
+            ROOT.RooFit.Range(regionName)).getVal()
+
+        obs = pdfPlots[2][0].getObservables(dataPlots[0][0])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
+        bkgCombFrac[regionName] = pdfPlots[2][0].createIntegral(
+            obs,
+            ROOT.RooFit.NormSet(obs),
+            ROOT.RooFit.Range(regionName)).getVal()
+        nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName]
+        # Correct the shape of f_final
+        args.find("nSig").setVal(nSigDB * sigFrac[regionName])
+        args.find("nBkgComb").setVal(nBkgCombDB * bkgCombFrac[regionName])
+
+        modified_pdfPlots = [
+            [pdfPlots[0][0],
+             pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
+             None,
+             "Total fit"],
+            [pdfPlots[0][0],
+             pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+             None,
+             "Sigal"],
+            [pdfPlots[0][0],
+             pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+             None,
+             "Background"],
+        ]
+
+        plotFuncs = {
+            'B': {'func': Plotter.plotFrameB_fine, 'tag': ""},
+            'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
+            'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
+        }
+
+        drawLatexFitResults = True
+        cwd=os.getcwd()
+        for frame in frames:
+            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots)
+            if drawLatexFitResults:
+                if frame == 'B':
+                    Plotter.latex.DrawLatexNDC(.19, .77, "Y_{Signal}")
+                    Plotter.latex.DrawLatexNDC(.35, .77, "= {0:.2f}".format(nSigDB * sigFrac[regionName]))
+                    Plotter.latex.DrawLatexNDC(.50, .77, "#pm {0:.2f}".format(nSigErrorDB * sigFrac[regionName]))
+                    Plotter.latex.DrawLatexNDC(.19, .70, "Y_{Background}")
+                    Plotter.latex.DrawLatexNDC(.35, .70, "= {0:.2f}".format(nBkgCombDB * bkgCombFrac[regionName]))
+                    Plotter.latex.DrawLatexNDC(.50, .70, "#pm {0:.2f}".format(nBkgCombErrorDB * bkgCombFrac[regionName]))
+                elif frame == 'L':
+                    Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}".format(afbDB))
+                elif frame == 'K':
+                    Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
+            Plotter.latexQ2(self.process.cfg['binKey'])
+            
+            ##################################
+            path=os.path.join(modulePath, self.process.work_dir, "FinalFit") 
+            if not os.path.exists(path):
+                os.mkdir(path)
+            os.chdir(path)
+            ##################################
+            self.canvasPrint(pltName.replace('.','_') + '_' + regionName + plotFuncs[frame]['tag'])
+        os.chdir(cwd)
+types.MethodType(SimplotPostfitBLK, Plotter)
+
 def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
-    """Specification of plotSimpleBLK for post-fit plots with KStar"""
+    """Specification of plotSimpleBLK for post-fit plots with peaking background"""
     for pIdx, plt in enumerate(pdfPlots):
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
 
@@ -317,8 +409,9 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
     nSigErrorDB = args.find('nSig').getError()
     nBkgCombDB = args.find('nBkgComb').getVal()
     nBkgCombErrorDB = args.find('nBkgComb').getError()
-    nBkgKStarDB = args.find('nBkgKStar').getVal()
-    nBkgKStarErrorDB = args.find('nBkgKStar').getError()
+    KStarFrac=args.find('KStarFrac').getVal()
+    nBkgKStarDB = KStarFrac*nSigDB
+    nBkgKStarErrorDB = (nSigDB*0.0118) + (KStarFrac*nSigErrorDB) + (nSigErrorDB*0.0118)
     if 'L' in frames or 'K' in frames:
         flDB = unboundFlToFl(args.find('unboundFl').getVal())
         afbDB = unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
@@ -333,8 +426,9 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
 
         # Bind the 'Bmass' defined in PDF with 'getObservables' to createIntegral
         def myfunc(iArg):
-            lo=ROOT.Double(0)
-            hi=ROOT.Double(1)
+            import ctypes
+            lo=ctypes.c_double(0.)
+            hi=ctypes.c_double(1.)
             dataPlots[0][0].getRange(iArg, lo, hi)
             iArg.setRange(lo, hi)
         FitterCore.ArgLooper(dataPlots[0][0].get(), myfunc)
@@ -363,7 +457,7 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
 
         nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName] + nBkgKStarDB * bkgKStarFrac[regionName]
 
-        if regionName in ['SB', 'innerSB', 'outerSB']:
+        if not regionName in ['SB', 'innerSB', 'outerSB']:
             modified_pdfPlots = [
                 [pdfPlots[0][0],
                  pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
@@ -386,7 +480,7 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
             # Correct the shape of f_final
             args.find("nSig").setVal(nSigDB * sigFrac[regionName])
             args.find("nBkgComb").setVal(nBkgCombDB * bkgCombFrac[regionName])
-            args.find("nBkgKStar").setVal(nBkgKStarDB * bkgKStarFrac[regionName])
+            #args.find("nBkgKStar").setVal(nBkgKStarDB * bkgKStarFrac[regionName])
             modified_pdfPlots = [
                 [pdfPlots[0][0],
                  pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.ProjectionRange(defaultPlotRegion)),
@@ -407,7 +501,7 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
             ]
 
         plotFuncs = {
-            'B': {'func': Plotter.plotFrameB_fine, 'tag': ""},
+            'B': {'func': Plotter.plotFrameB_fine, 'tag': "_Bmass"},
             'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
             'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
         }
@@ -434,12 +528,12 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
             Plotter.latexQ2(self.process.cfg['binKey'])
             
             ##################################
-            path=modulePath+"/Plots/FinalFit/" 
+            path=os.path.join(modulePath, self.process.work_dir, "FinalFit")
             if not os.path.exists(path):
                 os.mkdir(path)
             os.chdir(path)
             ##################################
-            self.canvasPrint(pltName + '_' + regionName + plotFuncs[frame]['tag'])
+            self.canvasPrint(pltName.replace('.', '_') + '_' + regionName + plotFuncs[frame]['tag'])
         os.chdir(cwd)
 types.MethodType(plotPostfitBLK_WithKStar, Plotter)
 
@@ -447,7 +541,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     """ Check carefully the keys in 'dbSetup' """
     if marks is None:
         marks = []
-    binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'Test3']
+    binKeys = ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'abovePsi2s']
 
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
     xxErr = array('d', map(lambda t: (t[1] - t[0]) / 2, [q2bins[binKey]['q2range'] for binKey in binKeys]))
@@ -720,6 +814,53 @@ def GetPlotterObject(self):
             'pdfPlots': [["f_bkgCombA.{0}".format(Year), plotterCfg_bkgStyle, None, "Analytic Bkg."], ],
             'marks': None},
     }
+    plotterCfg['plots']['plot_sigMDCB'] = {
+        'func': [functools.partial(plotSimpleBLK, frames='B')],
+        'kwargs': {
+            'pltName': "plot_sigMDCB.{0}".format(Year),
+            'dataPlots': [["sigMCReader.{0}.Fit".format(Year), plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [["f_sigMDCB.{0}".format(Year), plotterCfg_sigStyle, fitCollection.ArgAliasDCB, "Total fit"],
+                        ],
+            'marks': {'marks': ['sim']}}
+    }
+    plotterCfg['plots']['plot_bkgM_KStar'] = {
+        'func': [functools.partial(plotSimpleBLK, frames='B')],
+        'kwargs': {
+            'pltName': "plot_bkgM_KStar.{0}".format(Year),
+            'dataPlots': [["KsigMCReader.{0}.Fit".format(Year), plotterCfg_styles['mcStyleBase'], "Simulation"], ],
+            'pdfPlots' : [["f_bkgM_KStar.{0}".format(Year), plotterCfg_styles['sigStyleBase'], None, "Total fit"], ],
+            'marks': {'marks': ['sim']}}
+    }
+    plotterCfg['plots']['plot_bkgA_KStar'] = {  #Plot K*0MuMu Fits
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName'  : "plot_bkgA_KStar.{}".format(Year),
+            'dataPlots': [["KsigMCReader.{}.Fit".format(Year), plotterCfg_styles['mcStyleBase'], "Simulation"], ],
+            'pdfPlots' : [["f_bkgA_KStar.{}".format(Year), plotterCfg_styles['sigStyleBase'], None, "Analytic KStar0MuMu Bkg."], ],
+            'marks': {'marks': ['sim']}}
+    } 
+    plotterCfg['plots']['plot_final_AltM_WithKStar'] = {
+        'func': [plotPostfitBLK_WithKStar],
+        'kwargs': {
+            'pltName': "plot_final_AltM_WithKStar.{}".format(Year),
+            'dataReader': "dataReader.{}".format(Year),
+            'pdfPlots': [["f_final_AltM_WithKStar.{}".format(Year), plotterCfg_styles['allStyleBase'], None, "Total fit"],
+                         ["f_sig3DAltM.{}".format(Year), plotterCfg_styles['sigStyleBase'], None, "Sigal"],
+                         ["f_bkgComb.{}".format(Year),   plotterCfg_styles['bkgStyleBase'], None, "Background"],
+                         ["f_bkg_KStar.{}".format(Year), plotterCfg_bkgStyle_KStar,         None, "K*0MuMu Background"], ],
+        }
+    }
+    plotterCfg['plots']['plot_final_AltM'] = {  
+        'func': [plotPostfitBLK],
+        'kwargs': {
+            'pltName': "plot_final_AltM.{}".format(Year),
+            'dataReader': "dataReader.{}".format(Year),
+            'pdfPlots': [["f_final_AltM.{}".format(Year), plotterCfg_allStyle, None, "Total fit"],
+                         ["f_sig3DAltM.{}".format(Year), plotterCfg_sigStyle, None, "Sigal"],
+                         ["f_bkgComb.{}".format(Year), plotterCfg_bkgStyle, None, "Background"],
+                        ],
+        }
+    }
     plotterCfg['plots']['summary_RECO2GEN'] = {
         'func': [plotSummaryAfbFl],
         'kwargs': {
@@ -760,6 +901,17 @@ def GetPlotterObject(self):
             'pdfPlots': [["SimultaneousFitter", plotterCfg_bkgStyle, None, "Analytic Bkg."],],
             'marks': None},
     }
+    plotterCfg['plots']['Combined_plot_final_AltM'] = {  
+        'func': [plotPostfitBLK],
+        'kwargs': {
+            'pltName': "Combined_plot_final_AltM",
+            'dataPlots': [["SimultaneousFitter.dataWithCategories", plotterCfg_dataStyle, "Combined Data"], ],
+            'pdfPlots': [["f_final_AltM.{}".format(Year), plotterCfg_allStyle, None, "Total fit"],
+                         ["f_sig3DAltM.{}".format(Year), plotterCfg_sigStyle, None, "Sigal"],
+                         ["f_bkgComb.{}".format(Year), plotterCfg_bkgStyle, None, "Background"],
+                        ],
+        }
+    }
 
     plotter=Plotter(plotterCfg)
     if self.cfg['args'].SimFit and (self.cfg['args'].seqKey=='fitSig2D'):
@@ -788,46 +940,6 @@ def GetPlotterObject(self):
                         ],
             'marks': {'marks': ['sim']}}
     },
-    'angular3D_sigMDCB': {
-        'func': [functools.partial(plotSimpleBLK, frames='B')],
-        'kwargs': {
-            'pltName': "angular3D_sigMDCB",
-            'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_sigMDCB", plotterCfg_sigStyle, fitCollection.setupSigMDCBFitter['argAliasInDB'], "Total fit"],
-                        ],
-            'marks': ['sim']}
-    },
-
-    'angular3D_bkgA_KStar': {  #Plot K*0MuMu Fits
-        'func': [functools.partial(plotSimpleBLK, frames='LK')],
-        'kwargs': {
-            'pltName': "angular3D_bkgA_KStar",
-            'dataPlots': [["KsigMCReader.Fit", plotterCfg_dataStyle, "MC"], ],
-            'pdfPlots': [["f_bkgA_KStar", plotterCfg_bkgStyle, None, "Analytic KStar0MuMu Bkg."],
-                        ],
-            'marks': None}
-    }, 
-    'angular3D_bkgM_KStar': {
-        'func': [functools.partial(plotSimpleBLK, frames='B')],
-        'kwargs': {
-            'pltName': "angular3D_bkgM_KStar",
-            'dataPlots': [["KsigMCReader.Fit", plotterCfg_styles['mcStyle'], "Simulation"], ],
-            'pdfPlots': [["f_bkgM_KStar", plotterCfg_styles['sigStyle'], None, "Total fit"],
-                        ],
-            'marks': {'marks': ['sim']}}
-    },
-    'angular3D_final_WithKStar': {
-        'func': [plotPostfitBLK_WithKStar],
-        'kwargs': {
-            'pltName': "angular3D_final_WithKStar",
-            'dataReader': "dataReader",
-            'pdfPlots': [["f_final_WithKStar", plotterCfg_styles['allStyleBase'], None, "Total fit"],
-                         ["f_sig3D", plotterCfg_styles['sigStyleBase'], None, "Sigal"],
-                         ["f_bkgComb", plotterCfg_styles['bkgStyleBase'], None, "Background"],
-                         ["f_bkg_KStar", plotterCfg_bkgStyle_KStar, None, "K*0MuMu Background"],
-                        ],
-        }
-    },
 
     'simpleBLK': {  # Most general case, to be customized by user
         'func': [functools.partial(plotSimpleBLK, frames='BLK')],
@@ -845,18 +957,6 @@ def GetPlotterObject(self):
             'dataReader': "dataReader",
             'pdfPlots': [["f_final", plotterCfg_allStyle, None, "Total fit"],
                          ["f_sig3D", plotterCfg_sigStyle, None, "Sigal"],
-                         ["f_bkgComb", plotterCfg_bkgStyle, None, "Background"],
-                        ],
-        }
-    },
-
-    'angular3D_final_AltM': {  
-        'func': [plotPostfitBLK],
-        'kwargs': {
-            'pltName': "angular3D_final_AltM",
-            'dataReader': "dataReader",
-            'pdfPlots': [["f_final_AltM", plotterCfg_allStyle, None, "Total fit"],
-                         ["f_sig3DAltM", plotterCfg_sigStyle, None, "Sigal"],
                          ["f_bkgComb", plotterCfg_bkgStyle, None, "Background"],
                         ],
         }

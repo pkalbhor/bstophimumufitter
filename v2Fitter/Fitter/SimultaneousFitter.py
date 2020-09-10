@@ -86,10 +86,21 @@ Following functions to be overloaded to customize the full procedure...
 
     def _postFitSteps(self):
         """ Abstract: Do something after main fit loop"""
+        
         for pdf, data in zip(self.pdf, self.data):
             self.ToggleConstVar(pdf.getParameters(data), True)
-        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.minimizer.getParameters(self.dataWithCategories), self.cfg['argAliasInDB'])
-   
+        if self.cfg['saveToDB']:
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.minimizer.getParameters(self.dataWithCategories), self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
+
+        for pdf, data in zip(self.pdf, self.data):
+            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, pdf.getParameters(data), aliasDict=self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None, exclude=None)
+    
+        """ofile = ROOT.TFile("../input/Simultaneous_{0}.root".format(q2bins[self.process.cfg['binKey']]['label']), "RECREATE")
+        self.minimizer.Write()
+        self.dataWithCategories.Write()
+        self.category.Write()
+        ofile.Close()"""
+    
         self.cfg['source']["{0}.dataWithCategories".format(self.name)]=self.dataWithCategories
         self.cfg['source'][self.name] = self.minimizer
         self.cfg['source']["{0}.category".format(self.name)] = self.category
@@ -99,10 +110,9 @@ Following functions to be overloaded to customize the full procedure...
         #Attach ProjWData Argument to plotter for getting combined fit
         #self.process._sequence[1].cfg['plots'][self.process._sequence[1].cfg['switchPlots'][0]]['kwargs']['pdfPlots'][0][1]=(ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
 
-        frameL = CosThetaL.frame(ROOT.RooFit.Bins(30)) 
-        frameK = CosThetaK.frame(ROOT.RooFit.Bins(30)) 
+        frameL = CosThetaL.frame(ROOT.RooFit.Bins(24)) 
+        frameK = CosThetaK.frame(ROOT.RooFit.Bins(24)) 
         c1=ROOT.TCanvas()
-        pdb.set_trace()
         binKey= q2bins[self.process.cfg['binKey']]['label']
         for ID, Category, Year in zip([0, 1, 2], self.cfg['category'], ['2016', '2017', '2018']):
             CopyFrameL = frameL.Clone()
@@ -132,6 +142,7 @@ Following functions to be overloaded to customize the full procedure...
             Plotter.latexCMSExtra()
             c1.SaveAs("Simultaneous_CosK_{0}_{1}_{2}.pdf".format(Year, self.process.cfg['args'].seqKey, binKey))
 
+        """
         self.dataWithCategories.plotOn(frameL)
         self.minimizer.plotOn(frameL, ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
         frameL.SetMaximum(1.5 * frameL.GetMaximum())
@@ -156,7 +167,67 @@ Following functions to be overloaded to customize the full procedure...
         Plotter.latexCMSSim()
         Plotter.latexCMSExtra()
         Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries()) )
-        c1.SaveAs("Combined_{0}_cosK_{1}.pdf".format(self.process.cfg['args'].seqKey, binKey))
+        c1.SaveAs("Combined_{0}_cosK_{1}.pdf".format(self.process.cfg['args'].seqKey, binKey))"""
+
+    def _getFinalFitPlots(self):
+        args = self.minimizer.getParameters(self.dataWithCategories)
+        from BsToPhiMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, flToUnboundFl, afbToUnboundAfb
+        import BsToPhiMuMuFitter.plotCollection as plotCollection
+        from BsToPhiMuMuFitter.Plotter import Plotter
+        flDB = unboundFlToFl(args.find('unboundFl').getVal())
+        afbDB = unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
+        sigFrac = {}
+        bkgCombFrac = {}
+
+        pdfPlots = [[self.minimizer, plotCollection.plotterCfg_allStyle, None, "Total fit"],
+                    ["f_sig3DAltM", plotCollection.plotterCfg_sigStyle, None, "Total fit"],
+                    ["f_bkgComb", plotCollection.plotterCfg_bkgStyle, None, "Total fit"],
+                    ]
+        sampleSet = ROOT.RooArgSet(self.category)
+        c1=ROOT.TCanvas()
+        for ID, Category, Year in zip([0, 1, 2], self.cfg['category'], ['2016', '2017', '2018']):
+            nSigDB = args.find('nSig_{}'.format(Year)).getVal()
+            nSigErrorDB = args.find('nSig_{}'.format(Year)).getError()
+            nBkgCombDB = args.find('nBkgComb_{}'.format(Year)).getVal()
+            nBkgCombErrorDB = args.find('nBkgComb_{}'.format(Year)).getError()
+           
+            dataPlots = [[self.dataWithCategories, plotCollection.plotterCfg_dataStyle+(ROOT.RooFit.Cut("{0}=={0}::{1}".format(self.category.GetName(), Category)),), "{0} Data".format(Year)],]
+            modified_pdfPlots = [
+                [pdfPlots[0][0],
+                 pdfPlots[0][1] + (ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components(self.pdf[ID].GetName()),),
+                 None,
+                 "Total fit"],
+                [pdfPlots[0][0],
+                 pdfPlots[1][1] + (ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components(pdfPlots[1][0])),
+                 None,
+                 "Sigal"],
+                [pdfPlots[0][0],
+                 pdfPlots[2][1] + (ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components(pdfPlots[2][0])),
+                 None,
+                 "Background"],
+            ]
+            plotFuncs = {
+                'B': {'func': Plotter.plotFrameB_fine, 'tag': "Bmass"},
+                'L': {'func': Plotter.plotFrameL, 'tag': "cosl"},
+                'K': {'func': Plotter.plotFrameK, 'tag': "cosK"},
+            }
+            for frame in 'BLK':
+                plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots)
+                if True:
+                    if frame == 'B':
+                        ROOT.TLatex().DrawLatexNDC(.19, .77, "Y_{Signal}")
+                        ROOT.TLatex().DrawLatexNDC(.35, .77, "= {0:.2f}".format(nSigDB))
+                        ROOT.TLatex().DrawLatexNDC(.50, .77, "#pm {0:.2f}".format(nSigErrorDB))
+                        ROOT.TLatex().DrawLatexNDC(.19, .70, "Y_{Background}")
+                        ROOT.TLatex().DrawLatexNDC(.35, .70, "= {0:.2f}".format(nBkgCombDB))
+                        ROOT.TLatex().DrawLatexNDC(.50, .70, "#pm {0:.2f}".format(nBkgCombErrorDB))
+                    elif frame == 'L':
+                        ROOT.TLatex().DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}".format(afbDB))
+                    elif frame == 'K':
+                        ROOT.TLatex().DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
+                Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(dataPlots[0][0].sumEntries("{0}=={0}::{1}".format(self.category.GetName(), Category))) )
+                Plotter.latexQ2(self.process.cfg['binKey'])
+                Plotter.canvas.SaveAs("SimFitFinal3D_{0}_{1}_{2}.pdf".format(plotFuncs[frame]['tag'], Year, q2bins[self.process.cfg['binKey']]['label']))
 
     @classmethod
     def templateConfig(cls):
@@ -166,6 +237,8 @@ Following functions to be overloaded to customize the full procedure...
             'data': ["data1", "data2", "data3"],
             'pdf': ["f1", "f2", "f3"],
             'argPattern': [r'^.+$'],
+            'saveToDB': True,
+            'argAliasSaveToDB': True,
             'fitToCmds': [[],],
         }
         return cfg
@@ -185,4 +258,5 @@ Following functions to be overloaded to customize the full procedure...
         self._preFitSteps()
         self._runFitSteps()
         self._postFitSteps()
+        self._getFinalFitPlots()
 

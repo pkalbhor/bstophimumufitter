@@ -20,10 +20,10 @@ from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 #   * Input db is forced to be StdProcess.dbplayer.absInputDir
 #   * function name for labelled table is table_label1[_label2]
 
-dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected"))
-p.addService("dbplayer", dbplayer)
+#dbplayer = FitDBPlayer(absInputDir=os.path.join(modulePath, "plots_2018"))
+#p.addService("dbplayer", dbplayer)
 
-db_dir = p.dbplayer.absInputDir
+#db_dir = p.dbplayer.absInputDir
 
 indent = "  "
 
@@ -78,7 +78,7 @@ def table_yields():
 
     binKeyToLine = OrderedDict()
     for binKey in q2bins.keys():
-        if binKey in ['jpsi', 'psi2s', 'peaks']:
+        if binKey in ['jpsi', 'psi2s', 'peaks', 'abovePsi2sA', 'abovePsi2sB']:
             continue
         binKeyToLine[binKey] = [q2bins[binKey]['label'].strip('bin')]
         #binKeyToLine['betweenPeaks'] = ["3"]
@@ -121,7 +121,7 @@ def table_coverageAFBFL():
     print(indent * (baseIndentLevel + 0) + r"\end{tabular}")
     print("")
 
-def table_dataresAFBFL():
+def table_dataresAFBFL(self):
     baseIndentLevel = 2
 
     print("[table_dataresAFBFL] Printing table of final result")
@@ -139,11 +139,11 @@ def table_dataresAFBFL():
     binKeyToLine['jpsi'] = ["2", r"8.00 -- 11.00", r"\multicolumn{3}{|c|} {$J/\psi$ resonance region}"]
     binKeyToLine['betweenPeaks'] = ["3", r"11.00 -- 12.5"]
     binKeyToLine['psi2s'] = ["4", r"12.5 -- 15.00", r"\multicolumn{3}{|c|} {$\psi'$ resonance region}"]
-    binKeyToLine['abovePsi2sA'] = ["5A", r"15.00 -- 17.00"]
-    binKeyToLine['abovePsi2sB'] = ["5B", r"17.00 -- 19.00"]
-    binKeyToLine['Test3'] = ["5AB", r"15.00 -- 19.00"]
+    #binKeyToLine['abovePsi2sA'] = ["5A", r"15.00 -- 17.00"]
+    #binKeyToLine['abovePsi2sB'] = ["5B", r"17.00 -- 19.00"]
+    binKeyToLine['abovePsi2s'] = ["5", r"15.00 -- 19.00"]
     binKeyToLine['summaryLowQ2'] = ["LowQ2", r"1.00 -- 6.00"]
-    binKeyToLine['summary'] = ["0", r"1A$+$1B$+$1C$+$3$+$5A$+$5B"]
+    binKeyToLine['summary'] = ["0", r"$1A$+$1B$+$1C$+$3$+$5$"]
 
     syst_sources = [
         #'syst_randEffi',
@@ -156,8 +156,8 @@ def table_dataresAFBFL():
     ]
     for binKey, latexLine in binKeyToLine.items():
         if binKey not in ['jpsi', 'psi2s']:
-            db = shelve.open(r"{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
-            latexLine.append(r"${0:.01f} \pm {1:.01f}$".format(db['nSig']['getVal'], db['nSig']['getError']))
+            db = shelve.open(r"{0}/fitResults_{1}.db".format(self.process.dbplayer.absInputDir, q2bins[binKey]['label']))
+            latexLine.append(r"${0:.01f} \pm {1:.01f}$".format(db['nSig']['getVal'], db['nSig']['getError'])) #(0., 0.))
             fl = unboundFlToFl(db['unboundFl']['getVal'])
             afb = unboundAfbToAfb(db['unboundAfb']['getVal'], fl)
 
@@ -185,8 +185,8 @@ def table_dataresAFBFL():
     print(indent * (baseIndentLevel + 0) + r"\end{tabular}")
     print("")
 
-def table_FinalDataresAFBFL():
-    table_dataresAFBFL()
+def table_FinalDataresAFBFL(self):
+    table_dataresAFBFL(self)
 
 def table_FitResults():
     baseIndentLevel = 2                                                                                                                        
@@ -218,10 +218,38 @@ def table_FitResults():
     print(indent * (baseIndentLevel + 0) + r"\end{tabular}")
     print("")
  
+def EffiTable(self):
+    baseIndentLevel = 2                                                                                                                        
+    print("[table_FitResults] Printing table of Efficiency Numbers")
+    print("")
+    print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{|c|c|l|l|l|}")
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    print(indent * (baseIndentLevel + 1) + r"$q^2$ bin & Range & After Final Cuts & With No Cuts & Efficiency \\")
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    binKeyToLine = OrderedDict()
+    for binKey in q2bins.keys():
+        if binKey in ['jpsi', 'psi2s', 'peaks', 'abovePsi2sA', 'abovePsi2sB', 'Test1', 'Test2']:
+            continue
+        binKeyToLine[binKey] = [q2bins[binKey]['label'].strip('bin')]
+    for binKey, latexLine in binKeyToLine.items():
+        EFile = ROOT.TFile.Open("../data/TotalEffHists_{0}_{1}.root".format(self.process.cfg['args'].Year, q2bins[binKey]['label']), "READ")
+        effi = EFile.Get('h2Eff_accXrec_{}'.format(binKey))
+        latexLine.append("${}$".format(q2bins[binKey]['latexLabel']))
+        latexLine.append("${:.0f}$".format(effi.GetPassedHistogram().GetEntries()))
+        latexLine.append("${:.0f}$".format(effi.GetTotalHistogram().GetEntries()))
+        latexLine.append("${:.5f}$".format(effi.GetPassedHistogram().GetEntries()/effi.GetTotalHistogram().GetEntries()))
+        EFile.Close()
+        print(indent * (baseIndentLevel + 1) + " & ".join(latexLine) + r" \\")     
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    print(indent * (baseIndentLevel + 0) + r"\end{tabular}")
+    print("")
+
+
 if __name__ == '__main__':
     #  table_sysFL_sysAFB()
-    table_yields()
+    #table_yields()
     #  table_coverageAFBFL()
     #  table_dataresAFBFL()
-    table_FinalDataresAFBFL()
-    table_FitResults()
+    table_FinalDataresAFBFL(p)
+    #table_FitResults()

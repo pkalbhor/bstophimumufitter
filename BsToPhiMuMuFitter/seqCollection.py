@@ -5,8 +5,8 @@
 import sys, os, pdb
 import ROOT
 
-#Supress Info messages for RooClasses
-#ROOT.gROOT.ProcessLine("gErrorIgnoreLevel = kUnset;")
+#Supress RooFit related info messages
+ROOT.gEnv.SetValue("RooFit.Banner", 0)
 ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
 
 # Standard fitting procedures
@@ -15,8 +15,6 @@ def SetSequences():
 
     # For fitter validation and syst
     predefined_sequence['fitSigM']          = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMFitter]
-    predefined_sequence['fitSigMDCB']       = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMDCBFitter]
-    predefined_sequence['fitBkgCombA']      = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombAFitter]
     predefined_sequence['fitBkgCombM']      = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombMFitter]
 
     predefined_sequence['fitFinalM']        = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalMFitter]
@@ -27,58 +25,58 @@ def SetSequences():
                                                pdfCollection.stdWspaceReader,
                                                fitCollection.final_AltM_AltBkgCombM_AltA_Fitter]
     predefined_sequence['fitFinal3D'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter]
-    predefined_sequence['fitFinal3D_AltM'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_AltM]
 
-    predefined_sequence['fitBkgM_KStar'] = [dataCollection.KsigMCReader, pdfCollection.stdWspaceReader, fitCollection.bkgM_KStarFitter]
-    predefined_sequence['fitBkgA_KStar'] = [dataCollection.KsigMCReader, pdfCollection.stdWspaceReader, fitCollection.bkgA_KStarFitter]
-    predefined_sequence['fitFinal3D_WithKStar'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_WithKStar]
-    predefined_sequence['stdFit']     = [dataCollection.effiHistReader, 
-                                        dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, 
-                                        fitCollection.effiFitter, fitCollection.sigMFitter, fitCollection.bkgCombAFitter, 
-                                        fitCollection.sig2DFitter, dataCollection.sigMCGENReader, fitCollection.sigAFitter, 
-                                        fitCollection.finalFitter]
 
-    predefined_sequence['createplots'] = [dataCollection.effiHistReader, #dataCollection.KsigMCReader, 
-                                        dataCollection.sigMCReader, dataCollection.sigMCGENReader, 
-                                        dataCollection.dataReader, pdfCollection.stdWspaceReader, plotCollection.plotter]
 
 from BsToPhiMuMuFitter.python.ArgParser import SetParser, GetBatchTaskParser
 parser=GetBatchTaskParser()
 args = parser.parse_known_args()[0]
-import BsToPhiMuMuFitter.fitCollection  as fitCollection
 predefined_sequence['loadData']  = ['dataReader']
 predefined_sequence['loadMC']    = ['sigMCReader']
 predefined_sequence['loadMCGEN'] = ['sigMCGENReader']
 predefined_sequence['loadMCk']   = ['KsigMCReader']
 predefined_sequence['buildPdfs'] = ['dataReader', 'stdWspaceReader', 'stdPDFBuilder']
 predefined_sequence['buildEff']  = ['effiHistReader']
+
 predefined_sequence['fitEff']    = ['effiHistReader', 'stdWspaceReader', 'effiFitter']
 predefined_sequence['fitSig2D']  = (['sigMCReader', 'stdWspaceReader'], ['SimultaneousFitter_sig2D'] if args.SimFit else ['sig2DFitter'])
-predefined_sequence['fitSigMCGEN']=(['sigMCGENReader', 'stdWspaceReader'], ['SimulFitter_sigGEN', 'plotter'] if args.SimFit else ['sigAFitter'])
+predefined_sequence['fitSigMCGEN']=(['sigMCGENReader', 'stdWspaceReader'], ['SimulFitter_sigGEN'] if args.SimFit else ['sigAFitter'])
 predefined_sequence['fitBkgCombA']=(['dataReader', 'stdWspaceReader'], ['SimulFitter_bkgCombA', 'plotter'] if args.SimFit else ['bkgCombAFitter'])
-predefined_sequence['createplots']=['effiHistReader', 'dataReader', 'sigMCReader', 'sigMCGENReader', 'stdWspaceReader', 'plotter']
+predefined_sequence['fitSigMDCB']    = ['sigMCReader', 'stdWspaceReader', 'sigMDCBFitter']
+predefined_sequence['fitBkgM_KStar'] = ['KsigMCReader', 'stdWspaceReader', 'bkgM_KStarFitter']
+predefined_sequence['fitBkgA_KStar'] = ['KsigMCReader', 'stdWspaceReader', 'bkgA_KStarFitter']
+
+predefined_sequence['fitFinal3D_AltM']          = (['dataReader', 'stdWspaceReader'], ['SimulFitter_Final_AltM'] if args.SimFit else ['finalFitter_AltM'])
+predefined_sequence['fitFinal3D_WithKStar']     = ['dataReader', 'stdWspaceReader', 'finalFitter_WithKStar']
+predefined_sequence['fitFinal3D_AltM_WithKStar']= (['dataReader', 'stdWspaceReader'], ['SimFitter_Final_AltM_WithKStar'] if args.SimFit else ['finalFitter_AltM_WithKStar'])
+
+predefined_sequence['createplots']=['effiHistReader', 'dataReader', 'sigMCReader', 'sigMCGENReader', 
+                                    'KsigMCReader', 'stdWspaceReader', 'plotter']
 #'effiHistReader', 'KsigMCReader', 'sigMCReader', 'sigMCGENReader', 
 predefined_sequence['sigMCValidation'] = ['stdWspaceReader', 'sigMCReader', 'sigMCStudier']
+predefined_sequence['FinalDataResult'] = ['FinalDataResult']
+predefined_sequence['EffiTable']       = ['EffiTable']
 
 def Instantiate(self, seq):
     """All objects are initalized here"""
     # Classes in use are: DataReader, WSpaceReader, StdFitter, ObjectProvider, EfficiencyFitter, Plotter
-    from BsToPhiMuMuFitter.dataCollection import GetDataReader
+    import BsToPhiMuMuFitter.dataCollection as dataCollection
     import BsToPhiMuMuFitter.pdfCollection  as pdfCollection
-    from BsToPhiMuMuFitter.fitCollection import GetFitterObjects
+    import BsToPhiMuMuFitter.fitCollection  as fitCollection
     from BsToPhiMuMuFitter.plotCollection import GetPlotterObject
     sequence=[]
+    fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'sigMDCBFitter', 'finalFitter_AltM', 'bkgM_KStarFitter', 'bkgA_KStarFitter', 'finalFitter_WithKStar', 'finalFitter_AltM_WithKStar']
     for s in seq:
-        if s is 'sigMCReader' or s is 'dataReader' or s is 'sigMCGENReader' or s is 'KsigMCReader':
-            sequence.append(GetDataReader(self, s))
+        if s in ['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader']:
+            sequence.append(dataCollection.GetDataReader(self, s))
         if s is 'stdWspaceReader':
             sequence.append(pdfCollection.GetWspaceReader(self))
         if s is 'stdPDFBuilder':
             sequence.append(pdfCollection.stdPDFBuilder)
         if s is 'effiHistReader':
             sequence.append(dataCollection.effiHistReaderOneStep)
-        if s is 'sig2DFitter' or s is 'sigAFitter' or s is 'bkgCombAFitter' or s is 'effiFitter':
-            sequence.append(GetFitterObjects(self, s))
+        if s in fitSequence:
+            sequence.append(fitCollection.GetFitterObjects(self, s))
         if s is 'plotter':
             sequence.append(GetPlotterObject(self))
         if s is 'SimultaneousFitter_sig2D':
@@ -87,15 +85,20 @@ def Instantiate(self, seq):
             sequence.append(fitCollection.SimulFitter_sigGEN)
         if s is 'SimulFitter_bkgCombA':
             sequence.append(fitCollection.SimulFitter_bkgCombA)
+        if s is 'SimulFitter_Final_AltM':
+            sequence.append(fitCollection.SimultaneousFitter_Final_AltM)
+        if s is 'SimFitter_Final_AltM_WithKStar':
+            sequence.append(fitCollection.SimFitter_Final_AltM_WithKStar)
         if s is 'sigMCStudier':
             sequence.append(batchTask_sigMCValidation.GetToyObject(self))
+        if s is 'FinalDataResult': sequence.append(dataCollection.FinalDataResult)
+        if s is 'EffiTable': sequence.append(dataCollection.EffiTable)
     return sequence
 
 if __name__ == '__main__':
-    from   BsToPhiMuMuFitter.StdProcess import p; 
-    import BsToPhiMuMuFitter.cpp
-    import BsToPhiMuMuFitter.dataCollection as dataCollection
-    from   BsToPhiMuMuFitter.anaSetup import q2bins
+    #import BsToPhiMuMuFitter.cpp
+    from BsToPhiMuMuFitter.StdProcess import p
+    from BsToPhiMuMuFitter.anaSetup import q2bins
     from BsToPhiMuMuFitter.python.datainput import GetInputFiles
     
     p.work_dir="plots_"+str(args.Year)
@@ -143,7 +146,7 @@ if __name__ == '__main__':
                 args.func(args) 
                 continue
             else:
-                print("INFO: Processing {0} year data".format(str(args.Year)))
+                print("INFO: Processing {0} year data".format(args.Year))
                 sequence=Instantiate(p, predefined_sequence[args.seqKey])
                 p.setSequence(sequence)
                 p.beginSeq()

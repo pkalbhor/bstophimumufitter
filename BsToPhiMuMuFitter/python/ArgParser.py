@@ -44,6 +44,7 @@ def GetBatchTaskParser():
         help="Draw a line for GEN level value"
     )
     BatchTaskSubparserPostproc.set_defaults(func=batchTask_sigMCValidation.func_postproc, )
+    TableParser = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('MakeTables')
     add_help(parser)
     return parser
  

@@ -61,7 +61,7 @@ VarSet = RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass, Bdt)
 dataArgs = RooArgSet(VarSet, TriggerBase, "RooArgSet for Data and MC")
 
 #For producing K*0mumu DataSet
-TriggerBaseKstar = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual)
+TriggerBaseKstar = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1)
 DRVars           = RooArgSet(LMNTTriggersdr0, LMNTTriggersdr1, JpsiTriggersdr0, JpsiTriggersdr1, PsiPTriggersdr0, PsiPTriggersdr1)
 TrigBaseDR      = RooArgSet(TriggerBaseKstar, DRVars, "RooArgSet, trigger, dr, trackQual")
 dataArgsKStar   = RooArgSet(VarSet, TrigBaseDR, "RooArgSet for bd->K*0mumu MC")

@@ -23,21 +23,23 @@ def createBinTemplate(name, lowerBd, upperBd):
     }
     return template
 
-q2bins['belowJpsiA']   = createBinTemplate("bin1A", 1.0, 2.00)
+q2bins['belowJpsiA']   = createBinTemplate("bin1A", 1.00, 2.00)
 q2bins['belowJpsiB']   = createBinTemplate("bin1B", 2.00, 5.00)
 q2bins['belowJpsiC']   = createBinTemplate("bin1C", 5.00, 8.00)
-q2bins['betweenPeaks'] = createBinTemplate("bin3", 11.00, 12.5)
-q2bins['abovePsi2sA']  = createBinTemplate("bin5A", 15.00, 17.00)
-q2bins['abovePsi2sB']  = createBinTemplate("bin5B", 17.00, 19.00)
+q2bins['jpsi']         = createBinTemplate("bin2", 8.00, 11.0)
+q2bins['betweenPeaks'] = createBinTemplate("bin3", 11.0, 12.5)
+q2bins['psi2s']        = createBinTemplate("bin4", 12.5, 15.0)
+q2bins['abovePsi2sA']  = createBinTemplate("bin5A", 15.0, 17.0)
+q2bins['abovePsi2sB']  = createBinTemplate("bin5B", 17.0, 19.0)
+q2bins['abovePsi2s']   = createBinTemplate("bin5", 15., 19.)
 q2bins['summaryLowQ2'] = createBinTemplate("summaryLowQ2", 1., 6.)
-q2bins['summary']      = createBinTemplate("bin0", 1., 19.)
-q2bins['Test1']        = createBinTemplate("binA", 1., 3.)
-q2bins['Test2']        = createBinTemplate("binB", 3., 5.)
-q2bins['Test3']        = createBinTemplate("binC", 15., 19.)
+q2bins['summary']      = createBinTemplate("bin0", 1.00, 19.0)
+q2bins['summaryA']     = createBinTemplate("bin0A", 1.00, 12.5)
+q2bins['summaryA']['cutString'] = "({0}) && !({1})".format(q2bins['summaryA']['cutString'], q2bins['jpsi']['cutString'])
+q2bins['Test1']        = createBinTemplate("binA", 1.00, 3.00)
+q2bins['Test2']        = createBinTemplate("binB", 3.00, 5.00)
 q2bins['summary']['cutString'] = "(Mumumass > 1 && Mumumass < 4.35890) && !(Mumumass > 2.828427125 && Mumumass < 3.31662479) && !(Mumumass > 3.535533906 && Mumumass < 3.872983346)"
 
-q2bins['jpsi']         = createBinTemplate("bin2", 8.00, 11.00)
-q2bins['psi2s']        = createBinTemplate("bin4", 12.50, 15.00)
 q2bins['peaks']        = createBinTemplate("peaks", 1., 19.)
 q2bins['peaks']['cutString'] = "(Mumumass > 2.828427125 && Mumumass < 3.31662479) || (Mumumass > 3.535533906 && Mumumass < 3.872983346)"
 

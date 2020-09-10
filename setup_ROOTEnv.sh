@@ -15,6 +15,14 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 export PYTHONPATH=${PYTHONPATH}:${DIR}
 
+#argcomplete=$(pip3 list | grep argcomplete | wc -l)
+#if [ $argcomplete -eq 0 ]
+#then
+# pip3 install argcomplete --user
+#else
+# echo "Already installed argcomplete"
+#fi
+
 alias python='python3'
 alias runallsteps="${DIR}/BsToPhiMuMuFitter/bash/RunAllSteps"
 alias createpdfs="${DIR}/BsToPhiMuMuFitter/bash/pdfCollection.sh"
@@ -23,7 +31,7 @@ alias createplots="${DIR}/BsToPhiMuMuFitter/bash/plotCollection.sh"
 alias TotalClean="${DIR}/BsToPhiMuMuFitter/bash/TotalClean.sh"      #Clean all files created using any command
 alias JunkClean="${DIR}/BsToPhiMuMuFitter/bash/JunkClean.sh"        #Clean old libraries
 
-echo -e ">>>> Help <<<< \nRun \npython3 seqCollection.py -h \nfor exploring further options \n" 
+echo -e ">>>> Help <<<< \nRun \n\e[31mpython3 seqCollection.py -h \e[0m\nfor exploring further options \n" 
 #var=$(python ${DIR}/BsToPhiMuMuFitter/python/ArgCompletion.py)
 #TotList=$(echo "$var" | grep bin1A)
 #dirlist=$(echo "$var" | grep seqCollection.py)

@@ -23,7 +23,7 @@ plotterCfg_styles['dataStyle'] = (ROOT.RooFit.XErrorSize(0.),)
 plotterCfg_styles['mcStyleBase'] = ()
 plotterCfg_styles['allStyleBase'] = (ROOT.RooFit.LineColor(1),)
 plotterCfg_styles['sigStyleNoFillBase'] = (ROOT.RooFit.LineColor(4),)
-plotterCfg_styles['sigStyleBase'] = (ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3003), ROOT.RooFit.VLines())
+plotterCfg_styles['sigStyleBase'] = (ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3003))
 plotterCfg_styles['bkgStyleBase'] = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(2))
 
 plotterCfg_styles['mcStyle'] = plotterCfg_styles['mcStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
@@ -99,19 +99,21 @@ class Plotter(Path):
     frameB_binning_array = array('d', [4.52, 4.60, 4.68] + [4.76 + 0.08*i for i in range(14)] + [5.88, 5.96])
     frameB_binning = ROOT.RooBinning(len(frameB_binning_array)-1, frameB_binning_array)
     frameB_binning_fine_array = array('d', [4.52 + 0.04*i for i in range(38)])
-    frameB_binning_fine = ROOT.RooBinning(16, Bmass.getMin(defaultPlotRegion), Bmass.getMax(defaultPlotRegion)) #(len(frameB_binning_fine_array)-1, frameB_binning_fine_array)
+    frameB_binning_fine = ROOT.RooBinning(24, Bmass.getMin(defaultPlotRegion), Bmass.getMax(defaultPlotRegion)) #(len(frameB_binning_fine_array)-1, frameB_binning_fine_array)
 
     frameK = CosThetaK.frame()
     frameK.SetMinimum(0)
     frameK.SetTitle("")
     frameK_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
-    frameK_binning = ROOT.RooBinning(len(frameK_binning_array)-1, frameK_binning_array)
+    #frameK_binning = ROOT.RooBinning(len(frameK_binning_array)-1, frameK_binning_array)
+    frameK_binning = ROOT.RooBinning(24, -1, 1)
 
     frameL = CosThetaL.frame()
     frameL.SetMinimum(0)
     frameL.SetTitle("")
     frameL_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
-    frameL_binning = ROOT.RooBinning(len(frameL_binning_array)-1, frameL_binning_array)
+    #frameL_binning = ROOT.RooBinning(len(frameL_binning_array)-1, frameL_binning_array)
+    frameL_binning = ROOT.RooBinning(24, -1, 1)
 
     legend = ROOT.TLegend(.72, .72, .92, .92)
     legend.SetFillColor(0)
@@ -202,7 +204,7 @@ class Plotter(Path):
                 if p[3] is not None:
                     legendInstance.AddEntry("pdfP{0}".format(pIdx), p[3], "LF")
             legendInstance.Draw()
-        Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(dataPlots[0][0].sumEntries()) )
+        #Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(dataPlots[0][0].sumEntries()) )
         # Some marks
         Plotter.latexDataMarks(**marks)
 
