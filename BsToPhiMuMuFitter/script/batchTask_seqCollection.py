@@ -2,17 +2,16 @@ import os, sys, shelve, math, glob
 from subprocess import call
 from copy import copy, deepcopy
 import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
-import BsToPhiMuMuFitter.python.ArgParser as ArgParser
+from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
 
 class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):                                                                   
     def createJdl(self, parser_args):                                                                                              
         jdl = self.createJdlBase()
-        jdl += """Transfer_Input_Files = {0}/seqCollection.py""".format(ArgParser.modulePath)
-        for BinKey in parser_args.binKey:                                                                                          
-            jdl += """ 
+        jdl += """Transfer_Input_Files = {0}/seqCollection.py""".format(modulePath)
+        jdl += """ 
 arguments = -b {binKey} -s {seqKey} --Year {Year} {TwoStep}
 queue {nJobs}""" 
-            jdl = jdl.format(binKey=BinKey, seqKey=parser_args.seqKey, nJobs=self.cfg['nJobs'], executable=ArgParser.modulePath+"/seqCollection.py", Year=parser_args.Year, TwoStep="--TwoStep" if parser_args.TwoStep else "")
+        jdl = jdl.format(binKey=q2bins[parser_args.process.cfg['binKey']]['label'], seqKey=parser_args.process.cfg['args'].seqKey, nJobs=self.cfg['nJobs'], executable=os.path.join(modulePath,"seqCollection.py"), Year=parser_args.Year, TwoStep="--TwoStep" if parser_args.TwoStep else "")
         return jdl    
 
 setupBatchTask = deepcopy(BatchTaskWrapper.templateCfg())

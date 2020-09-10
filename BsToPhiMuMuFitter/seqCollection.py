@@ -54,6 +54,7 @@ predefined_sequence['createplots']=['effiHistReader', 'dataReader', 'sigMCReader
                                     'KsigMCReader', 'stdWspaceReader', 'plotter']
 #'effiHistReader', 'KsigMCReader', 'sigMCReader', 'sigMCGENReader', 
 predefined_sequence['sigMCValidation'] = ['stdWspaceReader', 'sigMCReader', 'sigMCStudier']
+predefined_sequence['seqCollection']   = []
 predefined_sequence['FinalDataResult'] = ['FinalDataResult']
 predefined_sequence['EffiTable']       = ['EffiTable']
 
@@ -74,7 +75,7 @@ def Instantiate(self, seq):
         if s is 'stdPDFBuilder':
             sequence.append(pdfCollection.stdPDFBuilder)
         if s is 'effiHistReader':
-            sequence.append(dataCollection.effiHistReaderOneStep)
+            sequence.append(dataCollection.effiHistReaderOneStep) if not args.TwoStep else sequence.append(dataCollection.effiHistReader)
         if s in fitSequence:
             sequence.append(fitCollection.GetFitterObjects(self, s))
         if s is 'plotter':
@@ -91,6 +92,8 @@ def Instantiate(self, seq):
             sequence.append(fitCollection.SimFitter_Final_AltM_WithKStar)
         if s is 'sigMCStudier':
             sequence.append(batchTask_sigMCValidation.GetToyObject(self))
+        #if s is 'seqCollection':
+        #    sequence.append(batchTask_seqCollection.)
         if s is 'FinalDataResult': sequence.append(dataCollection.FinalDataResult)
         if s is 'EffiTable': sequence.append(dataCollection.EffiTable)
     return sequence
@@ -129,14 +132,21 @@ if __name__ == '__main__':
                 sequence=Instantiate(p, predefined_sequence[args.seqKey][1])
                 p.setSequence(sequence)
                 p.beginSeq()
-            elif p.name=='sigMCValidationProcess':
+            elif args.Function_name in ['submit', 'run']:
                 print("INFO: Processing {0} year data".format(args.Year))
                 from BsToPhiMuMuFitter.anaSetup import modulePath
                 import BsToPhiMuMuFitter.script.batchTask_sigMCValidation as batchTask_sigMCValidation
-                wrappedTask = batchTask_sigMCValidation.BatchTaskWrapper(
-                    "myBatchTask",
-                    os.path.join(modulePath, "batchTask_sigMCValidation"),
-                    cfg=batchTask_sigMCValidation.setupBatchTask)
+                import BsToPhiMuMuFitter.script.batchTask_seqCollection as batchTask_seqCollection
+                if p.name=='sigMCValidationProcess':
+                    wrappedTask = batchTask_sigMCValidation.BatchTaskWrapper(
+                        "myBatchTask",
+                        os.path.join(modulePath, "batchTask_sigMCValidation"),
+                        cfg=batchTask_sigMCValidation.setupBatchTask)
+                else:
+                    wrappedTask = batchTask_seqCollection.BatchTaskWrapper(
+                        "BatchTaskseqCollection",
+                        os.path.join(modulePath, "batchTask_seqCollection"),
+                        cfg=batchTask_seqCollection.setupBatchTask )
                 parser.set_defaults(
                     wrapper=wrappedTask,
                     process=p)

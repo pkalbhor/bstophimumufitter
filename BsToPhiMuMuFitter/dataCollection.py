@@ -260,9 +260,6 @@ def buildTotalEffiHist(self):
 
 def buildAccXRecEffiHist(self):
     """Build two step efficiency histograms for later fitting/plotting"""
-    if self.process.cfg['binKey'] not in allBins:
-        return
-
     binKey = self.process.cfg['binKey']
     fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_{0}_{1}.root".format(str(self.process.cfg['args'].Year), q2bins[binKey]['label']), "UPDATE")
     # Build acceptance, reco efficiency, and accXrec

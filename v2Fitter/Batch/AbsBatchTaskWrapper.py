@@ -143,7 +143,7 @@ def submitTask(args):
     jdl = args.wrapper.createJdl(parser_args=args)
 
     if args.doSubmit:
-        with tempfile.NamedTemporaryFile() as tmp:
+        with tempfile.NamedTemporaryFile(mode='w') as tmp:
             tmp.write(jdl)
             tmp.flush()
             print(jdl)

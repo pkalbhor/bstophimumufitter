@@ -3,7 +3,8 @@
 # Setup pyROOT, 
 # Compatible with python3 and ROOT 6.23 or higher
 export SCRAM_ARCH=slc7_amd64_gcc820
-source /cvmfs/sft.cern.ch/lcg/views/dev3python3/latest/x86_64-centos7-gcc8-opt/setup.sh
+#source /cvmfs/sft.cern.ch/lcg/views/dev3python3/latest/x86_64-centos7-gcc8-opt/setup.sh
+source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.22.02/x86_64-centos7-gcc48-opt/bin/thisroot.sh
 
 # Inject to PYTHONPATH
 SOURCE="${BASH_SOURCE[0]}"
