@@ -7,7 +7,7 @@ import ROOT
 
 #Supress RooFit related info messages
 ROOT.gEnv.SetValue("RooFit.Banner", 0)
-ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
+ROOT.RooMsgService.instance().setGlobalKillBelow(3)
 
 # Standard fitting procedures
 predefined_sequence = {}
@@ -92,20 +92,17 @@ def Instantiate(self, seq):
             sequence.append(fitCollection.SimFitter_Final_AltM_WithKStar)
         if s is 'sigMCStudier':
             sequence.append(batchTask_sigMCValidation.GetToyObject(self))
-        #if s is 'seqCollection':
-        #    sequence.append(batchTask_seqCollection.)
         if s is 'FinalDataResult': sequence.append(dataCollection.FinalDataResult)
         if s is 'EffiTable': sequence.append(dataCollection.EffiTable)
     return sequence
 
 if __name__ == '__main__':
-    #import BsToPhiMuMuFitter.cpp
     from BsToPhiMuMuFitter.StdProcess import p
     from BsToPhiMuMuFitter.anaSetup import q2bins
     from BsToPhiMuMuFitter.python.datainput import GetInputFiles
     
     p.work_dir="plots_"+str(args.Year)
-    p.cfg['seqKey']= args.seqKey
+    #p.cfg['seqKey']= args.seqKey
     p.cfg['args'] = args
     GetInputFiles(p)
     p.cfg['bins'] = p.cfg['allBins'] if args.binKey=="all" else [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]

@@ -88,7 +88,7 @@ class Process:
 
     def runSeq(self):
         """Run all path. Process.runSeq() MainProcess"""
-        print(">>>> MainProcess-> Object: ", self.cfg['seqKey'], " Bin: ", self.cfg['binKey'])
+        print(">>>> MainProcess-> Object: ", self.cfg['args'].seqKey, " Bin: ", self.cfg['binKey'])
         for seq_obj in self._sequence:
             print (">> Entering Path: {0}".format(seq_obj.cfg['name']))
             self.logger.logDEBUG("Entering Path: {0}".format(seq_obj.cfg['name']))

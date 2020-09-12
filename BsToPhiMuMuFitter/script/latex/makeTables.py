@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-import os
+import os, sys
 import math
 import shelve
 from collections import OrderedDict
@@ -222,9 +222,9 @@ def EffiTable(self):
     baseIndentLevel = 2                                                                                                                        
     print("[table_FitResults] Printing table of Efficiency Numbers")
     print("")
-    print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{|c|c|l|l|l|}")
+    print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{|c|c|l|l|l|l|l|}")
     print(indent * (baseIndentLevel + 1) + r"\hline")
-    print(indent * (baseIndentLevel + 1) + r"$q^2$ bin & Range & After Final Cuts & With No Cuts & Efficiency \\")
+    print(indent * (baseIndentLevel + 1) + r"$q^2$ bin & Range & Reco-eff N & Reco-eff D & Acc-Eff N & Acc-Eff D & Efficiency \\")
     print(indent * (baseIndentLevel + 1) + r"\hline")
     print(indent * (baseIndentLevel + 1) + r"\hline")
     binKeyToLine = OrderedDict()
@@ -233,12 +233,24 @@ def EffiTable(self):
             continue
         binKeyToLine[binKey] = [q2bins[binKey]['label'].strip('bin')]
     for binKey, latexLine in binKeyToLine.items():
-        EFile = ROOT.TFile.Open("../data/TotalEffHists_{0}_{1}.root".format(self.process.cfg['args'].Year, q2bins[binKey]['label']), "READ")
-        effi = EFile.Get('h2Eff_accXrec_{}'.format(binKey))
+        filename="../data/accXrecEffHists_{0}_{1}.root".format(self.process.cfg['args'].Year, q2bins[binKey]['label'])
+        if os.path.exists(filename):
+            EFile = ROOT.TFile.Open(filename, "READ")
+        else:
+            print("Error:: File {} does not exists, please produce it first.".format(filename))
+            sys.exit(0)
+        receffi = EFile.Get('h2_rec_{}'.format(binKey))
+        acceffi = EFile.Get('h2_acc_{}'.format(binKey))
+        if not receffi or not acceffi:
+            print("Error: Attempt to access non existant object from file. Please content of a file for {} bin.".format(binKey))
+            sys.exit(0)
         latexLine.append("${}$".format(q2bins[binKey]['latexLabel']))
-        latexLine.append("${:.0f}$".format(effi.GetPassedHistogram().GetEntries()))
-        latexLine.append("${:.0f}$".format(effi.GetTotalHistogram().GetEntries()))
-        latexLine.append("${:.5f}$".format(effi.GetPassedHistogram().GetEntries()/effi.GetTotalHistogram().GetEntries()))
+        latexLine.append("${:.0f}$".format(receffi.GetPassedHistogram().GetEntries()))
+        latexLine.append("${:.0f}$".format(receffi.GetTotalHistogram().GetEntries()))
+        latexLine.append("${:.0f}$".format(acceffi.GetPassedHistogram().GetEntries()))
+        latexLine.append("${:.0f}$".format(acceffi.GetTotalHistogram().GetEntries()))
+        effi = (receffi.GetPassedHistogram().GetEntries()/receffi.GetTotalHistogram().GetEntries())*(acceffi.GetPassedHistogram().GetEntries()/acceffi.GetTotalHistogram().GetEntries())
+        latexLine.append(("${:.3%}$".format(effi)).replace("%","\%"))
         EFile.Close()
         print(indent * (baseIndentLevel + 1) + " & ".join(latexLine) + r" \\")     
     print(indent * (baseIndentLevel + 1) + r"\hline")
