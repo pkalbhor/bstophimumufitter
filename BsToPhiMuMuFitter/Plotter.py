@@ -10,14 +10,14 @@ import ROOT
 import BsToPhiMuMuFitter.cpp
 from v2Fitter.FlowControl.Path import Path
 from BsToPhiMuMuFitter.anaSetup import q2bins
-
+from v2Fitter.Fitter.FitterCore import FitterCore
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 from BsToPhiMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Phimass, genCosThetaK, genCosThetaL
 
 #from SingleBuToKstarMuMuFitter.StdProcess import p, setStyle, isPreliminary
 from BsToPhiMuMuFitter.StdProcess import p, setStyle
 
-defaultPlotRegion = "Fit"
+defaultPlotRegion = "altFit"
 plotterCfg_styles = {}
 plotterCfg_styles['dataStyle'] = (ROOT.RooFit.XErrorSize(0.),)
 plotterCfg_styles['mcStyleBase'] = ()
@@ -99,21 +99,21 @@ class Plotter(Path):
     frameB_binning_array = array('d', [4.52, 4.60, 4.68] + [4.76 + 0.08*i for i in range(14)] + [5.88, 5.96])
     frameB_binning = ROOT.RooBinning(len(frameB_binning_array)-1, frameB_binning_array)
     frameB_binning_fine_array = array('d', [4.52 + 0.04*i for i in range(38)])
-    frameB_binning_fine = ROOT.RooBinning(24, Bmass.getMin(defaultPlotRegion), Bmass.getMax(defaultPlotRegion)) #(len(frameB_binning_fine_array)-1, frameB_binning_fine_array)
+    frameB_binning_fine = ROOT.RooBinning(20, Bmass.getMin(defaultPlotRegion), Bmass.getMax(defaultPlotRegion)) #(len(frameB_binning_fine_array)-1, frameB_binning_fine_array)
 
     frameK = CosThetaK.frame()
     frameK.SetMinimum(0)
     frameK.SetTitle("")
     frameK_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
     #frameK_binning = ROOT.RooBinning(len(frameK_binning_array)-1, frameK_binning_array)
-    frameK_binning = ROOT.RooBinning(24, -1, 1)
+    frameK_binning = ROOT.RooBinning(20, -1, 1)
 
     frameL = CosThetaL.frame()
     frameL.SetMinimum(0)
     frameL.SetTitle("")
     frameL_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
     #frameL_binning = ROOT.RooBinning(len(frameL_binning_array)-1, frameL_binning_array)
-    frameL_binning = ROOT.RooBinning(24, -1, 1)
+    frameL_binning = ROOT.RooBinning(20, -1, 1)
 
     legend = ROOT.TLegend(.72, .72, .92, .92)
     legend.SetFillColor(0)
@@ -141,7 +141,12 @@ class Plotter(Path):
                 self.logger.logERROR(errorMsg)
                 raise RuntimeError("pdfPlot not found in source manager.")
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
-        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
+        if type(p[2]) is str:  # In case ArgAlias is to be defined with string at the end for all args
+            tag = p[2]; p[2] = {}; arglist=[]
+            FitterCore.ArgLooper(args, lambda p: arglist.append(p.GetName()))
+            for var in arglist: p[2].update({var: var+tag})
+        if self.process.cfg['args'].NoFit: self.process.cfg['args'].NoImport=True
+        if (not self.process.cfg['args'].NoImport): FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
         return p
 
     def initDataPlotCfg(self, p):
@@ -160,7 +165,7 @@ class Plotter(Path):
         return p
 
     @staticmethod
-    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, legend=False, scaleYaxis=1.4):
+    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, legend=False, scaleYaxis=1.4, Plotpdf=True):
         """
             Use initXXXPlotCfg to ensure elements in xxxPlots fit the format
         """
@@ -181,14 +186,16 @@ class Plotter(Path):
                         ROOT.RooFit.Name("dataP{0}".format(pIdx)),
                         ROOT.RooFit.Binning(binning),
                         *p[1])
-        for pIdx, p in enumerate(pdfPlots):
-            p[0].plotOn(cloned_frame, ROOT.RooFit.Name("pdfP{0}".format(pIdx)), *p[1])
+        if Plotpdf:
+            for pIdx, p in enumerate(pdfPlots): p[0].plotOn(cloned_frame, ROOT.RooFit.Name("pdfP{0}".format(pIdx)), *p[1])
         #p0 = cloned_frame.findObject("pdfP0" if pdfPlots else "dataP0").GetHistogram()
         #cloned_frame.SetMaximum(scaleYaxis * p0.GetMaximum())
         cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
-        #cloned_frame.Draw()
         Plotter.canvas.cd()
-        Plotter.DrawWithResidue(cloned_frame)
+        if Plotpdf:
+            Plotter.DrawWithResidue(cloned_frame)
+        else:
+            cloned_frame.Draw()
         
         # Legend
         if legend:
@@ -204,7 +211,7 @@ class Plotter(Path):
                 if p[3] is not None:
                     legendInstance.AddEntry("pdfP{0}".format(pIdx), p[3], "LF")
             legendInstance.Draw()
-        #Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(dataPlots[0][0].sumEntries()) )
+        Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(dataPlots[0][0].sumEntries()) )
         # Some marks
         Plotter.latexDataMarks(**marks)
 

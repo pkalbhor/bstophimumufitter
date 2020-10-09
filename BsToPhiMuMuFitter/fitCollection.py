@@ -29,8 +29,13 @@ ArgAliasRECO={'unboundAfb': 'unboundAfb_RECO', 'unboundFl': 'unboundFl_RECO'}
 ArgAliasGEN ={'unboundAfb': 'unboundAfb_GEN', 'unboundFl': 'unboundFl_GEN'}
 ArgAliasSigM={'sigMGauss1_sigma': 'sigMGauss1_sigma_RECO', 'sigMGauss2_sigma': 'sigMGauss2_sigma_RECO', 'sigMGauss_mean': 'sigMGauss_mean_RECO', 'sigM_frac': 'sigM_frac_RECO'}
 ArgAliasDCB ={'cbs1_sigma': 'cbs1_sigma_RECO', 'cbs2_sigma': 'cbs2_sigma_RECO', 'cbs1_alpha': 'cbs1_alpha_RECO', 'cbs2_alpha': 'cbs2_alpha_RECO', 'cbs1_n': 'cbs1_n_RECO', 'cbs2_n': 'cbs2_n_RECO', 'cbs_mean': 'cbs_mean_RECO', 'sigMDCB_frac': 'sigMDCB_frac_RECO'}
+ArgAliasJP = {}
+ArgAliasJK = {}
+
 def GetFitterObjects(self, seq):
     Year=self.cfg['args'].Year
+    AltRange = self.cfg['args'].AltRange
+    binKey = self.cfg['binKey']
     if seq is 'effiFitter':
         setupEffiFitter = deepcopy(EfficiencyFitter.templateConfig())
         setupEffiFitter.update({
@@ -48,7 +53,7 @@ def GetFitterObjects(self, seq):
         setupSig2DFitter = deepcopy(setupTemplateFitter)
         setupSig2DFitter.update({
             'name': "sig2DFitter.{0}".format(Year),
-            'data': "sigMCReader.{0}.Fit".format(Year),
+            'data': "sigMCReader.{0}.{1}".format(Year, "altFit" if AltRange else "Fit"),
             'pdf': "f_sig2D.{0}".format(Year),
             'FitHesse': True,
             'FitMinos': [True, ()],
@@ -75,27 +80,15 @@ def GetFitterObjects(self, seq):
     if seq is 'bkgCombAFitter':
         setupBkgCombAFitter = deepcopy(setupTemplateFitter)
         setupBkgCombAFitter.update({
-            'name': "bkgCombAFitter.{0}".format(Year),
-            'data': "dataReader.{0}.SB".format(Year),
-            'pdf': "f_bkgCombA.{0}".format(Year),
-            'argPattern': [r'bkgComb[KL]_c[\d]+', ],
+            'name': "bkgCombAFitter{}.{}".format('_Alt' if AltRange else '', Year),
+            'data': "dataReader.{}.{}SB".format(Year, 'alt' if AltRange else ''),
+            'pdf': "f_bkgCombA{}.{}".format("_Alt" if AltRange else "", Year),
+            'argPattern': [r'bkgComb[KL]_c[\d]+',  r'bkgComb[KL]_c[\d]_Alt+'],
             'FitHesse': True,
             'FitMinos': [False, ()],
             'createNLLOpt': [],
         })
         return StdFitter(setupBkgCombAFitter)
-    if seq is 'sigMFitter':
-        setupSigMFitter = deepcopy(setupTemplateFitter)
-        setupSigMFitter.update({
-            'name': "sigMFitter.{}".format(Year),
-            'data': "sigMCReader.{}.Fit".format(Year),
-            'pdf': "f_sigM.{}".format(Year),
-            'FitHesse': True,
-            'argPattern': ['sigMGauss[12]_sigma', 'sigMGauss_mean', 'sigM_frac'],
-            'createNLLOpt': [ROOT.RooFit.Range(5.2546, 5.4746),],
-            'argAliasInDB': ArgAliasSigM,
-        })
-        return StdFitter(setupSigMFitter)
     if seq is 'finalFitter':
         setupFinalFitter = deepcopy(setupTemplateFitter)                         # 3D = nSig(Sig2D*SigM) + nBkg(fBkgM*fBkgA)
         setupFinalFitter.update({
@@ -118,10 +111,22 @@ def GetFitterObjects(self, seq):
             'pdf': "f_sigMDCB.{0}".format(Year),
             'FitHesse': True,
             'FitMinos': [False, ()],
-            'argPattern': ['cbs[12]_sigma', 'cbs[12]_alpha', 'cbs[12]_n', 'cbs_mean', 'sigMDCB_frac'],
+            #'argPattern': ['cbs[12]_sigma', 'cbs[12]_alpha', 'cbs[12]_n', 'cbs_mean', 'sigMDCB_frac'],
             'createNLLOpt': [],
-            'argAliasInDB': ArgAliasDCB,
+            #'argAliasInDB': ArgAliasDCB,
             'argAliasSaveToDB': True,
+        })
+        return StdFitter(setupSigMDCBFitter)
+    #'_DCBG_Alt' if AltRange and binKey not in ['summary', 'summaryLowQ2'] and Year==2017 else ('_Alt' if AltRange else '')
+    if seq is 'sigMFitter':
+        setupSigMDCBFitter = deepcopy(setupTemplateFitter)
+        setupSigMDCBFitter.update({
+            'name': "sigMFitter{}.{}".format('_Alt' if AltRange else '', Year),
+            'data': "sigMCReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''),
+            'pdf': "f_sigM{}.{}".format('_Alt' if AltRange else '', Year),
+            'FitHesse': True,
+            'FitMinos': [False, ()],
+            'createNLLOpt': [],
         })
         return StdFitter(setupSigMDCBFitter)
     if seq is 'finalFitter_AltM':
@@ -141,22 +146,22 @@ def GetFitterObjects(self, seq):
     if seq is 'bkgM_KStarFitter':
         setupBkgMFitter_KStar = deepcopy(setupTemplateFitter)
         setupBkgMFitter_KStar.update({
-            'name': "bkgM_KStarFitter.{}".format(Year),
-            'data': "KsigMCReader.{}.Fit".format(Year),
-            'pdf': "f_bkgM_KStar.{}".format(Year),
+            'name': "bkgM_KStarFitter{}.{}".format('_Alt' if AltRange else '', Year),
+            'data': "KsigMCReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''),
+            'pdf': "f_bkgM_KStar{}.{}".format('_Alt' if AltRange else '', Year),
             'FitHesse': True,
             'FitMinos': [False, ()],
-            'argPattern': ['cbs[12]_sigma_KStar', 'cbs[12]_alpha_KStar', 'cbs[12]_n_KStar', 'cbs_mean_KStar', 'bkgM_frac_KStar', 'bkgM_frac[\d]_KStar', r'bkgMKStar_c[\d]+'],
+            #'argPattern': ['cbs[12]_sigma_KStar', 'cbs[12]_alpha_KStar', 'cbs[12]_n_KStar', 'cbs_mean_KStar', 'bkgM_frac_KStar', 'bkgM_frac[\d]_KStar', r'bkgMKStar_c[\d]+'],
             'createNLLOpt': [],
         })
         return StdFitter(setupBkgMFitter_KStar)
     if seq is 'bkgA_KStarFitter':
         setupBkgA_KStarFitter = deepcopy(setupTemplateFitter)
         setupBkgA_KStarFitter.update({
-            'name': "bkgA_KStarFitter.{}".format(Year),
-            'data': "KsigMCReader.{}.Fit".format(Year),
-            'pdf': "f_bkgA_KStar.{}".format(Year),
-            'argPattern': [r'bkgKStar[KL]_c[\d]+', r'bkgA_frac[\d]_KStar',],
+            'name': "bkgA_KStarFitter{}.{}".format('_Alt' if AltRange else '', Year),
+            'data': "KsigMCReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''),
+            'pdf': "f_bkgA_KStar{}.{}".format('_Alt' if AltRange else '', Year),
+            #'argPattern': [r'bkgKStar[KL]_c[\d]+', r'bkgA_frac[\d]_KStar',],
             'FitHesse': True,
             'FitMinos': [False, ()],
             'createNLLOpt': [],
@@ -179,18 +184,104 @@ def GetFitterObjects(self, seq):
     if seq is 'finalFitter_AltM_WithKStar':
         setupFinalFitter_AltM_WithKStar = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgM*fBkgA)
         setupFinalFitter_AltM_WithKStar.update({
-            'name': "finalFitter_AltM_WithKStar.{}".format(Year),
-            'data': "dataReader.{}.Fit".format(Year),
-            'pdf': "f_final_AltM_WithKStar.{}".format(Year),
-            'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', 'nBkgKStar', r'bkgCombM_c[\d]+'],
+            'name': "finalFitter_AltM_WithKStar{}.{}".format('_Alt' if AltRange else '', Year),
+            'data': "dataReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''),
+            'pdf': "f_final_AltM_WithKStar{}.{}".format('_Alt' if AltRange else '', Year),
+            'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombM_c[\d]+', r'bkgCombM_c[\d]_Alt+'],
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
             'FitHesse': True,
             'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
-            'argAliasInDB': {**ArgAliasDCB, **ArgAliasGEN},
+            'argAliasInDB': {**ArgAliasGEN},
             'argAliasSaveToDB': False,
         })
         return StdFitter(setupFinalFitter_AltM_WithKStar)
 
+    #For Validation
+    if seq is 'sigMFitter_JP': #Singal fit for JpsiPhi peak fit
+        setupSigMFitter_JP = deepcopy(setupTemplateFitter)
+        setupSigMFitter_JP.update({
+            'name': "sigMFitter_JP.{}".format(Year),
+            'data': "sigMCReader_JP.{}.Fit_antiResVeto".format(Year),
+            'pdf': "f_sigM_DCBG_JP.{}".format(Year),
+            'FitHesse': True,
+            'FitMinos': [False, ()],
+            'createNLLOpt': [],
+        })
+        return StdFitter(setupSigMFitter_JP)
+    if seq is 'bkgMFitter_JK': #Peaking bkg fit for JpsiPhi peak fit: JK = JpsiK*
+        setupBkgMFitter_JK = deepcopy(setupTemplateFitter)
+        setupBkgMFitter_JK.update({
+            'name': "bkgMFitter_JK.{}".format(Year),
+            'data': "bkgMCReader_JK.{}.Fit_antiResVeto".format(Year),
+            'pdf': "f_sigMDCB_JK.{}".format(Year),
+            'FitHesse': True,
+            'FitMinos': [False, ()],
+            'argPattern': [r'^.*$'], #['cbs[12]_sigma', 'cbs[12]_alpha', 'cbs[12]_n', 'cbs_mean', 'sigM_frac[12]', 'sigMGauss_mean', 'sigMGauss1_sigma'],
+            'createNLLOpt': [],
+        })
+        return StdFitter(setupBkgMFitter_JK)
+    if seq is 'sigMFitter_PP': #Singal fit for PsiPhi peak fit
+        setupSigMFitter_JP = deepcopy(setupTemplateFitter)
+        setupSigMFitter_JP.update({
+            'name': "sigMFitter_PP.{}".format(Year),
+            'data': "sigMCReader_PP.{}.Fit_antiResVeto".format(Year),
+            'pdf': "f_sigM_DCBG_PP.{}".format(Year),
+            'FitHesse': True,
+            'FitMinos': [False, ()],
+            'createNLLOpt': [],
+        })
+        return StdFitter(setupSigMFitter_JP)
+    if seq is 'bkgMFitter_PK': #Peaking bkg fit for PsiPhi peak fit: PK = PsiK*
+        setupBkgMFitter_PK = deepcopy(setupTemplateFitter)
+        setupBkgMFitter_PK.update({
+            'name': "bkgMFitter_PK.{}".format(Year),
+            'data': "bkgMCReader_PK.{}.Fit_antiResVeto".format(Year),
+            'pdf': "f_sigM_DCBG_PK.{}".format(Year),
+            'FitHesse': True,
+            'FitMinos': [False, ()],
+            'createNLLOpt': [],
+        })
+        return StdFitter(setupBkgMFitter_PK)
+
+    if seq is 'finalMFitter':
+        setupFinalMFitter = deepcopy(setupTemplateFitter)                        # Final Mass PDF = nSig(SigM)+nBkg(fBkgM)
+        setupFinalMFitter.update({
+            'name': "finalMFitter.{}".format(Year),
+            'data': "dataReader.{}.Fit".format(Year),
+            'pdf': "f_finalM.{}".format(Year),
+            'argPattern': ['nSig', 'nBkgComb', r'bkgCombM_c[\d]+'],
+            'createNLLOpt': [ROOT.RooFit.Extended(True), ],
+            'FitMinos': [True, ('nSig', 'nBkgComb')],
+            'argAliasInDB': ArgAliasSigM,
+            'argAliasSaveToDB': False,
+        })
+        return StdFitter(setupFinalMFitter)
+    if seq is 'finalMFitter_JP':
+        setupFinalMFitter_JP = deepcopy(setupTemplateFitter)                        # Final Mass PDF = nSig(SigM)+nBkg(fBkgM)
+        setupFinalMFitter_JP.update({
+            'name': "finalMFitter_JP.{}".format(Year),
+            'data': "dataReader.{}.Fit_antiResVeto".format(Year),
+            'pdf': "f_finalM_JP.{}".format(Year),
+            'argPattern': ['nSig', 'nBkgComb', 'nBkgPeak', r'bkgCombM_c[\d]_JP+'],
+            'createNLLOpt': [ROOT.RooFit.Extended(True), ],
+            'FitMinos': [True, ('nSig', 'nBkgComb', 'nBkgPeak')],
+            'argAliasInDB': {'nSig':'nSig_JP', 'nBkgComb':'nBkgComb_JP', 'nBkgPeak':'nBkgPeak_JP'},
+            'argAliasSaveToDB': True,
+        })
+        return StdFitter(setupFinalMFitter_JP)
+    if seq is 'finalMFitter_PP':
+        setupFinalMFitter_PP = deepcopy(setupTemplateFitter)                        # Final Mass PDF = nSig(SigM)+nBkg(fBkgM)
+        setupFinalMFitter_PP.update({
+            'name': "finalMFitter_PP.{}".format(Year),
+            'data': "dataReader.{}.Fit_antiResVeto".format(Year),
+            'pdf': "f_finalM_PP.{}".format(Year),
+            'argPattern': ['nSig', 'nBkgComb', 'nBkgPeak', r'bkgCombM_c[\d]_PP+'],
+            'createNLLOpt': [ROOT.RooFit.Extended(True), ],
+            'FitMinos': [True, ('nSig', 'nBkgComb', 'nBkgPeak')],
+            'argAliasInDB': {'nSig':'nSig_PP', 'nBkgComb':'nBkgComb_PP', 'nBkgPeak':'nBkgPeak_PP'},
+            'argAliasSaveToDB': True,
+        })
+        return StdFitter(setupFinalMFitter_PP)
 
 
 setupSigGENFitter = deepcopy(setupTemplateFitter) #Unimplemented
@@ -229,19 +320,6 @@ setupFinal_AltM_AltBkgCombM_AltA_Fitter.update({
     'argAliasSaveToDB': False,
 })
 final_AltM_AltBkgCombM_AltA_Fitter = StdFitter(setupFinal_AltM_AltBkgCombM_AltA_Fitter)
-
-setupFinalMFitter = deepcopy(setupTemplateFitter)                        # Final Mass PDF = nSig(SigM)+nBkg(fBkgM)
-setupFinalMFitter.update({
-    'name': "finalMFitter",
-    'data': "dataReader.Fit",
-    'pdf': "f_finalM",
-    'argPattern': ['nSig', 'nBkgComb', r'bkgCombM_c[\d]+'],
-    'createNLLOpt': [ROOT.RooFit.Extended(True), ],
-    'FitMinos': [True, ('nSig', 'nBkgComb')],
-    'argAliasInDB': ArgAliasSigM,
-    'argAliasSaveToDB': False,
-})
-finalMFitter = StdFitter(setupFinalMFitter)
 
 setupFinalMDCBFitter = deepcopy(setupTemplateFitter)                     # Final Mass PDF: nSig(f_sigMDCB)+nBkg(fBkgM)
 setupFinalMDCBFitter.update({
@@ -323,7 +401,7 @@ setupSimFinalFitter_AltM_WithKStar.update({
     'data'      : ["dataReader.2016.Fit", "dataReader.2017.Fit", "dataReader.2018.Fit"],
     'pdf'       : ["f_final_AltM_WithKStar.2016", "f_final_AltM_WithKStar.2017", "f_final_AltM_WithKStar.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
-    'argAliasInDB': {**ArgAliasDCB, **ArgAliasGEN},
+    'argAliasInDB': {**ArgAliasGEN},
     'argAliasSaveToDB': False,
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
 })

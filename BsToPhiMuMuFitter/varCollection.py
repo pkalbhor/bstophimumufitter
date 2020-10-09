@@ -57,7 +57,7 @@ PsiPTriggersdr0 = RooRealVar("PsiPTriggersdr0", "PsiPTriggersdr0", 0, 1e8)
 PsiPTriggersdr1 = RooRealVar("PsiPTriggersdr1", "PsiPTriggersdr1", 0, 1e8)
 
 TriggerBase = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1)
-VarSet = RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass, Bdt)
+VarSet = RooArgSet(Bmass, CosThetaK, CosThetaL, Q2, Mumumass, Mumumasserr, Phimass, Bdt)
 dataArgs = RooArgSet(VarSet, TriggerBase, "RooArgSet for Data and MC")
 
 #For producing K*0mumu DataSet

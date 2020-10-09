@@ -258,5 +258,4 @@ Following functions to be overloaded to customize the full procedure...
         self._preFitSteps()
         self._runFitSteps()
         self._postFitSteps()
-        self._getFinalFitPlots()
-
+        if 'fitFinal3D' in self.process.cfg['args'].seqKey: self._getFinalFitPlots()

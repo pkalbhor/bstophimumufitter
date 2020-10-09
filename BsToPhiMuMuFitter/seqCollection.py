@@ -4,6 +4,7 @@
 
 import sys, os, pdb
 import ROOT
+#ROOT.EnableImplicitMT()
 
 #Supress RooFit related info messages
 ROOT.gEnv.SetValue("RooFit.Banner", 0)
@@ -35,6 +36,8 @@ predefined_sequence['loadData']  = ['dataReader']
 predefined_sequence['loadMC']    = ['sigMCReader']
 predefined_sequence['loadMCGEN'] = ['sigMCGENReader']
 predefined_sequence['loadMCk']   = ['KsigMCReader']
+predefined_sequence['loadMCJ']   = ['bkgJpsiMCReader']
+predefined_sequence['loadMCP']   = ['bkgPsi2sMCReader']
 predefined_sequence['buildPdfs'] = ['dataReader', 'stdWspaceReader', 'stdPDFBuilder']
 predefined_sequence['buildEff']  = ['effiHistReader']
 
@@ -43,6 +46,7 @@ predefined_sequence['fitSig2D']  = (['sigMCReader', 'stdWspaceReader'], ['Simult
 predefined_sequence['fitSigMCGEN']=(['sigMCGENReader', 'stdWspaceReader'], ['SimulFitter_sigGEN'] if args.SimFit else ['sigAFitter'])
 predefined_sequence['fitBkgCombA']=(['dataReader', 'stdWspaceReader'], ['SimulFitter_bkgCombA', 'plotter'] if args.SimFit else ['bkgCombAFitter'])
 predefined_sequence['fitSigMDCB']    = ['sigMCReader', 'stdWspaceReader', 'sigMDCBFitter']
+predefined_sequence['fitSigM']    = ['sigMCReader', 'stdWspaceReader', 'sigMFitter']
 predefined_sequence['fitBkgM_KStar'] = ['KsigMCReader', 'stdWspaceReader', 'bkgM_KStarFitter']
 predefined_sequence['fitBkgA_KStar'] = ['KsigMCReader', 'stdWspaceReader', 'bkgA_KStarFitter']
 
@@ -50,13 +54,29 @@ predefined_sequence['fitFinal3D_AltM']          = (['dataReader', 'stdWspaceRead
 predefined_sequence['fitFinal3D_WithKStar']     = ['dataReader', 'stdWspaceReader', 'finalFitter_WithKStar']
 predefined_sequence['fitFinal3D_AltM_WithKStar']= (['dataReader', 'stdWspaceReader'], ['SimFitter_Final_AltM_WithKStar'] if args.SimFit else ['finalFitter_AltM_WithKStar'])
 
-predefined_sequence['createplots']=['effiHistReader', 'dataReader', 'sigMCReader', 'sigMCGENReader', 
-                                    'KsigMCReader', 'stdWspaceReader', 'plotter']
+predefined_sequence['loadAll'] = ['dataReader', 'sigMCReader', 'sigMCGENReader', 'KsigMCReader', 'effiHistReader', 'stdWspaceReader', 'stdPDFBuilder']
+predefined_sequence['fitAll']  = predefined_sequence['loadAll'] + ['effiFitter', 'sig2DFitter', 'sigAFitter']
+predefined_sequence['fitFinalAll'] = predefined_sequence['loadAll'] + ['fitSigMDCB', 'bkgCombAFitter', 'fitBkgM_KStar', 'fitBkgA_KStar', 'finalFitter_AltM_WithKStar']
+
+predefined_sequence['createplots']=['effiHistReader', 
+                                    'dataReader', 
+                                    'sigMCReader', 'sigMCGENReader', 
+                                    'KsigMCReader', 
+                                    #'bkgJpsiMCReader', 
+                                    'stdWspaceReader', 'plotter']
 #'effiHistReader', 'KsigMCReader', 'sigMCReader', 'sigMCGENReader', 
 predefined_sequence['sigMCValidation'] = ['stdWspaceReader', 'sigMCReader', 'sigMCStudier']
 predefined_sequence['seqCollection']   = []
 predefined_sequence['FinalDataResult'] = ['FinalDataResult']
 predefined_sequence['EffiTable']       = ['EffiTable']
+
+#For Validation Study
+predefined_sequence['fitSigM_JP'] = ['sigMCReader_JP', 'stdWspaceReader', 'sigMFitter_JP']
+predefined_sequence['fitBkgM_JK'] = ['bkgMCReader_JK', 'stdWspaceReader', 'bkgMFitter_JK']
+predefined_sequence['fitSigM_PP'] = ['sigMCReader_PP', 'stdWspaceReader', 'sigMFitter_PP']
+predefined_sequence['fitBkgM_PK'] = ['bkgMCReader_PK', 'stdWspaceReader', 'bkgMFitter_PK']
+predefined_sequence['fitFinalM_JP'] = ['dataReader', 'stdWspaceReader', 'finalMFitter_JP']
+predefined_sequence['fitFinalM_PP'] = ['dataReader', 'stdWspaceReader', 'finalMFitter_PP']
 
 def Instantiate(self, seq):
     """All objects are initalized here"""
@@ -66,9 +86,10 @@ def Instantiate(self, seq):
     import BsToPhiMuMuFitter.fitCollection  as fitCollection
     from BsToPhiMuMuFitter.plotCollection import GetPlotterObject
     sequence=[]
-    fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'sigMDCBFitter', 'finalFitter_AltM', 'bkgM_KStarFitter', 'bkgA_KStarFitter', 'finalFitter_WithKStar', 'finalFitter_AltM_WithKStar']
+    dataSequence=['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader', 'sigMCReader_JP', 'sigMCReader_PP', 'bkgMCReader_JK', 'bkgMCReader_PK']
+    fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'sigMFitter', 'sigMDCBFitter', 'finalFitter_AltM', 'bkgM_KStarFitter', 'bkgA_KStarFitter', 'finalFitter_WithKStar', 'finalFitter_AltM_WithKStar', 'sigMFitter_JP', 'bkgMFitter_JK', 'sigMFitter_PP', 'bkgMFitter_PK', 'finalMFitter_JP', 'finalMFitter_PP']
     for s in seq:
-        if s in ['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader']:
+        if s in dataSequence:
             sequence.append(dataCollection.GetDataReader(self, s))
         if s is 'stdWspaceReader':
             sequence.append(pdfCollection.GetWspaceReader(self))
@@ -102,7 +123,6 @@ if __name__ == '__main__':
     from BsToPhiMuMuFitter.python.datainput import GetInputFiles
     
     p.work_dir="plots_"+str(args.Year)
-    #p.cfg['seqKey']= args.seqKey
     p.cfg['args'] = args
     GetInputFiles(p)
     p.cfg['bins'] = p.cfg['allBins'] if args.binKey=="all" else [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]

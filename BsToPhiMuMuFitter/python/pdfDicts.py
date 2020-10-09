@@ -29,7 +29,7 @@ xTerm2 = "\
 +(x10+x11*CosThetaK+x12*(1.5*pow(CosThetaK,2)-0.5)+x13*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x14*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,2)\
 +(x15+x16*CosThetaK+x17*(1.5*pow(CosThetaK,2)-0.5)+x18*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x19*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,3)"; n1A=20
 
-pdfL1A = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2)) + l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLc=9
+pdfL1A = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2)) + exp(-0.5*pow((CosThetaL-l4)/l5,2)) + exp(-0.5*pow((CosThetaL-l6)/l7,2))"; nLc=7
 pdfK1A = "1+k1*CosThetaK+k2*pow(CosThetaK,2)+k3*pow(CosThetaK,3)+k4*pow(CosThetaK,4)+k5*pow(CosThetaK,5)+k6*pow(CosThetaK,6)"; nK1A=7
 f_effiSigA_format['Gaus3_Poly6_XTerm'] = ["l{0}[.1,0,10]".format(3*i-2) for i in range(1, nLc//3 + 1)] \
     + ["l{0}[0,-.5,.5]".format(3*i-1) for i in range(1, nLc//3+1)] \
@@ -45,10 +45,10 @@ f_effiSigA_format['Gaus3_Poly6_XTerm'] = ["l{0}[.1,0,10]".format(3*i-2) for i in
         xTerm=xTerm,
         args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, nLc+1)] + ["k{0}".format(i) for i in range(1, nK1A)] + ["x{0}".format(i) for i in range(n)]) + "}")]
 
-pdfL1B = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2))+l4*exp(-0.5*pow((CosThetaL-l5)/l6,2)) + l7*exp(-0.5*pow((CosThetaL-l8)/l9,2))"; nLB=9
-f_effiSigA_format['Gaus3_Poly6_XTerm_v2'] = ["l1[.1,0,10]", "l2[0,-0.5,0.5]", "l3[0.2,.01,5.]", "l4[0.2,0,10]", "l5[.2,-0.5,0.5]", "l6[.2,0.01,5.0]", "l7[0.1,0,10]", "l8[0,-.5,.5]", "l9[.2,.01,5.]"] \
+pdfL1B = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2)) + exp(-0.5*pow((CosThetaL-l4)/l5,2)) + exp(-0.5*pow((CosThetaL-l6)/l7,2))"; nLB=7
+f_effiSigA_format['Gaus3_Poly6_XTerm_v2'] = ["l1[.1,0,10]", "l2[0,-0.5,0.5]", "l3[0.2,.01,5.]", "l4[.2,-0.5,0.5]", "l5[.2,0.01,5.0]", "l6[0,-.5,.5]", "l7[.2,.001,5.]"] \
     + ["k{0}[-10,10]".format(i) for i in range(1, nK)] \
-    + ["effi_norm[1,0,1000]", "hasXTerm[0]"] + ["x{0}[-20,20]".format(i) for i in range(n)] \
+    + ["effi_norm[1,0,1000]", "hasXTerm[0]"] + ["x{0}[-30,30]".format(i) for i in range(n)] \
     + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL1B, args="{CosThetaL,"+', '.join(["l{0}".format(i) for i in range(1, nLB+1)]) + "}")] \
     + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, nK)]) + "}")] \
     + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}".format(i) for i in range(n)]) + "}")] \
@@ -64,6 +64,14 @@ f_effiSigA_format['Gaus3_Poly6_XTerm_v2'] = ["l1[.1,0,10]", "l2[0,-0.5,0.5]", "l
 # Analytical Functions for Combinatorial Background Shapes of Angular Variables
 
 f_analyticBkgCombA_format = {}
+f_analyticBkgCombA_format['Poly2_Poly2'] = [ # pdfL: Poly2, pdfK: Poly2
+    "bkgCombL_c1[-10.,10.]", "bkgCombL_c2[-10.,10.]",
+    "bkgCombK_c1[-10,10]", "bkgCombK_c2[-10,10]",
+    "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
+        pdfL="1.+bkgCombL_c1*CosThetaL+bkgCombL_c2*pow(CosThetaL,2)",
+        pdfK="1+bkgCombK_c1*CosThetaK+bkgCombK_c2*pow(CosThetaK,2)",
+        args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombK_c1, bkgCombK_c2}")
+]
 f_analyticBkgCombA_format['Poly3_Poly3'] = [ # pdfL: Poly3, pdfK: Poly3
     "bkgCombL_c1[-10.,10.]", "bkgCombL_c2[-10.,10.]", "bkgCombL_c3[-10.,10.]",
     "bkgCombK_c1[-10,10]", "bkgCombK_c2[-10,10]", "bkgCombK_c3[-10,10]",

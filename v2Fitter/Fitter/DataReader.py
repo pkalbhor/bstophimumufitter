@@ -54,7 +54,7 @@ class DataReader(Path):
 
     def createDataSet(self, dname, dcut):
         """Return named dataset, create if not exist"""
-        if dname in self.dataset.keys():
+        if dname in self.dataset.keys() and not self.process.cfg['args'].force:
             print("\033[0;34;47m Dataset: ", dname, " Already Exists! \033[0m", dcut, self.dataset[dname].sumEntries())
             return self.dataset[dname]
         tempfile_preload = ROOT.TFile(tempfile.gettempdir()+"/temp.root", 'RECREATE') #Pritam
@@ -105,7 +105,7 @@ class DataReader(Path):
         elif os.path.exists(self.cfg['preloadFile']):
             file_preload = ROOT.TFile(self.cfg['preloadFile'], 'UPDATE')
             for dname, d in self.dataset.items():
-                if file_preload.Get(dname) and False: 
+                if file_preload.Get(dname) and self.process.cfg['args'].force: 
                     file_preload.Delete(dname+';*')     # Delete old objects if exists
                     file_preload.Delete('ProcessID*;*') # Delete old Pids if exists
                     d.Write()

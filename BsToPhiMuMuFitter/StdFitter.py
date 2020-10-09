@@ -42,7 +42,11 @@ class StdFitter(FitterCore):
             self.data.getRange(iArg, lo, hi)
             iArg.setRange(lo, hi)
         FitterCore.ArgLooper(self.data.get(), myfunc)
-        FitterCore.ArgLooper(self.pdf.getObservables(self.data), myfunc)
+        try:
+            FitterCore.ArgLooper(self.pdf.getObservables(self.data), myfunc)
+        except AttributeError:
+            print("Error: PDF '{}' not found. Please make sure you have generated mentioned pdf in RooWorkspaces stored in './input' folder".format(self.cfg['pdf']))
+            exit()
         ###
 
         self.fitter = ROOT.StdFitter()
@@ -54,7 +58,11 @@ class StdFitter(FitterCore):
 
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
-        #if not self.name=="sigAFitter": 
+        if self.cfg['AliasTag'] is not None: #Adding tag to parameters to rename it. #Adding tag to parameters to rename it.
+            self.cfg['argAliasInDB'] = {}; arglist=[]
+            FitterCore.ArgLooper(self.pdf.getParameters(self.data), lambda p: arglist.append(p.GetName()))
+            for var in arglist: self.cfg['argAliasInDB'].update({var: var+self.cfg['AliasTag']})
+
         if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgKStar'])
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))

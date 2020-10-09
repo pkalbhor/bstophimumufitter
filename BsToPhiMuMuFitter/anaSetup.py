@@ -17,7 +17,7 @@ q2bins = {}
 def createBinTemplate(name, lowerBd, upperBd):
     template = {
         'q2range': (lowerBd, upperBd),
-        'cutString': "Mumumass > {0} && Mumumass < {1}".format(sqrt(lowerBd), sqrt(upperBd)),
+        'cutString': "Q2 > {0} && Q2 < {1}".format(lowerBd, upperBd),
         'label': "{0}".format(name),
         'latexLabel': "{lowerBd:.2f} < q^{{2}} < {upperBd:.2f}".format(upperBd=upperBd, lowerBd=lowerBd),
     }
@@ -38,10 +38,11 @@ q2bins['summaryA']     = createBinTemplate("bin0A", 1.00, 12.5)
 q2bins['summaryA']['cutString'] = "({0}) && !({1})".format(q2bins['summaryA']['cutString'], q2bins['jpsi']['cutString'])
 q2bins['Test1']        = createBinTemplate("binA", 1.00, 3.00)
 q2bins['Test2']        = createBinTemplate("binB", 3.00, 5.00)
-q2bins['summary']['cutString'] = "(Mumumass > 1 && Mumumass < 4.35890) && !(Mumumass > 2.828427125 && Mumumass < 3.31662479) && !(Mumumass > 3.535533906 && Mumumass < 3.872983346)"
+q2bins['summary']['cutString'] = "(Q2 > 1. && Q2 < 19.) && !(Q2 > 8. && Q2 < 11.) && !(Q2 > 12.5 && Q2 <15.)"
 
 q2bins['peaks']        = createBinTemplate("peaks", 1., 19.)
-q2bins['peaks']['cutString'] = "(Mumumass > 2.828427125 && Mumumass < 3.31662479) || (Mumumass > 3.535533906 && Mumumass < 3.872983346)"
+q2bins['peaks']['cutString'] = "(Q2 > 8. && Q2 < 11.) || (Q2 > 12.5 && Q2 < 15.)"
+q2bins['full'] = createBinTemplate("full", 1., 19.)
 
 # SM prediction
 q2bins['belowJpsiA']['sm'] = {
@@ -118,11 +119,11 @@ bMassRegions['SB']   = createBmassTemplate("SB",   4.7, 6.0)
 bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['cutString'], bMassRegions['SR']['cutString'])
 
 # systematics
-bMassRegions['altFit'] = createBmassTemplate("altFit", 4.68, 5.88)
-bMassRegions['altSR']  = createBmassTemplate("altSR", 5.18, 5.38)
-bMassRegions['altLSB'] = createBmassTemplate("altLSB", 4.68, 5.18)
-bMassRegions['altUSB'] = createBmassTemplate("altUSB", 5.38, 5.88)
-bMassRegions['altSB']  = createBmassTemplate("altSB", 4.68, 5.88)
+bMassRegions['altFit'] = createBmassTemplate("altFit", 5.27, 5.45)
+bMassRegions['altSR']  = createBmassTemplate("altSR", 5.27, 5.45)
+bMassRegions['altLSB'] = createBmassTemplate("altLSB", 5.1, 5.27)
+bMassRegions['altUSB'] = createBmassTemplate("altUSB", 5.45, 5.62)
+bMassRegions['altSB']  = createBmassTemplate("altSB", 5.1, 5.62)
 bMassRegions['altSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB']['cutString'], bMassRegions['altSR']['cutString'])
 
 bMassRegions['altFit_vetoJpsiX'] = createBmassTemplate("altFit_vetoJpsiX", 5.18, 5.80)

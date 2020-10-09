@@ -7,7 +7,10 @@
 * [`anaSetup.py`](https://github.com/pkalbhor/BsToPhiMuMuFitter/blob/master/BsToPhiMuMuFitter/anaSetup.py)
 
 # How to run?
-
+Explore availabe options using
+```bash
+python seqCollection.py --help
+```
 ## Standard fitting procedure
 
 Select a pre-defined sequence in [`seqCollection.py`](https://github.com/pkalbhor/BsToPhiMuMuFitter/blob/master/BsToPhiMuMuFitter/seqCollection.py), and then just

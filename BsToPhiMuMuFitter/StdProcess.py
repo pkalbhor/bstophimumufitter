@@ -209,7 +209,6 @@ msgService.addStream(4,
 processCfg = {
     'isBatchJob': False,
     'binKey': 'summary',
-    'seqKey': None,
     'args': None,
 }
 p = Process("myProcess", "Plots", processCfg)

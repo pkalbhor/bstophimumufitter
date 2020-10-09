@@ -96,6 +96,7 @@ Following functions to be overloaded to customize the full procedure...
             'data': "",
             'pdf': "f",
             'argPattern': [r'^.+$'],
+            'AliasTag': None,
             'createNLLOpt': [],
         }
         return cfg

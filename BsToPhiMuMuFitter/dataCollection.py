@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent foldnestmax=3 ft=python et:
 
@@ -45,12 +45,35 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
                     "({0}) && ({1}) && ({2}) && ({3})".format(
                         val['cutString'],
                         q2bins[self.process.cfg['binKey']]['cutString'],
-                        self.process.cfg['cuts'][-1] if self.process.cfg['binKey'] not in ['jpsi', 'psi2s'] else cuts_noResVeto,
+                        self.process.cfg['cuts'][-1],
                         "1" if not extraCuts else extraCuts,
                     )
                 )
             )
-    
+    if "ResVeto" in targetBMassRegion and self.process.cfg['binKey']=='full':
+        self.cfg['dataset'].append(
+            (
+                "{0}.Fit_ResVeto".format(self.cfg['name'], key),
+                "({0}) && ({1}) && ({2}) && ({3})".format(
+                    bMassRegions['Fit']['cutString'],
+                    q2bins[self.process.cfg['binKey']]['cutString'],
+                    self.process.cfg['cuts_Signal'],
+                    extraCuts,
+                )
+            )
+        )
+    if "antiResVeto" in targetBMassRegion and self.process.cfg['binKey'] in ['jpsi', 'psi2s']:
+        self.cfg['dataset'].append(
+            (
+                "{0}.Fit_antiResVeto".format(self.cfg['name'], key),
+                "({0}) && ({1}) && ({2}) && ({3})".format(
+                    bMassRegions['Fit']['cutString'],
+                    q2bins[self.process.cfg['binKey']]['cutString'],
+                    self.process.cfg['cuts_antiResVeto'],
+                    extraCuts,
+                )
+            )
+        )    
     # Customize preload TFile
     self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{binLabel}.root".format(datasetName=self.cfg['name'].split('.')[0], binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
@@ -66,7 +89,7 @@ def customizeGEN(self):
     self.cfg['dataset'].append(
         (
             "{0}.Fit".format(self.cfg['name']),
-            re.sub("Mumumass", "sqrt(genQ2)", q2bins[self.process.cfg['binKey']]['cutString'])
+            re.sub("Q2", "genQ2", q2bins[self.process.cfg['binKey']]['cutString'])
         )
     )
     # Customize preload TFile
@@ -78,11 +101,11 @@ def GetDataReader(self, seq):
         dataReaderCfg.update({
             'name': "dataReader.{Year}".format(Year=self.cfg['args'].Year),
             'ifile': self.cfg['dataFilePath'],
-            'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
+            #'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
             'lumi': 35.9,
         })
         dataReader = DataReader(dataReaderCfg)
-        customizeData = functools.partial(customizeOne, targetBMassRegion=['^Full$', '^Fit$', '^SR$', '^.{0,1}SB$'], extraCuts=ExtraCuts)
+        customizeData = functools.partial(customizeOne, targetBMassRegion=['^.*Fit$', '^.*SR$', '^.*SB$', 'ResVeto', 'antiResVeto'], extraCuts=ExtraCuts)
         dataReader.customize = types.MethodType(customizeData, dataReader)
         return dataReader
 
@@ -92,11 +115,11 @@ def GetDataReader(self, seq):
         sigMCReaderCfg.update({
             'name': "sigMCReader.{Year}".format(Year=self.cfg['args'].Year),
             'ifile': self.cfg['sigMC'],
-            'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
+            #'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
             'lumi': 66226.56,
         })
         sigMCReader = DataReader(sigMCReaderCfg)
-        customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCuts)
+        customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^.*Fit$', 'ResVeto'], extraCuts=ExtraCuts)
         sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
         return sigMCReader
 
@@ -105,27 +128,74 @@ def GetDataReader(self, seq):
         KsigMCReaderCfg = copy(CFG)
         KsigMCReaderCfg.update({
             'name': "KsigMCReader.{Year}".format(Year=self.cfg['args'].Year),
-            'ifile': self.cfg['KStarSigMC'],
+            'ifile': self.cfg['peaking']['KstarMuMu'],
             'argset': dataArgsKStar,
-            'preloadFile': modulePath + "/data/preload_KsigMCReader_{binLabel}.root",
+            #'preloadFile': modulePath + "/data/preload_KsigMCReader_{binLabel}.root",
             'lumi': 2765.2853,
         })
         KsigMCReader = DataReader(KsigMCReaderCfg)
-        customizeKSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCutsKStar)
+        customizeKSigMC = functools.partial(customizeOne, targetBMassRegion=['^.*Fit$'], extraCuts=ExtraCuts)
         KsigMCReader.customize = types.MethodType(customizeKSigMC, KsigMCReader)
         return KsigMCReader
-
     if seq is 'sigMCGENReader':
         sigMCGENReaderCfg = copy(CFG)
         sigMCGENReaderCfg.update({
             'name': "sigMCGENReader.{Year}".format(Year=self.cfg['args'].Year),
-            'ifile': self.cfg['UnfilteredMC'],
-            'preloadFile': modulePath + "/data/preload_sigMCGENReader_{binLabel}.root",
+            'ifile': self.cfg['genonly']['PhiMuMu'],
+            #'preloadFile': modulePath + "/data/preload_sigMCGENReader_{binLabel}.root",
             'argset': dataArgsGEN,
         })
         sigMCGENReader = DataReader(sigMCGENReaderCfg)
         sigMCGENReader.customize = types.MethodType(customizeGEN, sigMCGENReader)
         return sigMCGENReader
+    if seq is 'sigMCReader_JP':
+        bkgJpsiMCReaderCfg = copy(CFG)
+        bkgJpsiMCReaderCfg.update({
+            'name': "sigMCReader_JP.{}".format(self.cfg['args'].Year),
+            'ifile': self.cfg['control']['JpsiPhi'],
+            #'preloadFile': modulePath + "/data/preload_bkgMCReader_JP_{binLabel}.root",
+            'lumi': 295.761,
+        })
+        bkgJpsiMCReader = DataReader(bkgJpsiMCReaderCfg)
+        customizeBkgPeakMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'antiResVeto'], extraCuts=ExtraCuts)
+        bkgJpsiMCReader.customize = types.MethodType(customizeBkgPeakMC, bkgJpsiMCReader)
+        return bkgJpsiMCReader
+    if seq is 'sigMCReader_PP':
+        bkgPsi2sMCReaderCfg = copy(CFG)
+        bkgPsi2sMCReaderCfg.update({
+            'name': "sigMCReader_PP.{}".format(self.cfg['args'].Year),
+            'ifile': self.cfg['control']['PsiPhi'],
+            #'preloadFile': modulePath + "/data/preload_bkgMCReader_PP_{binLabel}.root",
+            'lumi': 218.472,
+        })
+        bkgPsi2sMCReader = DataReader(bkgPsi2sMCReaderCfg)
+        customizeBkgPeakMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'antiResVeto'], extraCuts=ExtraCuts)
+        bkgPsi2sMCReader.customize = types.MethodType(customizeBkgPeakMC, bkgPsi2sMCReader)
+        return bkgPsi2sMCReader
+    if seq is 'bkgMCReader_JK':
+        bkgJpsiKstMCReaderCfg = copy(CFG)
+        bkgJpsiKstMCReaderCfg.update({
+            'name': "bkgMCReader_JK.{}".format(self.cfg['args'].Year),
+            'ifile': self.cfg['peaking']['JpsiKstar'],
+            #'preloadFile': modulePath + "/data/preload_bkgMCReader_JK_{binLabel}.root",
+            'lumi': 218.472,
+        })
+        bkgJpsiKstMCReader = DataReader(bkgJpsiKstMCReaderCfg)
+        customizeBkgPeakMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'antiResVeto'], extraCuts=ExtraCuts)
+        bkgJpsiKstMCReader.customize = types.MethodType(customizeBkgPeakMC, bkgJpsiKstMCReader)
+        return bkgJpsiKstMCReader
+    if seq is 'bkgMCReader_PK':
+        bkgPsi2sKstMCReaderCfg = copy(CFG)
+        bkgPsi2sKstMCReaderCfg.update({
+            'name': "bkgMCReader_PK.{}".format(self.cfg['args'].Year),
+            'ifile': self.cfg['peaking']['PsiKstar'],
+            #'preloadFile': modulePath + "/data/preload_bkgMCReader_PK_{binLabel}.root",
+            'lumi': 218.472,
+        })
+        bkgPsi2sKstMCReader = DataReader(bkgPsi2sKstMCReaderCfg)
+        customizeBkgPeakMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'antiResVeto'], extraCuts=ExtraCuts)
+        bkgPsi2sKstMCReader.customize = types.MethodType(customizeBkgPeakMC, bkgPsi2sKstMCReader)
+        return bkgPsi2sKstMCReader
 
 setupEfficiencyBuildProcedure = {}
 setupEfficiencyBuildProcedure['acc'] = {
@@ -161,12 +231,12 @@ def buildTotalEffiHist(self):
     if h2_accXrec == None or forceRebuild:
         # Fill histograms
         setupEfficiencyBuildProcedure['acc'].update({
-            'ifiles'    : self.process.cfg['UnfilteredMC'],
-            'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
-            'cutString' : "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel)})
+            'ifiles'    : self.process.cfg['genonly']['PhiMuMu'],
+            'baseString': re.sub("Q2", "genQ2", q2bins[binKey]['cutString']),
+            'cutString' : "({0}) && ({1})".format(re.sub("Q2", "genQ2", q2bins[binKey]['cutString']), genSel)})
         setupEfficiencyBuildProcedure['rec'].update({
             'ifiles'    : self.process.cfg['sigMC'],
-            'baseString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel),
+            'baseString': "({0}) && ({1})".format(re.sub("Q2", "genQ2", q2bins[binKey]['cutString']), genSel),
             'cutString' : "({0}) && ({1}) && ({2})".format(self.process.cfg['cuts'][-1], q2bins[binKey]['cutString'], 1 if ExtraCuts==None else ExtraCuts)})
 
         label='accXrec'
@@ -272,13 +342,13 @@ def buildAccXRecEffiHist(self):
 
         # Fill histograms
         setupEfficiencyBuildProcedure['acc'].update({
-            'ifiles'    : self.process.cfg['UnfilteredMC'],
-            'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
-            'cutString' : "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel)})
+            'ifiles'    : self.process.cfg['genonly']['PhiMuMu'],
+            'baseString': re.sub("Q2", "genQ2", q2bins[binKey]['cutString']),
+            'cutString' : "({0}) && ({1})".format(re.sub("Q2", "genQ2", q2bins[binKey]['cutString']), genSel)})
         setupEfficiencyBuildProcedure['rec'].update({
             'ifiles'    : self.process.cfg['sigMC'],
             'dfiles'    : self.process.cfg['sigMCD'],
-            'baseString': "({0}) && ({1})".format(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']), genSel),
+            'baseString': "({0}) && ({1})".format(re.sub("Q2", "genQ2", q2bins[binKey]['cutString']), genSel),
             'cutString' : "({0}) && ({1}) && ({2})".format(cuts_antiResVeto if binKey in ['jpsi', 'psi2s'] else self.process.cfg['cuts'][-1], q2bins[binKey]['cutString'], 1 if ExtraCuts==None else ExtraCuts)})
 
         LBins=accXEffThetaLBins #if not binKey=="belowJpsiA" else ThetaLBins
@@ -293,7 +363,7 @@ def buildAccXRecEffiHist(self):
                 if label=="rec":
                     for f in setupEfficiencyBuildProcedure[label]['dfiles']:
                         treeDen.Add(f)
-                UseDataFrame=False
+                UseDataFrame=True
                 if UseDataFrame:
                     if setupEfficiencyBuildProcedure[label]['weight'] is None and label=="acc":
                         df_tot = ROOT.RDataFrame(treein).Define('weight', "1").Filter(setupEfficiencyBuildProcedure[label]['baseString'])
