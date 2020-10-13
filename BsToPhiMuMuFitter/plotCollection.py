@@ -799,6 +799,17 @@ def GetPlotterObject(self):
                         ],
         }
     }
+    plotterCfg['plots']['plot_final_WithKStar'] = {
+        'func': [plotPostfitBLK_WithKStar],
+        'kwargs': {
+            'pltName': "plot_final_WithKStar.{}".format(Year),
+            'dataReader': "dataReader.{}".format(Year),
+            'pdfPlots': [["f_final_WithKStar.{}".format(Year), plotterCfg_styles['allStyleBase'], None, "Total fit"],
+                         ["f_sigM.{}".format(Year), plotterCfg_styles['sigStyleBase'], None, "Sigal"],
+                         ["f_bkgComb.{}".format(Year),   plotterCfg_styles['bkgStyleBase'], None, "Background"],
+                         ["f_bkg_KStar.{}".format(Year), plotterCfg_bkgStyle_KStar,         None, "K*0MuMu Background"], ],
+        }
+    }
     plotterCfg['plots']['plot_final_AltM_WithKStar'] = {
         'func': [plotPostfitBLK_WithKStar],
         'kwargs': {

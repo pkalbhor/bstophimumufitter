@@ -177,7 +177,7 @@ def GetFitterObjects(self, seq):
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
             'FitHesse': True,
             'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
-            'argAliasInDB': {**setupSigMFitter['argAliasInDB'], **ArgAliasGEN},
+            'argAliasInDB': {**ArgAliasGEN},
             'argAliasSaveToDB': False,
         })
         return StdFitter(setupFinalFitter_WithKStar)

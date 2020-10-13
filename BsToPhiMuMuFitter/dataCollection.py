@@ -105,7 +105,7 @@ def GetDataReader(self, seq):
             'lumi': 35.9,
         })
         dataReader = DataReader(dataReaderCfg)
-        customizeData = functools.partial(customizeOne, targetBMassRegion=['^.*Fit$', '^.*SR$', '^.*SB$', 'ResVeto', 'antiResVeto'], extraCuts=ExtraCuts)
+        customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$', 'ResVeto', 'antiResVeto'], extraCuts=ExtraCuts)
         dataReader.customize = types.MethodType(customizeData, dataReader)
         return dataReader
 
@@ -119,7 +119,7 @@ def GetDataReader(self, seq):
             'lumi': 66226.56,
         })
         sigMCReader = DataReader(sigMCReaderCfg)
-        customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^.*Fit$', 'ResVeto'], extraCuts=ExtraCuts)
+        customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'ResVeto'], extraCuts=ExtraCuts)
         sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
         return sigMCReader
 
@@ -134,7 +134,7 @@ def GetDataReader(self, seq):
             'lumi': 2765.2853,
         })
         KsigMCReader = DataReader(KsigMCReaderCfg)
-        customizeKSigMC = functools.partial(customizeOne, targetBMassRegion=['^.*Fit$'], extraCuts=ExtraCuts)
+        customizeKSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCuts)
         KsigMCReader.customize = types.MethodType(customizeKSigMC, KsigMCReader)
         return KsigMCReader
     if seq is 'sigMCGENReader':

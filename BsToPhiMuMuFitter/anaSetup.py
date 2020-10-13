@@ -119,11 +119,11 @@ bMassRegions['SB']   = createBmassTemplate("SB",   4.7, 6.0)
 bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['cutString'], bMassRegions['SR']['cutString'])
 
 # systematics
-bMassRegions['altFit'] = createBmassTemplate("altFit", 5.27, 5.45)
-bMassRegions['altSR']  = createBmassTemplate("altSR", 5.27, 5.45)
-bMassRegions['altLSB'] = createBmassTemplate("altLSB", 5.1, 5.27)
-bMassRegions['altUSB'] = createBmassTemplate("altUSB", 5.45, 5.62)
-bMassRegions['altSB']  = createBmassTemplate("altSB", 5.1, 5.62)
+bMassRegions['altFit'] = createBmassTemplate("altFit", 5.1, 5.60)
+bMassRegions['altSR']  = createBmassTemplate("altSR", 5.25, 5.45)
+bMassRegions['altLSB'] = createBmassTemplate("altLSB", 5.1, 5.25)
+bMassRegions['altUSB'] = createBmassTemplate("altUSB", 5.45, 5.60)
+bMassRegions['altSB']  = createBmassTemplate("altSB", 5.10, 5.60)
 bMassRegions['altSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB']['cutString'], bMassRegions['altSR']['cutString'])
 
 bMassRegions['altFit_vetoJpsiX'] = createBmassTemplate("altFit_vetoJpsiX", 5.18, 5.80)

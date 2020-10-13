@@ -79,7 +79,7 @@ def GetInputFiles(self):
         cut_Bdt,
     ]
     cuts.append("({0})".format(")&&(".join(cuts)))
-    cuts_noResVeto = "({0})&&({1})&&({2})".format(cut_passTrigger, cut_Bdt)
+    cuts_noResVeto = "({0})&&({1})".format(cut_passTrigger, cut_Bdt)
     cuts_Signal = "({0}) && (({1}) && ({2}))".format(cuts_noResVeto, cut_resonanceRej, cut_antiRadiation)
     cuts_antiSignal = "({0}) && !(({1}) && ({2}))".format(cuts_noResVeto, cut_resonanceRej, cut_antiRadiation)
     #cuts_antiResVeto = "({0}) && !({1}) && !({2})".format(cuts_noResVeto, cut_resonanceSel, cut_antiRadiation)
