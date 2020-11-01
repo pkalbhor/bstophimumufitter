@@ -17,7 +17,7 @@ from BsToPhiMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumas
 #from SingleBuToKstarMuMuFitter.StdProcess import p, setStyle, isPreliminary
 from BsToPhiMuMuFitter.StdProcess import p, setStyle
 
-defaultPlotRegion = "altFit"
+defaultPlotRegion = "Fit"
 plotterCfg_styles = {}
 plotterCfg_styles['dataStyle'] = (ROOT.RooFit.XErrorSize(0.),)
 plotterCfg_styles['mcStyleBase'] = ()
@@ -173,7 +173,7 @@ class Plotter(Path):
         cloned_frame = frame.emptyClone("cloned_frame") # No need to call RefreshNorm
         if frame is Plotter.frameB:
             cloned_frame.SetNdivisions(510, "X")
-            cloned_frame.SetYTitle("Events / {0} GeV".format(binning.averageBinWidth()))
+            cloned_frame.SetYTitle("Events / {0:.3f} GeV".format(binning.averageBinWidth()))
         elif frame is Plotter.frameL:
             cloned_frame.SetYTitle("Events / {0}".format(binning.averageBinWidth()))
         elif frame is Plotter.frameK:

@@ -26,6 +26,7 @@ def sigAFitter_bookPdfData(self):
     self.data.changeObservableName("genCosThetaL", "CosThetaL")
 
 ArgAliasRECO={'unboundAfb': 'unboundAfb_RECO', 'unboundFl': 'unboundFl_RECO'}
+ArgAliasRECO_Alt={'unboundAfb': 'unboundAfb_RECO_Alt', 'unboundFl': 'unboundFl_RECO_Alt'}
 ArgAliasGEN ={'unboundAfb': 'unboundAfb_GEN', 'unboundFl': 'unboundFl_GEN'}
 ArgAliasSigM={'sigMGauss1_sigma': 'sigMGauss1_sigma_RECO', 'sigMGauss2_sigma': 'sigMGauss2_sigma_RECO', 'sigMGauss_mean': 'sigMGauss_mean_RECO', 'sigM_frac': 'sigM_frac_RECO'}
 ArgAliasDCB ={'cbs1_sigma': 'cbs1_sigma_RECO', 'cbs2_sigma': 'cbs2_sigma_RECO', 'cbs1_alpha': 'cbs1_alpha_RECO', 'cbs2_alpha': 'cbs2_alpha_RECO', 'cbs1_n': 'cbs1_n_RECO', 'cbs2_n': 'cbs2_n_RECO', 'cbs_mean': 'cbs_mean_RECO', 'sigMDCB_frac': 'sigMDCB_frac_RECO'}
@@ -59,7 +60,7 @@ def GetFitterObjects(self, seq):
             'FitMinos': [True, ()],
             'argPattern': ['unboundAfb', 'unboundFl'],
             'createNLLOpt': [],
-            'argAliasInDB': ArgAliasRECO,
+            'argAliasInDB': ArgAliasRECO_Alt if AltRange else ArgAliasRECO,
         })
         return StdFitter(setupSig2DFitter)
     if seq is 'sigAFitter':
@@ -89,6 +90,18 @@ def GetFitterObjects(self, seq):
             'createNLLOpt': [],
         })
         return StdFitter(setupBkgCombAFitter)
+    if seq is 'SimulFitter_bkgCombA':
+        setupSimulFitter_bkgCombA = deepcopy(setupTemplateSimFitter)
+        setupSimulFitter_bkgCombA.update({
+            'category'  : ['LSB{}'.format(str(Year).strip('20')), 'USB{}'.format(str(Year).strip('20'))],
+            'data'      : ["dataReader.{}.LSB".format(Year), "dataReader.{}.USB".format(Year)],
+            'pdf'       : ["f_bkgCombA.{}".format(Year), "f_bkgCombA.{}".format(Year)],
+            'Years'     : [Year, Year],
+            #'argPattern': [r'bkgComb[KL]_c[\d]+', ],
+            'argAliasInDB': None,
+            'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(0)],],
+        })
+        return SimultaneousFitter(setupSimulFitter_bkgCombA)
     if seq is 'finalFitter':
         setupFinalFitter = deepcopy(setupTemplateFitter)                         # 3D = nSig(Sig2D*SigM) + nBkg(fBkgM*fBkgA)
         setupFinalFitter.update({
@@ -170,10 +183,10 @@ def GetFitterObjects(self, seq):
     if seq is 'finalFitter_WithKStar':
         setupFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                         # 3D = nSig(Sig2D*SigM) + nBkg(fBkgM*fBkgA)
         setupFinalFitter_WithKStar.update({
-            'name': "finalFitter_WithKStar.{}".format(Year),
-            'data': "dataReader.{}.Fit".format(Year),
-            'pdf': "f_final_WithKStar.{}".format(Year),
-            'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombM_c[\d]+'],
+            'name': "finalFitter_WithKStar{}.{}".format('_Alt' if AltRange else '', Year),
+            'data': "dataReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''),
+            'pdf': "f_final_WithKStar{}.{}".format('_Alt' if AltRange else '', Year),
+            'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombM_c[\d]+', r'bkgCombM_c[\d]_Alt+'],
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
             'FitHesse': True,
             'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
@@ -252,8 +265,6 @@ def GetFitterObjects(self, seq):
             'argPattern': ['nSig', 'nBkgComb', r'bkgCombM_c[\d]+'],
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
             'FitMinos': [True, ('nSig', 'nBkgComb')],
-            'argAliasInDB': ArgAliasSigM,
-            'argAliasSaveToDB': False,
         })
         return StdFitter(setupFinalMFitter)
     if seq is 'finalMFitter_JP':
@@ -372,16 +383,6 @@ setupSimulFitter_sigGEN.update({
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)], ],
 })
 SimulFitter_sigGEN = SimultaneousFitter(setupSimulFitter_sigGEN)
-
-setupSimulFitter_bkgCombA = deepcopy(setupTemplateSimFitter)  # Not Needed
-setupSimulFitter_bkgCombA.update({
-    'category'  : ['cat16', 'cat17', 'cat18'],
-    'data'      : ["dataReader.2016.SB", "dataReader.2017.SB", "dataReader.2018.SB"],
-    'pdf'       : ["f_bkgCombA.2016", "f_bkgCombA.2017", "f_bkgCombA.2018"],
-    'argPattern': [r'bkgComb[KL]_c[\d]+', ],
-    'fitToCmds' : [],
-})
-SimulFitter_bkgCombA = SimultaneousFitter(setupSimulFitter_bkgCombA)
 
 setupSimFitterFinal_AltM = deepcopy(setupTemplateSimFitter)
 setupSimFitterFinal_AltM.update({

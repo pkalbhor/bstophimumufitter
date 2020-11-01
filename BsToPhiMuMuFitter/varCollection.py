@@ -56,15 +56,18 @@ JpsiTriggersdr1 = RooRealVar("JpsiTriggersdr1", "JpsiTriggersdr1", 0, 1e8)
 PsiPTriggersdr0 = RooRealVar("PsiPTriggersdr0", "PsiPTriggersdr0", 0, 1e8)
 PsiPTriggersdr1 = RooRealVar("PsiPTriggersdr1", "PsiPTriggersdr1", 0, 1e8)
 
+BaseSet = RooArgSet(Mupeta, Mumeta, Muppt, Mumpt, Kppt, Kmpt, Kpeta, Kmeta)
 TriggerBase = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1)
 VarSet = RooArgSet(Bmass, CosThetaK, CosThetaL, Q2, Mumumass, Mumumasserr, Phimass, Bdt)
-dataArgs = RooArgSet(VarSet, TriggerBase, "RooArgSet for Data and MC")
+BaseVars = RooArgSet(BaseSet, TriggerBase, "First Set of Vars")
+dataArgs = RooArgSet(VarSet, BaseVars, "RooArgSet for Data and MC")
 
 #For producing K*0mumu DataSet
 TriggerBaseKstar = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1)
 DRVars           = RooArgSet(LMNTTriggersdr0, LMNTTriggersdr1, JpsiTriggersdr0, JpsiTriggersdr1, PsiPTriggersdr0, PsiPTriggersdr1)
 TrigBaseDR      = RooArgSet(TriggerBaseKstar, DRVars, "RooArgSet, trigger, dr, trackQual")
-dataArgsKStar   = RooArgSet(VarSet, TrigBaseDR, "RooArgSet for bd->K*0mumu MC")
+BaseVars_Kstar  = RooArgSet(BaseSet, TrigBaseDR, "First Set of Vars for Kstar MC")
+dataArgsKStar   = RooArgSet(VarSet, BaseVars_Kstar, "RooArgSet for bd->K*0mumu MC")
 
 genCosThetaK = RooRealVar("genCosThetaK", "cos#theta_{K}", -1., 1.)
 genCosThetaL = RooRealVar("genCosThetaL", "cos#theta_{l}", -1., 1.)

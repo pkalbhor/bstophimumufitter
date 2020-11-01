@@ -27,11 +27,13 @@ Following functions to be overloaded to customize the full procedure...
         self.category = None
         self.data = []
         self.pdf = []
+        self.Years = []
         self.dataWithCategories = None
         self.minimizer = None
 
     def _bookPdfData(self):
         """ """
+        self.Years = self.cfg['Years']
         self.category = ROOT.RooCategory("{0}_category".format(self.name), "")
         dataWithCategoriesCmdArgs = (ROOT.RooFit.Index(self.category),)
         if len(self.cfg['category']) == len(self.cfg['data']) == len(self.cfg['pdf']):
@@ -61,10 +63,10 @@ Following functions to be overloaded to customize the full procedure...
     def _preFitSteps(self):
         """Abstract: Do something before main fit loop"""
         cwd=os.getcwd()
-        for pdf, data, Year in zip(self.pdf, self.data, ['2016', '2017', '2018']):
+        for pdf, data, Year in zip(self.pdf, self.data, self.Years):
             args = pdf.getParameters(ROOT.RooArgSet(CosThetaK, CosThetaL, Bmass))
             os.chdir(os.path.join(self.process.cwd, "plots_{0}".format(Year)))
-            if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, aliasDict=self.cfg['argAliasInDB'], exclude=self.cfg['argPattern'])
+            if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, aliasDict=self.cfg['argAliasInDB'], exclude=self.cfg['argPattern'] if not self.process.cfg['args'].seqKey == 'fitBkgCombA' else None)
             self.ToggleConstVar(args, True)
             self.ToggleConstVar(args, False, self.cfg['argPattern'])
             FitterCore.ArgLooper(args, lambda p: p.SetName(p.GetName()+"_{0}".format(Year)), targetArgs=self.cfg['argPattern'], inverseSel=True) # Rename parameter names
@@ -89,12 +91,15 @@ Following functions to be overloaded to customize the full procedure...
         
         for pdf, data in zip(self.pdf, self.data):
             self.ToggleConstVar(pdf.getParameters(data), True)
+
+        cwd=os.getcwd()
+        if self.process.cfg['args'].seqKey == 'fitBkgCombA': os.chdir(os.path.join(self.process.cwd, "plots_{0}".format(self.process.cfg['args'].Year)))
         if self.cfg['saveToDB']:
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.minimizer.getParameters(self.dataWithCategories), self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
-
         for pdf, data in zip(self.pdf, self.data):
             FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, pdf.getParameters(data), aliasDict=self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None, exclude=None)
-    
+        os.chdir(cwd)
+     
         """ofile = ROOT.TFile("../input/Simultaneous_{0}.root".format(q2bins[self.process.cfg['binKey']]['label']), "RECREATE")
         self.minimizer.Write()
         self.dataWithCategories.Write()
@@ -114,7 +119,7 @@ Following functions to be overloaded to customize the full procedure...
         frameK = CosThetaK.frame(ROOT.RooFit.Bins(24)) 
         c1=ROOT.TCanvas()
         binKey= q2bins[self.process.cfg['binKey']]['label']
-        for ID, Category, Year in zip([0, 1, 2], self.cfg['category'], ['2016', '2017', '2018']):
+        for ID, Category, Year in zip(range(len(self.Years)), self.cfg['category'], self.Years):
             CopyFrameL = frameL.Clone()
             self.category.setIndex(ID); sampleSet = ROOT.RooArgSet(self.category)
             self.dataWithCategories.plotOn(CopyFrameL, ROOT.RooFit.Cut("({0}==({0}::{1}))".format(self.category.GetName(), Category)))
@@ -127,7 +132,7 @@ Following functions to be overloaded to customize the full procedure...
             Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries("{0}=={0}::{1}".format(self.category.GetName(), Category))) )
             Plotter.latexCMSSim()
             Plotter.latexCMSExtra()
-            c1.SaveAs("Simultaneous_Cosl_{0}_{1}_{2}.pdf".format(Year, self.process.cfg['args'].seqKey, binKey))
+            c1.SaveAs("Simultaneous_Cosl_{0}_{1}_{2}.pdf".format(Category, self.process.cfg['args'].seqKey, binKey))
 
             CopyFrameK = frameK.Clone()
             self.dataWithCategories.plotOn(CopyFrameK, ROOT.RooFit.Cut("{0}=={0}::{1}".format(self.category.GetName(), Category)))
@@ -140,7 +145,7 @@ Following functions to be overloaded to customize the full procedure...
             Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries("{0}=={0}::{1}".format(self.category.GetName(), Category))) )
             Plotter.latexCMSSim()
             Plotter.latexCMSExtra()
-            c1.SaveAs("Simultaneous_CosK_{0}_{1}_{2}.pdf".format(Year, self.process.cfg['args'].seqKey, binKey))
+            c1.SaveAs("Simultaneous_CosK_{0}_{1}_{2}.pdf".format(Category, self.process.cfg['args'].seqKey, binKey))
 
         """
         self.dataWithCategories.plotOn(frameL)

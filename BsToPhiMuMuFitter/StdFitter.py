@@ -63,7 +63,7 @@ class StdFitter(FitterCore):
             FitterCore.ArgLooper(self.pdf.getParameters(self.data), lambda p: arglist.append(p.GetName()))
             for var in arglist: self.cfg['argAliasInDB'].update({var: var+self.cfg['AliasTag']})
 
-        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgKStar'])
+        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgComb', 'nSig', 'nBkgPeak', 'PeakFrac'])
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
 
@@ -112,7 +112,6 @@ class StdFitter(FitterCore):
         frame.Draw()
         c2.SaveAs("PlotInstant.pdf")"""
         ####
-
         self.ToggleConstVar(self.args, True)
         if self.cfg['saveToDB']:
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)

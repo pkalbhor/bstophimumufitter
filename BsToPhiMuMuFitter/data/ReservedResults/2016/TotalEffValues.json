@@ -1,0 +1,47 @@
+{
+  "belowJpsiA": {
+    "PeakNum": 1445,
+    "PeakDen": 3412721,
+    "sigNum": 152553,
+    "sigDen": 5645627,
+    "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 1.0 && genQ2 < 2.0",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 1.0 && Q2 < 2.0",
+    "ratio": 0.015669620953326135
+  },
+  "belowJpsiB": {
+    "PeakNum": 4541,
+    "PeakDen": 9487827,
+    "sigNum": 484172,
+    "sigDen": 15492577,
+    "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 2.0 && genQ2 < 5.0",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 2.0 && Q2 < 5.0",
+    "ratio": 0.015314708600944745
+  },
+  "belowJpsiC": {
+    "PeakNum": 4792,
+    "PeakDen": 12219887,
+    "sigNum": 627377,
+    "sigDen": 19267599,
+    "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 5.0 && genQ2 < 8.0",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 5.0 && Q2 < 8.0",
+    "ratio": 0.012043386537595489
+  },
+  "betweenPeaks": {
+    "PeakNum": 2578,
+    "PeakDen": 9742057,
+    "sigNum": 467981,
+    "sigDen": 15195406,
+    "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 11.0 && genQ2 < 12.5",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 11.0 && Q2 < 12.5",
+    "ratio": 0.008592436552869414
+  },
+  "summaryLowQ2": {
+    "PeakNum": 7531,
+    "PeakDen": 16492344,
+    "sigNum": 823600,
+    "sigDen": 26867222,
+    "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 1.0 && genQ2 < 6.0",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 1.0 && Q2 < 6.0",
+    "ratio": 0.014896240956573568
+  }
+}

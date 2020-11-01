@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdn=3 ft=python et:
 
@@ -186,7 +186,7 @@ setupBuildBkgCombM = {
     'objName': "f_bkgCombM",
     'varNames': ["Bmass"],
     'factoryCmd': [
-        "bkgCombM_c1[-0.2,-20,2]",
+        "bkgCombM_c1[-0.1,-20,2]",
         "EXPR::f_bkgCombM('exp(bkgCombM_c1*Bmass)',{Bmass,bkgCombM_c1})",
     ],
     'CopyObj': [('JP', 'f_bkgCombM'), ('PP', 'f_bkgCombM')]
@@ -212,34 +212,28 @@ def GetAnalyticBkgAList(self):
     AltRange = Args.AltRange
     if Args.Year==2016:
         f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
-        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Gaus3Poly4_Exp']
-        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Gaus3Poly4_Exp'] #['Gaus2Poly4_Poly3'] #['GausPoly_Exp']
-        f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Poly6_Poly6' if AltRange else 'Gaus3Poly4_Exp']
+        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Gaus2Poly2_Poly6'] #['Gaus3Poly4_Exp']
+        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Gaus2Poly2_Poly6'] 
+        f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Poly6_Poly6' if AltRange else 'Gaus2Poly2_Poly6']
         f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Poly6_Poly4']
         f_analyticBkgCombA_format['abovePsi2s']     = f_analyticBkgCombA_format['Poly6_Poly4']
-        f_analyticBkgCombA_format['summary']        = f_analyticBkgCombA_format['Poly6_Poly4']
-        f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Gaus3Poly4_Exp']
+        f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Gaus3Poly2_Poly6']
         return f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
     if Args.Year==2017:
         f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
-        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Poly3_Poly3'] #['Gaus3_Poly4'] #['Gaus2Poly4_Poly3']
-        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Poly3_Poly3' if AltRange else 'Gaus3Poly4_Poly4']
+        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Gaus3_Poly4']
+        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Poly3_Poly3' if AltRange else 'Gaus3Poly4_Exp']
         f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Poly6_Poly5']
-        f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Poly3_Poly3']
-        f_analyticBkgCombA_format['abovePsi2s']     = f_analyticBkgCombA_format['Poly3_Poly3']
-        f_analyticBkgCombA_format['summary']        = f_analyticBkgCombA_format['Poly6_Poly5']
-        f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Poly6_Poly4' if AltRange else 'Gaus2Poly4_Poly3']
+        f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Poly6_Poly6']
+        f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Poly6_Poly4' if AltRange else 'Gaus3_Poly6']
         return f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
     if Args.Year==2018:
         f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
-        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Gaus3_Poly4'] #['Gaus2Poly4_Poly3']
-        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Gaus3Poly4_Poly4']
-        f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Gaus2Poly4_Poly3']
-        f_analyticBkgCombA_format['abovePsi2s']     = f_analyticBkgCombA_format['Poly4_Poly4']
-        f_analyticBkgCombA_format['summary']        = f_analyticBkgCombA_format['Poly6_Poly4']#['Gaus2Poly2_Exp'] #['GausPoly_Exp']
+        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Gaus2_Poly4'] #['Gaus2Poly4_Poly3']
+        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Gaus2Poly2_Poly6']
+        f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Poly6_Poly5']
         f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Gaus2Poly4_Poly4' if AltRange else 'Gaus3Poly4_Exp']
         return f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
-      
 setupBuildAnalyticBkgCombA = {
     'objName': "f_bkgCombA",
     'varNames': ["CosThetaK", "CosThetaL"],
@@ -328,13 +322,13 @@ def GetAnalyticBkgA_KStarList(self):
         return f_analyticBkgA_KStar_format.get(self.process.cfg['binKey'], f_analyticBkgA_KStar_format['DEFAULT'])
     if Args.Year==2018:
         f_analyticBkgA_KStar_format['DEFAULT']     = f_analyticBkgA_KStar_format['Gaus2_Poly4']
-        f_analyticBkgA_KStar_format['belowJpsiA']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['belowJpsiA']  = f_analyticBkgA_KStar_format['Gaus2_Poly4']
         f_analyticBkgA_KStar_format['belowJpsiB']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
         f_analyticBkgA_KStar_format['belowJpsiC']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
         f_analyticBkgA_KStar_format['betweenPeaks']= f_analyticBkgA_KStar_format['Poly6_Poly4']
         f_analyticBkgA_KStar_format['abovePsi2s']  = f_analyticBkgA_KStar_format['Poly6_Poly4']
         f_analyticBkgA_KStar_format['summary']     = f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
-        f_analyticBkgA_KStar_format['summaryLowQ2']= f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['summaryLowQ2']= f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
         return f_analyticBkgA_KStar_format.get(self.process.cfg['binKey'], f_analyticBkgA_KStar_format['DEFAULT'])
 
 setupBuildAnalyticBkgA_KStar = {
@@ -566,11 +560,13 @@ def buildFinal(self):
         self.cfg['source'][p] = f_final
 
     variations2 = [("f_final_WithKStar", "f_sig3D", "f_bkgComb", "f_bkg_KStar"),
+                   ("f_final_WithKStar_Alt", "f_sig3D_Alt", "f_bkgComb_Alt", "f_bkg_KStar_Alt"),
                    ("f_final_AltM_WithKStar", "f_sig3DAltM", "f_bkgComb", "f_bkg_KStar"),
-                   ("f_final_AltM_WithKStar_Alt", "f_sig3D_Alt", "f_bkgComb_Alt", "f_bkg_KStar_Alt"),
                    ("f_finalM_JP", "f_sigM_DCBG_JP", "f_bkgCombM_JP", "f_sigM_DCBG_JK"),                #Mass PDF = nSig(BkgMDCBG)+nBkg(fBkgM)
                    ("f_finalM_PP", "f_sigM_DCBG_PP", "f_bkgCombM_PP", "f_sigM_DCBG_PK")]                #Mass PDF = nSig(BkgMDCBG)+nBkg(fBkgM)
-    wspace.factory("PeakFrac[0.0674]") #Has to be different for each bin
+
+    from BsToPhiMuMuFitter.python.datainput import GetPeakingFraction
+    wspace.factory("PeakFrac[{}]".format(GetPeakingFraction(self)*3.90625*(9.4E-7/(8.2E-7*0.492)) ) ) #Has to be different for each bin
     wspace.obj("PeakFrac").setError(0.0118)
     wspace.factory("prod::nBkgPeak(PeakFrac, nSig)")
     for p, pSig, pBkg, kBkg in variations2:

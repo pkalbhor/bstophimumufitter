@@ -38,6 +38,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
     # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
     self.cfg['dataset'] = []
     for key, val in bMassRegions.items():
+        finalcut = self.process.cfg['cuts'][-1] if not key in ['USB', 'LSB'] else self.process.cfg['cuts'][-1].replace(re.search("Bdt \>(.*?)\)\&\&", self.process.cfg['cuts'][-1]).group(0).strip(), 'Bdt > 0.30)&&')
         if any([re.match(pat, key) for pat in targetBMassRegion]):
             self.cfg['dataset'].append(
                 (
@@ -101,11 +102,9 @@ def GetDataReader(self, seq):
         dataReaderCfg.update({
             'name': "dataReader.{Year}".format(Year=self.cfg['args'].Year),
             'ifile': self.cfg['dataFilePath'],
-            #'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
-            'lumi': 35.9,
-        })
+            'lumi': 35.9,    })
         dataReader = DataReader(dataReaderCfg)
-        customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$', 'ResVeto', 'antiResVeto'], extraCuts=ExtraCuts)
+        customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^.{0,1}SB$', 'ResVeto', 'antiResVeto'], extraCuts=ExtraCuts) #'^Fit$', '^.{0,1}SB$',
         dataReader.customize = types.MethodType(customizeData, dataReader)
         return dataReader
 
@@ -347,7 +346,7 @@ def buildAccXRecEffiHist(self):
             'cutString' : "({0}) && ({1})".format(re.sub("Q2", "genQ2", q2bins[binKey]['cutString']), genSel)})
         setupEfficiencyBuildProcedure['rec'].update({
             'ifiles'    : self.process.cfg['sigMC'],
-            'dfiles'    : self.process.cfg['sigMCD'],
+            'dfiles'    : self.process.cfg['genOff']['PhiMuMu'],
             'baseString': "({0}) && ({1})".format(re.sub("Q2", "genQ2", q2bins[binKey]['cutString']), genSel),
             'cutString' : "({0}) && ({1}) && ({2})".format(cuts_antiResVeto if binKey in ['jpsi', 'psi2s'] else self.process.cfg['cuts'][-1], q2bins[binKey]['cutString'], 1 if ExtraCuts==None else ExtraCuts)})
 

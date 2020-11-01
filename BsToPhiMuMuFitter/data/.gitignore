@@ -1,4 +1,6 @@
 # Ignore everything in this directory
-*
+*.root
+*.log
+*.swp
 # Except this file
 !.gitignore

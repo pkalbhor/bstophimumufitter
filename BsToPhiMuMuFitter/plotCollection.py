@@ -709,7 +709,7 @@ plotterCfg_sigStyleNoFill = (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineWidth(2))
 #plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillColor(4), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines()); 
 plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4), ROOT.RooFit.DrawOption("L"))
 plotterCfg_bkgStyle = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
-plotterCfg_bkgStyle_KStar = (ROOT.RooFit.LineColor(6), ROOT.RooFit.LineStyle(8))
+plotterCfg_bkgStyle_KStar = (ROOT.RooFit.LineColor(8), ROOT.RooFit.LineStyle(1), ROOT.RooFit.FillColor(8), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3001))
 
 def GetPlotterObject(self):
     Year=self.cfg['args'].Year
@@ -754,6 +754,17 @@ def GetPlotterObject(self):
             'dataPlots': [["sigMCReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''), plotterCfg_mcStyle, "Simulation"], ],
             'pdfPlots': [[PdfForSigM, plotterCfg_sigStyle, fitCollection.ArgAliasDCB, "Total fit"], ],
             'marks': {'marks': ['sim']}}
+    }
+    plotterCfg['plots']['plot_finalM'] = {
+        'func': [functools.partial(plotPostfitBLK, frames='B')],
+        'kwargs': {       
+            'pltName': "plot_finalM.{}".format(Year),
+            'dataReader': "dataReader.{}".format(Year),
+            'pdfPlots': [["f_finalM.{}".format(Year), plotterCfg_styles['allStyleBase'], None, "Total fit"],
+                         ["f_sigM.{}".format(Year), plotterCfg_styles['sigStyleBase'], None, "Sigal"],
+                         ["f_bkgCombM.{}".format(Year), plotterCfg_styles['bkgStyleBase'], None, "Background"],                               
+                        ],
+        }
     }
     plotterCfg['plots']['plot_sigMDCB'] = {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
@@ -802,12 +813,12 @@ def GetPlotterObject(self):
     plotterCfg['plots']['plot_final_WithKStar'] = {
         'func': [plotPostfitBLK_WithKStar],
         'kwargs': {
-            'pltName': "plot_final_WithKStar.{}".format(Year),
+            'pltName': "plot_final_WithKStar{}.{}".format('_Alt' if AltRange else '',Year),
             'dataReader': "dataReader.{}".format(Year),
-            'pdfPlots': [["f_final_WithKStar.{}".format(Year), plotterCfg_styles['allStyleBase'], None, "Total fit"],
-                         ["f_sigM.{}".format(Year), plotterCfg_styles['sigStyleBase'], None, "Sigal"],
-                         ["f_bkgComb.{}".format(Year),   plotterCfg_styles['bkgStyleBase'], None, "Background"],
-                         ["f_bkg_KStar.{}".format(Year), plotterCfg_bkgStyle_KStar,         None, "K*0MuMu Background"], ],
+            'pdfPlots': [["f_final_WithKStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_styles['allStyleBase'], None, "Total fit"],
+                         ["f_sigM{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_styles['sigStyleBase'], None, "Sigal"],
+                         ["f_bkgComb{}.{}".format('_Alt' if AltRange else '', Year),   plotterCfg_styles['bkgStyleBase'], None, "Background"],
+                         ["f_bkg_KStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_bkgStyle_KStar,         None, "K*0MuMu Background"], ],
         }
     }
     plotterCfg['plots']['plot_final_AltM_WithKStar'] = {
@@ -901,17 +912,6 @@ def GetPlotterObject(self):
             'dataPlots': [["dataReader.Fit", plotterCfg_dataStyle, None], ],
             'marks': []}
     },
-
-    'angular3D_sigM': {
-        'func': [functools.partial(plotSimpleBLK, frames='B')],
-        'kwargs': {
-            'pltName': "angular3D_sigM",
-            'dataPlots': [["sigMCReader.Fit", plotterCfg_styles['mcStyleBase'], "Simulation"], ],
-            'pdfPlots': [["f_sigM", plotterCfg_styles['sigStyleBase'], fitCollection.setupSigMFitter['argAliasInDB'], "Total fit"],
-                        ],
-            'marks': {'marks': ['sim']}}
-    },
-
     'simpleBLK': {  # Most general case, to be customized by user
         'func': [functools.partial(plotSimpleBLK, frames='BLK')],
         'kwargs': {
