@@ -56,6 +56,7 @@ JpsiTriggersdr1 = RooRealVar("JpsiTriggersdr1", "JpsiTriggersdr1", 0, 1e8)
 PsiPTriggersdr0 = RooRealVar("PsiPTriggersdr0", "PsiPTriggersdr0", 0, 1e8)
 PsiPTriggersdr1 = RooRealVar("PsiPTriggersdr1", "PsiPTriggersdr1", 0, 1e8)
 
+genVars = RooArgSet(genMupEta,genMumEta, genMupPt, genMumPt, genKpEta, genKmEta, genKpPt, genKmPt)
 BaseSet = RooArgSet(Mupeta, Mumeta, Muppt, Mumpt, Kppt, Kmpt, Kpeta, Kmeta)
 TriggerBase = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1)
 VarSet = RooArgSet(Bmass, CosThetaK, CosThetaL, Q2, Mumumass, Mumumasserr, Phimass, Bdt)
@@ -75,4 +76,7 @@ genQ2        = RooRealVar("genQ2", "q^{2} [GeV^{2}]", 0.1, 20.)
 dataArgsGEN = RooArgSet(
     genQ2,
     genCosThetaK,
-    genCosThetaL)
+    genCosThetaL,
+    genKpPt, genKmPt)
+dataArgsGENonly = RooArgSet(genQ2,genCosThetaK,genCosThetaL)
+dataArgsGENoff = RooArgSet(genVars, dataArgsGENonly, "For off Gen MC sample")

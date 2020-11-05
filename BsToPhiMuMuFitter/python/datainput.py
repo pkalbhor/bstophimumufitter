@@ -127,6 +127,7 @@ def MCLumiCalc(self):
         return Events / (FiltEff*Xsec*BF*DBF)
 
 def GetPeakingFraction(self):
+    """Getting a fraction of a Bd->K*0mumu with respect to signal mode"""
     from BsToPhiMuMuFitter.anaSetup import q2bins
     import ROOT
     import json

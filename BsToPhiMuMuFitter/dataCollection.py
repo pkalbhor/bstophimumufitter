@@ -11,7 +11,7 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
-from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN, dataArgsKStar
+from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN, dataArgsKStar, dataArgsGENoff
 from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, modulePath 
 from BsToPhiMuMuFitter.python.datainput import genSel, ExtraCuts, ExtraCutsKStar
 
@@ -90,7 +90,7 @@ def customizeGEN(self):
     self.cfg['dataset'].append(
         (
             "{0}.Fit".format(self.cfg['name']),
-            re.sub("Q2", "genQ2", q2bins[self.process.cfg['binKey']]['cutString'])
+            re.sub("Q2", "genQ2", q2bins[self.process.cfg['binKey']]['cutString']) + " && genKpPt>0 && genKmPt>0"
         )
     )
     # Customize preload TFile
@@ -114,7 +114,6 @@ def GetDataReader(self, seq):
         sigMCReaderCfg.update({
             'name': "sigMCReader.{Year}".format(Year=self.cfg['args'].Year),
             'ifile': self.cfg['sigMC'],
-            #'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
             'lumi': 66226.56,
         })
         sigMCReader = DataReader(sigMCReaderCfg)
@@ -129,7 +128,6 @@ def GetDataReader(self, seq):
             'name': "KsigMCReader.{Year}".format(Year=self.cfg['args'].Year),
             'ifile': self.cfg['peaking']['KstarMuMu'],
             'argset': dataArgsKStar,
-            #'preloadFile': modulePath + "/data/preload_KsigMCReader_{binLabel}.root",
             'lumi': 2765.2853,
         })
         KsigMCReader = DataReader(KsigMCReaderCfg)
@@ -141,18 +139,26 @@ def GetDataReader(self, seq):
         sigMCGENReaderCfg.update({
             'name': "sigMCGENReader.{Year}".format(Year=self.cfg['args'].Year),
             'ifile': self.cfg['genonly']['PhiMuMu'],
-            #'preloadFile': modulePath + "/data/preload_sigMCGENReader_{binLabel}.root",
             'argset': dataArgsGEN,
         })
         sigMCGENReader = DataReader(sigMCGENReaderCfg)
         sigMCGENReader.customize = types.MethodType(customizeGEN, sigMCGENReader)
         return sigMCGENReader
+    if seq is 'sigMCGENcReader':
+        sigMCGENcReaderCfg = copy(CFG)
+        sigMCGENcReaderCfg.update({
+            'name': "sigMCGENcReader.{Year}".format(Year=self.cfg['args'].Year),
+            'ifile': self.cfg['genOff']['PhiMuMu'],
+            'argset': dataArgsGENoff,
+        })
+        sigMCGENcReader = DataReader(sigMCGENcReaderCfg)
+        sigMCGENcReader.customize = types.MethodType(customizeGEN, sigMCGENcReader)
+        return sigMCGENcReader
     if seq is 'sigMCReader_JP':
         bkgJpsiMCReaderCfg = copy(CFG)
         bkgJpsiMCReaderCfg.update({
             'name': "sigMCReader_JP.{}".format(self.cfg['args'].Year),
             'ifile': self.cfg['control']['JpsiPhi'],
-            #'preloadFile': modulePath + "/data/preload_bkgMCReader_JP_{binLabel}.root",
             'lumi': 295.761,
         })
         bkgJpsiMCReader = DataReader(bkgJpsiMCReaderCfg)
@@ -164,7 +170,6 @@ def GetDataReader(self, seq):
         bkgPsi2sMCReaderCfg.update({
             'name': "sigMCReader_PP.{}".format(self.cfg['args'].Year),
             'ifile': self.cfg['control']['PsiPhi'],
-            #'preloadFile': modulePath + "/data/preload_bkgMCReader_PP_{binLabel}.root",
             'lumi': 218.472,
         })
         bkgPsi2sMCReader = DataReader(bkgPsi2sMCReaderCfg)
@@ -176,7 +181,6 @@ def GetDataReader(self, seq):
         bkgJpsiKstMCReaderCfg.update({
             'name': "bkgMCReader_JK.{}".format(self.cfg['args'].Year),
             'ifile': self.cfg['peaking']['JpsiKstar'],
-            #'preloadFile': modulePath + "/data/preload_bkgMCReader_JK_{binLabel}.root",
             'lumi': 218.472,
         })
         bkgJpsiKstMCReader = DataReader(bkgJpsiKstMCReaderCfg)
@@ -188,7 +192,6 @@ def GetDataReader(self, seq):
         bkgPsi2sKstMCReaderCfg.update({
             'name': "bkgMCReader_PK.{}".format(self.cfg['args'].Year),
             'ifile': self.cfg['peaking']['PsiKstar'],
-            #'preloadFile': modulePath + "/data/preload_bkgMCReader_PK_{binLabel}.root",
             'lumi': 218.472,
         })
         bkgPsi2sKstMCReader = DataReader(bkgPsi2sKstMCReaderCfg)
@@ -231,7 +234,7 @@ def buildTotalEffiHist(self):
         # Fill histograms
         setupEfficiencyBuildProcedure['acc'].update({
             'ifiles'    : self.process.cfg['genonly']['PhiMuMu'],
-            'baseString': re.sub("Q2", "genQ2", q2bins[binKey]['cutString']),
+            'baseString': re.sub("Q2", "genQ2", q2bins[binKey]['cutString']) + " && genKpPt>0 && genKmPt>0",
             'cutString' : "({0}) && ({1})".format(re.sub("Q2", "genQ2", q2bins[binKey]['cutString']), genSel)})
         setupEfficiencyBuildProcedure['rec'].update({
             'ifiles'    : self.process.cfg['sigMC'],
@@ -342,7 +345,7 @@ def buildAccXRecEffiHist(self):
         # Fill histograms
         setupEfficiencyBuildProcedure['acc'].update({
             'ifiles'    : self.process.cfg['genonly']['PhiMuMu'],
-            'baseString': re.sub("Q2", "genQ2", q2bins[binKey]['cutString']),
+            'baseString': re.sub("Q2", "genQ2", q2bins[binKey]['cutString']) + " && genKpPt>0 && genKmPt>0",
             'cutString' : "({0}) && ({1})".format(re.sub("Q2", "genQ2", q2bins[binKey]['cutString']), genSel)})
         setupEfficiencyBuildProcedure['rec'].update({
             'ifiles'    : self.process.cfg['sigMC'],
@@ -431,7 +434,8 @@ def buildAccXRecEffiHist(self):
 
                 h2_eff.Write("h2_{0}_{1}".format(label, binKey), ROOT.TObject.kOverwrite)
                 h2_eff_fine.Write("h2_{0}_fine_{1}".format(label, binKey), ROOT.TObject.kOverwrite)
-
+                h2_eff.CreateHistogram().Write("hist2_{0}_{1}".format(label, binKey), ROOT.TObject.kOverwrite)
+                h2_eff_fine.CreateHistogram().Write("hist2_{0}_fine_{1}".format(label, binKey), ROOT.TObject.kOverwrite)
                 if UseDataFrame: del df_acc, df_tot
 
         # Merge acc and rec to accXrec
@@ -439,9 +443,17 @@ def buildAccXRecEffiHist(self):
         for proj in ["ProjectionX", "ProjectionY"]:
             h_acc_fine = fin.Get("h_acc_fine_{0}_{1}".format(binKey, proj))
             h_rec_fine = fin.Get("h_rec_fine_{0}_{1}".format(binKey, proj))
+            hist_acc_fine = h_acc_fine.GetPassedHistogram().Clone("hist_acc_fine_{0}_{1}".format(binKey, proj))
+            hist_rec_fine = h_rec_fine.GetPassedHistogram().Clone("hist_rec_fine_{0}_{1}".format(binKey, proj))
             h_accXrec_fine = h_acc_fine.GetPassedHistogram().Clone("h_accXrec_fine_{0}_{1}".format(binKey, proj))
+            hist_acc_fine.Reset("ICESM")
+            hist_rec_fine.Reset("ICESM")
             h_accXrec_fine.Reset("ICESM")
             for b in range(1, h_accXrec_fine.GetNbinsX() + 1):
+                hist_acc_fine.SetBinContent(b, h_acc_fine.GetEfficiency(b))
+                hist_acc_fine.SetBinError(b, max(h_acc_fine.GetEfficiencyErrorLow(b), h_acc_fine.GetEfficiencyErrorUp(b)))
+                hist_rec_fine.SetBinContent(b, h_rec_fine.GetEfficiency(b))
+                hist_rec_fine.SetBinError(b, max(h_rec_fine.GetEfficiencyErrorLow(b), h_rec_fine.GetEfficiencyErrorUp(b)))
                 if h_rec_fine.GetTotalHistogram().GetBinContent(b) == 0 or h_rec_fine.GetPassedHistogram().GetBinContent(b) == 0:
                     h_accXrec_fine.SetBinContent(b, 0)
                     h_accXrec_fine.SetBinError(b, 1)
@@ -449,6 +461,8 @@ def buildAccXRecEffiHist(self):
                 else:
                     h_accXrec_fine.SetBinContent(b, h_acc_fine.GetEfficiency(b) * h_rec_fine.GetEfficiency(b))
                     h_accXrec_fine.SetBinError(b, h_accXrec_fine.GetBinContent(b) * math.sqrt(1 / h_acc_fine.GetTotalHistogram().GetBinContent(b) + 1 / h_acc_fine.GetPassedHistogram().GetBinContent(b) + 1 / h_rec_fine.GetTotalHistogram().GetBinContent(b) + 1 / h_rec_fine.GetPassedHistogram().GetBinContent(b)))
+            hist_acc_fine.Write("hist_acc_{0}_{1}".format(binKey, proj), ROOT.TObject.kOverwrite)
+            hist_rec_fine.Write("hist_rec_{0}_{1}".format(binKey, proj), ROOT.TObject.kOverwrite)
             h_accXrec_fine.Write("h_accXrec_{0}_{1}".format(binKey, proj), ROOT.TObject.kOverwrite)
 
         h2_acc = fin.Get("h2_acc_{0}".format(binKey))
@@ -478,6 +492,25 @@ def buildAccXRecEffiHist(self):
     self.cfg['source'][self.name + '.accXrec.{0}'.format(Year)] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec))
     self.cfg['source'][self.name + '.h_accXrec_fine_ProjectionX.{0}'.format(Year)] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey']))
     self.cfg['source'][self.name + '.h_accXrec_fine_ProjectionY.{0}'.format(Year)] = fin.Get("h_accXrec_{0}_ProjectionY".format(self.process.cfg['binKey']))
+   
+    hist2_acc_fine = fin.Get("hist2_acc_fine_{0}".format(binKey))
+    self.cfg['source'][self.name + '.hist2_acc_fine.{}'.format(Year)] = hist2_acc_fine
+    self.cfg['source'][self.name + '.acc_fine.{0}'.format(Year)] = RooDataHist("acc_fine", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(hist2_acc_fine))
+    self.cfg['source'][self.name + '.h_acc_fine_ProjectionX.{0}'.format(Year)] = fin.Get("hist_acc_{0}_ProjectionX".format(self.process.cfg['binKey']))
+    self.cfg['source'][self.name + '.h_acc_fine_ProjectionY.{0}'.format(Year)] = fin.Get("hist_acc_{0}_ProjectionY".format(self.process.cfg['binKey']))
+
+    hist2_rec_fine = fin.Get("hist2_rec_fine_{0}".format(binKey))
+    self.cfg['source'][self.name + '.hist2_rec_fine.{}'.format(Year)] = hist2_rec_fine
+    self.cfg['source'][self.name + '.rec_fine.{0}'.format(Year)] = RooDataHist("rec_fine", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(hist2_rec_fine))
+    self.cfg['source'][self.name + '.h_rec_fine_ProjectionX.{0}'.format(Year)] = fin.Get("hist_rec_{0}_ProjectionX".format(self.process.cfg['binKey']))
+    self.cfg['source'][self.name + '.h_rec_fine_ProjectionY.{0}'.format(Year)] = fin.Get("hist_rec_{0}_ProjectionY".format(self.process.cfg['binKey']))
+
+    hist2_acc = fin.Get("hist2_acc_{0}".format(binKey))
+    self.cfg['source'][self.name + '.hist2_acc.{}'.format(Year)] = hist2_acc
+    self.cfg['source'][self.name + '.acc.{0}'.format(Year)] = RooDataHist("acc", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(hist2_acc))
+    hist2_rec = fin.Get("hist2_rec_{0}".format(binKey))
+    self.cfg['source'][self.name + '.hist2_rec.{}'.format(Year)] = hist2_rec
+    self.cfg['source'][self.name + '.rec.{0}'.format(Year)] = RooDataHist("rec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(hist2_rec))
 
 effiHistReaderOneStep = ObjProvider({
     'name': "effiHistReaderOneStep",

@@ -21,6 +21,7 @@ class EfficiencyFitter(FitterCore):
         cfg = FitterCore.templateConfig()
         cfg.update({
             'name': "EfficiencyFitter",
+            'datahist': "effiHistReader.h2_accXrec",
             'data': "effiHistReader.accXrec",
             'dataX': "effiHistReader.h_accXrec_fine_ProjectionX",
             'dataY': "effiHistReader.h_accXrec_fine_ProjectionY",
@@ -43,13 +44,13 @@ class EfficiencyFitter(FitterCore):
         self.ToggleConstVar(args, isConst=True)
         
         # Disable xTerm correction and fit to 1-D
-        args.find('hasXTerm').setVal(0)
+        args.find('hasXTerm{}'.format(self.cfg['label'])).setVal(0)
 
         h_accXrec_fine_ProjectionX = self.process.sourcemanager.get(self.cfg['dataX'])
         h_accXrec_fine_ProjectionY = self.process.sourcemanager.get(self.cfg['dataY'])
         effi_cosl = self.process.sourcemanager.get(self.cfg['pdfX'])
         effi_cosK = self.process.sourcemanager.get(self.cfg['pdfY'])
-        for proj, pdf, var, argPats in [(h_accXrec_fine_ProjectionX, effi_cosl, CosThetaL, [r"^l\d+$"]), (h_accXrec_fine_ProjectionY, effi_cosK, CosThetaK, [r"^k\d+$"])]:
+        for proj, pdf, var, argPats in [(h_accXrec_fine_ProjectionX, effi_cosl, CosThetaL, [r"^l\d+\w*"]), (h_accXrec_fine_ProjectionY, effi_cosK, CosThetaK, [r"^k\d+\w*"])]:
             hdata = ROOT.RooDataHist("hdata", "", ROOT.RooArgList(var), ROOT.RooFit.Import(proj))
             self.ToggleConstVar(args, isConst=False, targetArgs=argPats)
             
@@ -73,15 +74,16 @@ class EfficiencyFitter(FitterCore):
 
             self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
 
-        args.find('effi_norm').setConstant(False)
+        effi_norm='effi_norm{}'.format(self.cfg['label'])
+        args.find(effi_norm).setConstant(False)
         Res2D=self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True), ROOT.RooFit.Save(), ROOT.RooFit.PrintLevel(-1))
         Res2D.Print()
-        args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
-        args.find('effi_norm').setConstant(True)
+        args.find(effi_norm).setVal(args.find(effi_norm).getVal() / 4.)
+        args.find(effi_norm).setConstant(True)
 
         # Fix uncorrelated term and for later update with xTerms in main fit step
-        args.find('hasXTerm').setVal(1)
-        self.ToggleConstVar(args, isConst=False, targetArgs=[r"^x\d+$"])
+        args.find('hasXTerm{}'.format(self.cfg['label'])).setVal(1)
+        self.ToggleConstVar(args, isConst=False, targetArgs=[r"^x\d+\w*"])
 
     def _postFitSteps(self):
         """Post-processing"""
@@ -90,14 +92,13 @@ class EfficiencyFitter(FitterCore):
         FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, args)
 
     def _runFitSteps(self):
-        h2_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec.{0}".format(self.process.cfg['args'].Year))
+        h2_accXrec = self.process.sourcemanager.get(self.cfg['datahist']) #("effiHistReader.h2_accXrec.{0}".format(self.process.cfg['args'].Year))
         args = self.pdf.getParameters(self.data)
         nPar = 0
         def GetTFunction():
             nonlocal nPar
             args_it = args.createIterator()
             arg = args_it.Next()
-            pdb.set_trace()
             effi_sigA_formula = self.pdf.formula().formulaString()
             paramDict ={}
             for p in range(self.pdf.formula().actualDependents().getSize()):
@@ -151,7 +152,6 @@ class EfficiencyFitter(FitterCore):
 
         else:
             f2_effi_sigA=GetTFunction()
-            pdb.set_trace()
             fitter = ROOT.EfficiencyFitter()
             self.minimizer = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
             self.minimizer.SetPrintLevel(0) #Pritam
@@ -163,7 +163,6 @@ class EfficiencyFitter(FitterCore):
             print ("""    Floating Parameter  InitialValue    FinalValue +/-  Error     GblCorr.
   --------------------  ------------  --------------------------  --------""")
             import ctypes 
-            pdb.set_trace()
             parVal, parErr = ctypes.c_double(.0), ctypes.c_double(.0)
             eplus, eminus, eparab, gcc = ctypes.c_double(0.), ctypes.c_double(0.), ctypes.c_double(.0), ctypes.c_double(0.)
             for xIdx in range(nPar):
@@ -216,9 +215,8 @@ class EfficiencyFitter(FitterCore):
             os.mkdir(path)
         os.chdir(path)
         ####################################
-        canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
-        os.chdir(cwd)
-
+        canvas.Print("effi_2D_comp{}_{}.pdf".format(self.cfg['label'], q2bins[self.process.cfg['binKey']]['label']))
+        os.chdir(cwd) 
 
     @staticmethod
     def isPosiDef(formula2D):

@@ -41,6 +41,8 @@ def GetFitterObjects(self, seq):
         setupEffiFitter = deepcopy(EfficiencyFitter.templateConfig())
         setupEffiFitter.update({
             'name'  : "effiFitter.{0}".format(Year),
+            'label' : "",
+            'datahist': "effiHistReader.h2_accXrec.{0}".format(Year), # 2D Histogram
             'data'  : "effiHistReader.accXrec.{0}".format(Year), # 2D RooDataHist
             'dataX' : "effiHistReader.h_accXrec_fine_ProjectionX.{0}".format(Year), # TH1D CosThetaL 
             'dataY' : "effiHistReader.h_accXrec_fine_ProjectionY.{0}".format(Year), # TH1D CosThetaK
@@ -50,6 +52,34 @@ def GetFitterObjects(self, seq):
         })
         effiFitter = EfficiencyFitter(setupEffiFitter)
         return effiFitter
+    if seq is 'accEffiFitter':
+        setupEffiFitter = deepcopy(EfficiencyFitter.templateConfig())
+        setupEffiFitter.update({
+            'name'  : "accEffiFitter.{0}".format(Year),
+            'label' : "_acc",
+            'datahist': "effiHistReader.hist2_acc.{0}".format(Year) if (binKey=="belowJpsiA" or (binKey=="belowJpsiB" and Year==2018)) else "effiHistReader.hist2_acc_fine.{0}".format(Year), # 2D Histogram
+            'data'  : "effiHistReader.acc.{0}".format(Year) if (binKey=="belowJpsiA" or (binKey=="belowJpsiB" and Year==2018)) else "effiHistReader.acc_fine.{0}".format(Year), # 2D RooDataHist
+            'dataX' : "effiHistReader.h_acc_fine_ProjectionX.{0}".format(Year), # TH1D CosThetaL 
+            'dataY' : "effiHistReader.h_acc_fine_ProjectionY.{0}".format(Year), # TH1D CosThetaK
+            'pdf'   : "effi_sigA_acc.{0}".format(Year),
+            'pdfX'  : "effi_cosl_acc.{0}".format(Year),
+            'pdfY'  : "effi_cosK_acc.{0}".format(Year),
+        })
+        return EfficiencyFitter(setupEffiFitter)
+    if seq is 'recEffiFitter':
+        setupEffiFitter = deepcopy(EfficiencyFitter.templateConfig())
+        setupEffiFitter.update({
+            'name'  : "recEffiFitter.{0}".format(Year),
+            'label' : "_rec",
+            'datahist': "effiHistReader.hist2_rec.{0}".format(Year) if binKey=="belowJpsiA" else "effiHistReader.hist2_rec_fine.{0}".format(Year), # 2D Histogram
+            'data'  : "effiHistReader.rec.{0}".format(Year) if binKey=="belowJpsiA" else "effiHistReader.rec_fine.{0}".format(Year), # 2D RooDataHist
+            'dataX' : "effiHistReader.h_rec_fine_ProjectionX.{0}".format(Year), # TH1D CosThetaL 
+            'dataY' : "effiHistReader.h_rec_fine_ProjectionY.{0}".format(Year), # TH1D CosThetaK
+            'pdf'   : "effi_sigA_rec.{0}".format(Year),
+            'pdfX'  : "effi_cosl_rec.{0}".format(Year),
+            'pdfY'  : "effi_cosK_rec.{0}".format(Year),
+        })
+        return EfficiencyFitter(setupEffiFitter)
     if seq is 'sig2DFitter':
         setupSig2DFitter = deepcopy(setupTemplateFitter)
         setupSig2DFitter.update({
@@ -69,6 +99,21 @@ def GetFitterObjects(self, seq):
             'name': "sigAFitter.{0}".format(Year),
             'data': "sigMCGENReader.{0}.Fit".format(Year),
             'pdf': "f_sigA.{0}".format(Year),
+            'FitHesse': True,
+            'FitMinos': [True, ()],
+            'argPattern': ['unboundAfb', 'unboundFl'],
+            'createNLLOpt': [],
+            'argAliasInDB': ArgAliasGEN,
+        })
+        sigAFitter=StdFitter(setupSigAFitter)
+        sigAFitter._bookPdfData = types.MethodType(sigAFitter_bookPdfData, sigAFitter)
+        return sigAFitter
+    if seq is 'sigAFitterCorrected':
+        setupSigAFitter = deepcopy(setupTemplateFitter)
+        setupSigAFitter.update({
+            'name': "sigAFitterCorrected.{0}".format(Year),
+            'data': "sigMCGENReader.{0}.Fit".format(Year),
+            'pdf': "f_sigA_corrected.{0}".format(Year),
             'FitHesse': True,
             'FitMinos': [True, ()],
             'argPattern': ['unboundAfb', 'unboundFl'],

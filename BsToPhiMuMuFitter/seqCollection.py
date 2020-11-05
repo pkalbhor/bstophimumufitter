@@ -33,6 +33,7 @@ args = parser.parse_known_args()[0]
 predefined_sequence['loadData']  = ['dataReader']
 predefined_sequence['loadMC']    = ['sigMCReader']
 predefined_sequence['loadMCGEN'] = ['sigMCGENReader']
+predefined_sequence['loadMCGENc'] = ['sigMCGENcReader'] # from official GEN MC
 predefined_sequence['loadMCk']   = ['KsigMCReader']
 predefined_sequence['loadMCJ']   = ['bkgJpsiMCReader']
 predefined_sequence['loadMCP']   = ['bkgPsi2sMCReader']
@@ -40,8 +41,11 @@ predefined_sequence['buildPdfs'] = ['dataReader', 'stdWspaceReader', 'stdPDFBuil
 predefined_sequence['buildEff']  = ['effiHistReader']
 
 predefined_sequence['fitEff']    = ['effiHistReader', 'stdWspaceReader', 'effiFitter']
+predefined_sequence['fitAccEff'] = ['effiHistReader', 'stdWspaceReader', 'accEffiFitter']
+predefined_sequence['fitRecEff'] = ['effiHistReader', 'stdWspaceReader', 'recEffiFitter']
 predefined_sequence['fitSig2D']  = (['sigMCReader', 'stdWspaceReader'], ['SimultaneousFitter_sig2D'] if args.SimFit else ['sig2DFitter'])
 predefined_sequence['fitSigMCGEN']=(['sigMCGENReader', 'stdWspaceReader'], ['SimulFitter_sigGEN'] if args.SimFit else ['sigAFitter'])
+predefined_sequence['fitSigMCGENc']=['sigMCGENReader', 'stdWspaceReader', 'sigAFitterCorrected'] # Corrected Decay Formula
 predefined_sequence['fitBkgCombA']=(['dataReader', 'stdWspaceReader'], ['SimulFitter_bkgCombA'] if args.SimFit else ['bkgCombAFitter'])
 predefined_sequence['fitSigMDCB']    = ['sigMCReader', 'stdWspaceReader', 'sigMDCBFitter']
 predefined_sequence['fitSigM']    = ['sigMCReader', 'stdWspaceReader', 'sigMFitter']
@@ -60,7 +64,7 @@ predefined_sequence['fitFinalAll'] = predefined_sequence['loadAll'] + ['fitSigMD
 predefined_sequence['createplots']=['effiHistReader', 
                                     'dataReader', 
                                     'sigMCReader', 
-                                    #'sigMCGENReader', 
+                                    'sigMCGENReader', 
                                     'KsigMCReader', 
                                     #'bkgJpsiMCReader', 
                                     'stdWspaceReader', 'plotter']
@@ -86,8 +90,9 @@ def Instantiate(self, seq):
     import BsToPhiMuMuFitter.fitCollection  as fitCollection
     from BsToPhiMuMuFitter.plotCollection import GetPlotterObject
     sequence=[]
-    dataSequence=['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader', 'sigMCReader_JP', 'sigMCReader_PP', 'bkgMCReader_JK', 'bkgMCReader_PK']
-    fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'sigMFitter', 'sigMDCBFitter', 'finalFitter_AltM', 
+    dataSequence=['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader', 'sigMCReader_JP', 'sigMCReader_PP', 'bkgMCReader_JK', 'bkgMCReader_PK', 'sigMCGENcReader']
+    fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'accEffiFitter', 'recEffiFitter', 'sigMFitter', 'sigMDCBFitter',
+                'finalFitter_AltM', 'sigAFitterCorrected',
                 'bkgM_KStarFitter', 'bkgA_KStarFitter', 'finalFitter_WithKStar', 'finalFitter_AltM_WithKStar', 'finalMFitter', 'sigMFitter_JP',
                 'bkgMFitter_JK', 'sigMFitter_PP', 'bkgMFitter_PK', 'finalMFitter_JP', 'finalMFitter_PP',
                 'SimulFitter_bkgCombA']

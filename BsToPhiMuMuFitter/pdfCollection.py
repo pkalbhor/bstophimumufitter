@@ -62,18 +62,30 @@ setattr(ObjProvider, 'getWspace', getWspace)
 def buildGenericObj(self, objName, factoryCmd, varNames, CopyObj=None):
     """Build with RooWorkspace.factory. See also RooFactoryWSTool.factory"""
     wspace = self.getWspace()
+    tspace = None
     obj = wspace.obj(objName)
-    if obj == None:
-        self.logger.logINFO("Build {0} from scratch.".format(objName))
+    def InFactory(wspace):
         for v in varNames:
             if wspace.obj(v) == None:
                 getattr(wspace, 'import')(globals()[v])  #Import CosThetaK and CosThetaL 
         for cmdIdx, cmd in enumerate(factoryCmd):
             wspace.factory(cmd)
+    if obj == None:
+        self.logger.logINFO("Build {0} from scratch.".format(objName))
+        InFactory(wspace)
         obj = wspace.obj(objName)
+    elif objName=='effi_sigA':
+        tspace = RooWorkspace('TempWorkSpace')
+        InFactory(tspace)
+
     if CopyObj is not None:
-        for suffix, obj in CopyObj:
-            getattr(wspace, 'import')(wspace.obj(obj), ROOT.RooFit.RenameAllNodes(suffix), ROOT.RooFit.RenameAllVariablesExcept(suffix, 'Bmass,CosThetaL,CosThetaK'))
+        for suffix, Obj in CopyObj:
+            if not tspace==None:
+                getattr(wspace, 'import')(tspace.obj(Obj), ROOT.RooFit.RenameAllNodes(suffix), ROOT.RooFit.RenameAllVariablesExcept(suffix, 'Bmass,CosThetaL,CosThetaK'))
+            else:
+                getattr(wspace, 'import')(wspace.obj(Obj), ROOT.RooFit.RenameAllNodes(suffix), ROOT.RooFit.RenameAllVariablesExcept(suffix, 'Bmass,CosThetaL,CosThetaK'))
+            self.cfg['source'][objName+'_'+suffix]=wspace.obj(Obj+'_'+suffix)
+    del tspace
     self.cfg['source'][objName] = obj
 
 #======================================================================================================
@@ -84,21 +96,18 @@ def GetEffiSigAList(self):
         f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
         f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
         f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-        f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
         f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
 
     if Args.Year==2017:
         f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
         f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
         f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-        f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm_v2'] 
         f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
 
     if Args.Year==2018:
         f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
         f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
         f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-        f_effiSigA_format['Test1']        = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
         f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
     return f_effiSigA_format.get(self.process.cfg['binKey'], f_effiSigA_format['DEFAULT'])
 
@@ -108,6 +117,65 @@ setupBuildEffiSigA = {
     'factoryCmd': [  ]
 }
 
+def Get_AccEff_List(self):
+    Args=self.process.cfg['args']
+    f_effiSigA_Acc={} # In order to avoid taking previously set `f_effiSigA_format` dict keys   
+    if Args.Year==2016:
+        f_effiSigA_Acc['DEFAULT']      = f_effiSigA_format['Poly6_Poly6_XTerm']
+        f_effiSigA_Acc['belowJpsiA']   = f_effiSigA_format['Poly8_Poly8_XTerm']
+        f_effiSigA_Acc['belowJpsiB']   = f_effiSigA_format['Poly9_Poly6_XTerm']
+        f_effiSigA_Acc['belowJpsiC']   = f_effiSigA_format['Poly9_Poly8_XTerm']
+        f_effiSigA_Acc['betweenPeaks'] = f_effiSigA_format['Poly7_Poly6_XTerm']
+        f_effiSigA_Acc['summaryLowQ2'] = f_effiSigA_format['Poly7_Poly7_XTerm']
+
+    if Args.Year==2017:
+        f_effiSigA_Acc['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
+        f_effiSigA_Acc['belowJpsiA']   = f_effiSigA_format['Poly7_Poly7_XTerm']
+        f_effiSigA_Acc['belowJpsiB']   = f_effiSigA_format['Poly7_Poly7_XTerm']
+        f_effiSigA_Acc['summaryLowQ2'] = f_effiSigA_format['Poly7_Poly7_XTerm']
+
+    if Args.Year==2018:
+        f_effiSigA_Acc['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
+        f_effiSigA_Acc['belowJpsiA']   = f_effiSigA_format['Poly7_Poly7_XTerm']
+        f_effiSigA_Acc['belowJpsiB']   = f_effiSigA_format['Poly6_Poly6_XTerm']
+        f_effiSigA_Acc['summaryLowQ2'] = f_effiSigA_format['Poly7_Poly7_XTerm']
+    return f_effiSigA_Acc.get(self.process.cfg['binKey'], f_effiSigA_Acc['DEFAULT'])
+
+setupBuild_accEffiSigA = {
+    'objName': "effi_sigA",
+    'varNames': ["CosThetaK", "CosThetaL"],
+    'factoryCmd': [  ],
+    'CopyObj': [('acc', 'effi_sigA'), ('acc', 'effi_cosl'), ('acc', 'effi_cosK')]
+}
+
+def Get_RecEff_List(self):
+    Args=self.process.cfg['args']
+    f_effiSigA_Rec = {}
+    if Args.Year==2016:
+        f_effiSigA_Rec['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
+        f_effiSigA_Rec['belowJpsiA']   = f_effiSigA_format['Poly6_Poly6_XTerm']
+        f_effiSigA_Rec['belowJpsiB']   = f_effiSigA_format['Poly8_Poly6_XTerm']
+        f_effiSigA_Rec['summaryLowQ2'] = f_effiSigA_format['Poly8_Poly6_XTerm']
+
+    if Args.Year==2017:
+        f_effiSigA_Rec['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
+        f_effiSigA_Rec['belowJpsiA']   = f_effiSigA_format['Poly6_Poly6_XTerm']
+        f_effiSigA_Rec['belowJpsiB']   = f_effiSigA_format['Poly6_Poly6_XTerm']
+        f_effiSigA_Rec['summaryLowQ2'] = f_effiSigA_format['Poly6_Poly6_XTerm']
+
+    if Args.Year==2018:
+        f_effiSigA_Rec['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
+        f_effiSigA_Rec['belowJpsiA']   = f_effiSigA_format['Poly6_Poly6_XTerm']
+        f_effiSigA_Rec['belowJpsiB']   = f_effiSigA_format['Poly6_Poly6_XTerm']
+        f_effiSigA_Rec['summaryLowQ2'] = f_effiSigA_format['Poly7_Poly6_XTerm']
+    return f_effiSigA_Rec.get(self.process.cfg['binKey'], f_effiSigA_Rec['DEFAULT'])
+
+setupBuild_recEffiSigA = {
+    'objName': "effi_sigA",
+    'varNames': ["CosThetaK", "CosThetaL"],
+    'factoryCmd': [  ],
+    'CopyObj': [('rec', 'effi_sigA'), ('rec', 'effi_cosl'), ('rec', 'effi_cosK')]
+}
 #======================================================================================================
 setupBuildSigM = {
     'objName': "f_sigM",
@@ -142,8 +210,9 @@ def buildSigA(self):
         f_sigA = ROOT.RooBtosllModel("f_sigA", "", CosThetaL, CosThetaK, wspace.var('unboundAfb'), wspace.var('unboundFl'))
         getattr(wspace, 'import')(f_sigA)
         wspace.importClassCode(ROOT.RooBtosllModel.Class())
-
+        wspace.factory("prod::f_sigA_corrected(f_sigA, effi_sigA_acc)")
     self.cfg['source']['f_sigA'] = f_sigA
+    self.cfg['source']['f_sigA_corrected'] = wspace.obj("f_sigA_corrected")
 
 def buildSig(self):
     """Build with RooWorkspace.factory. See also RooFactoryWSTool.factory"""
@@ -154,10 +223,12 @@ def buildSig(self):
     f_sig3D = wspace.obj("f_sig3D_Alt")
     f_sig3DAltM = wspace.obj("f_sig3DAltM")
     f_sig3DAltM_Alt = wspace.obj("f_sig3DAltM_Alt")
-    if f_sig3D == None or f_sig3DAltM == None:
+    wspace.factory("prod::effi_sigA_comb(effi_sigA_acc, effi_sigA_rec)")
+    effi_sigA_comb = wspace.obj("effi_sigA_comb")
+    if f_sig3D == None or f_sig3DAltM == None or f_sig3DAltM_Alt == None:
         for k in ['effi_sigA', 'f_sigA', 'f_sigM', 'f_sigM_Alt', 'f_sigMDCB', 'f_sigM_DCBG_Alt']:
             locals()[k] = self.cfg['source'][k] if k in self.cfg['source'] else self.process.sourcemanager.get(k)
-        f_sig2D = RooEffProd("f_sig2D", "", locals()['f_sigA'], locals()['effi_sigA'])
+        f_sig2D = RooEffProd("f_sig2D", "", locals()['f_sigA'], effi_sigA_comb) #locals()['effi_sigA'])
         getattr(wspace, 'import')(f_sig2D, ROOT.RooFit.RecycleConflictNodes())
         if wspace.obj("f_sigM") == None:
             getattr(wspace, 'import')(locals()['f_sigM'])
@@ -617,10 +688,14 @@ def customizePDFBuilder(self):
     setupBuildAnalyticBkgA_KStar['factoryCmd'] = GetAnalyticBkgA_KStarList(self)
     setupBuildBkgM_KStar['factoryCmd']         = GetBkgM_KStarList(self) 
     setupBuildEffiSigA['factoryCmd']           = GetEffiSigAList(self) 
+    setupBuild_accEffiSigA['factoryCmd']       = Get_AccEff_List(self) 
+    setupBuild_recEffiSigA['factoryCmd']       = Get_RecEff_List(self) 
     buildAnalyticBkgCombA   = functools.partial(buildGenericObj, **setupBuildAnalyticBkgCombA)
     buildAnalyticBkgA_KStar = functools.partial(buildGenericObj, **setupBuildAnalyticBkgA_KStar)
     buildBkgM_KStar         = functools.partial(buildGenericObj, **setupBuildBkgM_KStar)
     buildEffiSigA           = functools.partial(buildGenericObj, **setupBuildEffiSigA)
+    build_accEffiSigA       = functools.partial(buildGenericObj, **setupBuild_accEffiSigA)
+    build_recEffiSigA       = functools.partial(buildGenericObj, **setupBuild_recEffiSigA)
     
     setupSmoothBkg['factoryCmd'] = SmoothBkgCmd.get(self.process.cfg['binKey'], SmoothBkgCmd['DEFAULT'])
     buildSmoothBkg = functools.partial(buildSmoothBkgCombA, **setupSmoothBkg)
@@ -629,6 +704,8 @@ def customizePDFBuilder(self):
         'wspaceTag': wspaceTag,
         'obj': OrderedDict([
             ('effi_sigA', [buildEffiSigA]),
+            ('acc_effi_sigA', [build_accEffiSigA]),
+            ('rec_effi_sigA', [build_recEffiSigA]),
             ('f_sigA', [buildSigA]),
             ('f_sigM', [buildSigM]),
             ('f_sig3D', [buildSig]),  # Include f_sig2D

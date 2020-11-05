@@ -136,7 +136,7 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
     os.chdir(cwd)
 types.MethodType(plotSimpleGEN, Plotter)
 
-def plotEfficiency(self, data_name, pdf_name):
+def plotEfficiency(self, data_name, pdf_name, data_hist, label):
     pltName = "effi"
     data = self.process.sourcemanager.get(data_name)
     pdf = self.process.sourcemanager.get(pdf_name)
@@ -144,7 +144,7 @@ def plotEfficiency(self, data_name, pdf_name):
         self.logger.logWARNING("Skip plotEfficiency. pdf or data not found")
         return
     args = pdf.getParameters(data)
-    FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
+    if (not self.process.cfg['args'].NoImport): FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
 
     #####################################
     cwd=os.getcwd()
@@ -157,7 +157,7 @@ def plotEfficiency(self, data_name, pdf_name):
     binningL = ROOT.RooBinning(len(dataCollection.accXEffThetaLBins) - 1, dataCollection.accXEffThetaLBins)
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
 
-    data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec.{0}".format(self.process.cfg['args'].Year))
+    data_accXrec = self.process.sourcemanager.get(data_hist) #("effiHistReader.h2_accXrec.{0}".format(self.process.cfg['args'].Year))
     Plotter.canvas.cd()
     #data_accXrec.Scale(100)
     #data_accXrec.SetMinimum(0)
@@ -171,50 +171,51 @@ def plotEfficiency(self, data_name, pdf_name):
     h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(40), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(40)))
     h2_effi_sigA_fine.Scale(100)
     h2_effi_sigA_fine.SetLineColor(2)
-    h2_effi_sigA_fine.Draw("SURF SAME")
+    if not self.process.cfg['args'].NoFit: h2_effi_sigA_fine.Draw("SURF SAME")
     Plotter.latexCMSSim(.08, .93)
     Plotter.latexCMSExtra(.08, .89)
     #Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     Plotter.latexQ2(self.process.cfg['binKey'], .40, .93)
-    self.canvasPrint(pltName + "_2D")
+    self.canvasPrint(pltName + "_2D" + label)
     data_accXrec.Scale(0.01)
     
     #Cos_L Efficiency
     cloned_frameL = Plotter.frameL.emptyClone("cloned_frameL")
-    h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX.{0}".format(self.process.cfg['args'].Year))
-    data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_accXrec_fine_ProjectionX", "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
+    plotlabel= 'acc' if label is '_acc' else 'rec' if label is '_rec' else 'accXrec' 
+    h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_{}_fine_ProjectionX.{}".format(plotlabel, self.process.cfg['args'].Year))
+    data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_{}_fine_ProjectionX".format(plotlabel), "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
     data_accXrec_fine_ProjectionX.plotOn(cloned_frameL, ROOT.RooFit.Rescale(100), ROOT.RooFit.MarkerStyle(7))
-    pdfL = self.process.sourcemanager.get("effi_cosl.{0}".format(self.process.cfg['args'].Year))
-    pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill) 
+    pdfL = self.process.sourcemanager.get("effi_cosl{}.{}".format(label, self.process.cfg['args'].Year))
+    if not self.process.cfg['args'].NoFit: pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill) 
     cloned_frameL.GetYaxis().SetTitle("Efficiency [%]")
-    cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
+    cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum()*(100 if self.process.cfg['args'].NoFit else 1))
 
     cloned_frameL.Draw() #DrawWithResidue(self, cloned_frameL)
     Plotter.latexQ2(self.process.cfg['binKey'])
-    Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
+    if not self.process.cfg['args'].NoFit: Plotter.latex.DrawLatexNDC(.75, .89, "#chi^{{2}}/NDF={0:.2f}".format(cloned_frameL.chiSquare(pdfL.getParameters(data_accXrec_fine_ProjectionX).getSize())))
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
-    self.canvasPrint(pltName + "_cosl")
+    self.canvasPrint(pltName + label + "_cosl")
    
     #Cos_K Efficiency 
     Plotter.canvas.cd()
     cloned_frameK = Plotter.frameK.emptyClone("cloned_frameK")
-    h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY.{0}".format(self.process.cfg['args'].Year)) 
-    data_accXrec_fine_ProjectionY = ROOT.RooDataHist("data_accXrec_fine_ProjectionY", "", ROOT.RooArgList(CosThetaK), ROOT.RooFit.Import(h_accXrec_fine_ProjectionY))
+    h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_{}_fine_ProjectionY.{}".format(plotlabel, self.process.cfg['args'].Year)) 
+    data_accXrec_fine_ProjectionY = ROOT.RooDataHist("data_{}_fine_ProjectionY".format(plotlabel), "", ROOT.RooArgList(CosThetaK), ROOT.RooFit.Import(h_accXrec_fine_ProjectionY))
     data_accXrec_fine_ProjectionY.plotOn(cloned_frameK, ROOT.RooFit.Rescale(100), ROOT.RooFit.MarkerStyle(7))
-    pdfK = self.process.sourcemanager.get("effi_cosK.{0}".format(self.process.cfg['args'].Year))
-    pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill)#, ROOT.RooFit.LineWidth(2))
+    pdfK = self.process.sourcemanager.get("effi_cosK{}.{}".format(label, self.process.cfg['args'].Year))
+    if not self.process.cfg['args'].NoFit: pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill)#, ROOT.RooFit.LineWidth(2))
     cloned_frameK.GetYaxis().SetTitle("Efficiency [%]")
-    cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
+    cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum()*(100 if self.process.cfg['args'].NoFit else 1))
     #cloned_frameK.SetMaximum(10 + cloned_frameK.GetMaximum())
     #cloned_frameK.SetMinimum(h_accXrec_fine_ProjectionY.GetMinimum()*100-10)
 
     cloned_frameK.Draw() #DrawWithResidue(self, cloned_frameK)
     Plotter.latexQ2(self.process.cfg['binKey'])
-    Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
+    if not self.process.cfg['args'].NoFit: Plotter.latex.DrawLatexNDC(.75, .89, "#chi^{{2}}/NDF={0:.2f}".format(cloned_frameK.chiSquare(pdfK.getParameters(data_accXrec_fine_ProjectionY).getSize())))
     Plotter.latexCMSSim()
     Plotter.latexCMSExtra()
-    self.canvasPrint(pltName + "_cosK")
+    self.canvasPrint(pltName + label + "_cosK")
     Plotter.canvas.cd()
     os.chdir(cwd)
 
@@ -719,7 +720,25 @@ def GetPlotterObject(self):
         'func': [plotEfficiency],
         'kwargs': {
             'data_name': "effiHistReader.accXrec.{0}".format(Year),
-            'pdf_name': "effi_sigA.{0}".format(Year)}
+            'pdf_name': "effi_sigA.{0}".format(Year),
+            'data_hist': "effiHistReader.h2_accXrec.{0}".format(Year),
+            'label': ""}
+    }
+    plotterCfg['plots']['effiacc']= {
+        'func': [plotEfficiency],
+        'kwargs': {
+            'data_hist': "effiHistReader.hist2_acc.{0}".format(Year) if (binKey=="belowJpsiA" or (binKey=="belowJpsiB" and Year==2018)) else "effiHistReader.hist2_acc_fine.{0}".format(Year),
+            'data_name': "effiHistReader.acc.{0}".format(Year) if (binKey=="belowJpsiA" or (binKey=="belowJpsiB" and Year==2018)) else "effiHistReader.acc_fine.{0}".format(Year),
+            'pdf_name': "effi_sigA_acc.{0}".format(Year),
+            'label': "_acc"}
+    }
+    plotterCfg['plots']['effirec']= {
+        'func': [plotEfficiency],
+        'kwargs': {
+            'data_hist': "effiHistReader.hist2_rec.{0}".format(Year) if binKey=="belowJpsiA" else "effiHistReader.hist2_rec_fine.{0}".format(Year),
+            'data_name': "effiHistReader.rec.{0}".format(Year) if binKey=="belowJpsiA" else "effiHistReader.rec_fine.{0}".format(Year),
+            'pdf_name': "effi_sigA_rec.{0}".format(Year),
+            'label': "_rec"}
     }
     plotterCfg['plots']['plot_sig2D']= {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
@@ -735,6 +754,14 @@ def GetPlotterObject(self):
             'pltName': "plot_sigMCGEN.{0}".format(Year),
             'dataPlots': [["sigMCGENReader.{0}.Fit".format(Year), plotterCfg_mcStyle, "Simulation"], ],
             'pdfPlots': [["f_sigA.{0}".format(Year), plotterCfg_sigStyle, fitCollection.ArgAliasGEN, None], ],
+            'marks': {'marks': ['sim']}}
+    }
+    plotterCfg['plots']['plot_sigMCGENc']= { #Corrected decay formula
+        'func': [functools.partial(plotSimpleGEN, frames='LK')],
+        'kwargs': {
+            'pltName': "plot_sigMCGENc.{0}".format(Year),
+            'dataPlots': [["sigMCGENReader.{0}.Fit".format(Year), plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [["f_sigA_corrected.{0}".format(Year), plotterCfg_sigStyle, fitCollection.ArgAliasGEN, None], ],
             'marks': {'marks': ['sim']}}
     }
     plotterCfg['plots']['plot_bkgCombA'] = {
