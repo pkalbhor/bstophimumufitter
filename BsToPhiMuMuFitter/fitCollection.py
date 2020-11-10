@@ -37,18 +37,19 @@ def GetFitterObjects(self, seq):
     Year=self.cfg['args'].Year
     AltRange = self.cfg['args'].AltRange
     binKey = self.cfg['binKey']
+    TwoStep = self.cfg['args'].TwoStep
     if seq is 'effiFitter':
         setupEffiFitter = deepcopy(EfficiencyFitter.templateConfig())
         setupEffiFitter.update({
             'name'  : "effiFitter.{0}".format(Year),
-            'label' : "",
+            'label' : '_ts' if TwoStep else '',
             'datahist': "effiHistReader.h2_accXrec.{0}".format(Year), # 2D Histogram
             'data'  : "effiHistReader.accXrec.{0}".format(Year), # 2D RooDataHist
             'dataX' : "effiHistReader.h_accXrec_fine_ProjectionX.{0}".format(Year), # TH1D CosThetaL 
             'dataY' : "effiHistReader.h_accXrec_fine_ProjectionY.{0}".format(Year), # TH1D CosThetaK
-            'pdf'   : "effi_sigA.{0}".format(Year),
-            'pdfX'  : "effi_cosl.{0}".format(Year),
-            'pdfY'  : "effi_cosK.{0}".format(Year),
+            'pdf'   : "effi_sigA{}.{}".format('_ts' if TwoStep else '', Year),
+            'pdfX'  : "effi_cosl{}.{}".format('_ts' if TwoStep else '', Year),
+            'pdfY'  : "effi_cosK{}.{}".format('_ts' if TwoStep else '', Year),
         })
         effiFitter = EfficiencyFitter(setupEffiFitter)
         return effiFitter
@@ -85,7 +86,7 @@ def GetFitterObjects(self, seq):
         setupSig2DFitter.update({
             'name': "sig2DFitter.{0}".format(Year),
             'data': "sigMCReader.{0}.{1}".format(Year, "altFit" if AltRange else "Fit"),
-            'pdf': "f_sig2D.{0}".format(Year),
+            'pdf': "f_sig2D{}.{}".format('_ts' if TwoStep else '', Year),
             'FitHesse': True,
             'FitMinos': [True, ()],
             'argPattern': ['unboundAfb', 'unboundFl'],

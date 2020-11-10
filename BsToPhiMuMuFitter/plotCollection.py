@@ -567,7 +567,8 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
                 fl = unboundFlToFl(unboundFl['getVal'])
                 afb = unboundAfbToAfb(unboundAfb['getVal'], fl)
-
+                print("Parameter values, Bin:", binKey, " A6:", unboundAfb['getVal'], " -> ", afb, "  FL:", unboundFl['getVal'], " -> ", fl)
+            
                 yyFl[binKeyIdx] = fl
                 yyAfb[binKeyIdx] = afb
                 yyFlStatErrHi[binKeyIdx], yyFlStatErrLo[binKeyIdx],\
@@ -716,13 +717,14 @@ def GetPlotterObject(self):
     Year=self.cfg['args'].Year
     AltRange=self.cfg['args'].AltRange
     binKey = self.cfg['binKey']
+    TwoStep = self.cfg['args'].TwoStep
     plotterCfg['plots']['effi']= {
         'func': [plotEfficiency],
         'kwargs': {
             'data_name': "effiHistReader.accXrec.{0}".format(Year),
-            'pdf_name': "effi_sigA.{0}".format(Year),
+            'pdf_name': "effi_sigA{}.{}".format('_ts' if TwoStep else '', Year),
             'data_hist': "effiHistReader.h2_accXrec.{0}".format(Year),
-            'label': ""}
+            'label': '_ts' if TwoStep else ''}
     }
     plotterCfg['plots']['effiacc']= {
         'func': [plotEfficiency],
@@ -745,7 +747,7 @@ def GetPlotterObject(self):
         'kwargs': {
             'pltName': "plot_sig2D.{0}".format(Year),
             'dataPlots': [["sigMCReader.{0}.Fit".format(Year), plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_sig2D.{0}".format(Year), plotterCfg_sigStyle, fitCollection.ArgAliasRECO, None], ],
+            'pdfPlots': [["f_sig2D{}.{}".format('_ts' if TwoStep else '', Year), plotterCfg_sigStyle, fitCollection.ArgAliasRECO, None], ],
             'marks': {'marks': ['sim']}}
     }
     plotterCfg['plots']['plot_sigMCGEN']= {

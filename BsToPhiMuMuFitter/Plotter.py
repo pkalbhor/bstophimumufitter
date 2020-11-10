@@ -187,7 +187,8 @@ class Plotter(Path):
                         ROOT.RooFit.Binning(binning),
                         *p[1])
         if Plotpdf:
-            for pIdx, p in enumerate(pdfPlots): p[0].plotOn(cloned_frame, ROOT.RooFit.Name("pdfP{0}".format(pIdx)), *p[1])
+            for pIdx, p in enumerate(pdfPlots): 
+                p[0].plotOn(cloned_frame, ROOT.RooFit.Name("pdfP{0}".format(pIdx)), *p[1])
         #p0 = cloned_frame.findObject("pdfP0" if pdfPlots else "dataP0").GetHistogram()
         #cloned_frame.SetMaximum(scaleYaxis * p0.GetMaximum())
         cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())

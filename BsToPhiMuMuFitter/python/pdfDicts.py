@@ -10,17 +10,32 @@ xTerm = "(x0+x1*CosThetaK+x2*(1.5*pow(CosThetaK,2)-0.5)+x3*(2.5*pow(CosThetaK,3)
 +(x15+x16*CosThetaK+x17*(1.5*pow(CosThetaK,2)-0.5)+x18*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x19*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,3)\
 +(x20+x21*CosThetaK+x22*(1.5*pow(CosThetaK,2)-0.5)+x23*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x24*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,4)"
 
-xTerm2 = "\
-(x0+x1*CosThetaK+x2*(1.5*pow(CosThetaK,2)-0.5)+x3*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x4*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))\
+# LP4*Pol3
+xTerm2 = "(x0+x1*CosThetaK+x2*(1.5*pow(CosThetaK,2)-0.5)+x3*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x4*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))\
 +(x5+x6*CosThetaK+x7*(1.5*pow(CosThetaK,2)-0.5)+x8*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x9*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*CosThetaL\
 +(x10+x11*CosThetaK+x12*(1.5*pow(CosThetaK,2)-0.5)+x13*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x14*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,2)\
 +(x15+x16*CosThetaK+x17*(1.5*pow(CosThetaK,2)-0.5)+x18*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x19*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,3)"; n1A=20
 
-xTerm3 = "\
-(x0+x1*CosThetaK+x2*(1.5*pow(CosThetaK,2)-0.5)+x3*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x4*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))\
+# LP3*Pol3
+xTerm3 = "(x0+x1*CosThetaK+x2*(1.5*pow(CosThetaK,2)-0.5)+x3*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))\
++(x4+x5*CosThetaK+x6*(1.5*pow(CosThetaK,2)-0.5)+x7*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))*CosThetaL\
++(x8+x9*CosThetaK+x10*(1.5*pow(CosThetaK,2)-0.5)+x11*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))*pow(CosThetaL,2)\
++(x12+x13*CosThetaK+x14*(1.5*pow(CosThetaK,2)-0.5)+x15*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))*pow(CosThetaL,3)"; Nx3=16
+
+# LP3*Pol4
+xTerm4 = "(x0+x1*CosThetaK+x2*(1.5*pow(CosThetaK,2)-0.5)+x3*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))\
++(x4+x5*CosThetaK+x6*(1.5*pow(CosThetaK,2)-0.5)+x7*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))*CosThetaL\
++(x8+x9*CosThetaK+x10*(1.5*pow(CosThetaK,2)-0.5)+x11*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))*pow(CosThetaL,2)\
++(x12+x13*CosThetaK+x14*(1.5*pow(CosThetaK,2)-0.5)+x15*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))*pow(CosThetaL,3)\
++(x16+x17*CosThetaK+x18*(1.5*pow(CosThetaK,2)-0.5)+x19*(2.5*pow(CosThetaK,3)-1.5*CosThetaK))*pow(CosThetaL,4)"; Nx4=20
+
+# LP4*Pol5
+xTerm5 = "(x0+x1*CosThetaK+x2*(1.5*pow(CosThetaK,2)-0.5)+x3*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x4*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))\
 +(x5+x6*CosThetaK+x7*(1.5*pow(CosThetaK,2)-0.5)+x8*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x9*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*CosThetaL\
 +(x10+x11*CosThetaK+x12*(1.5*pow(CosThetaK,2)-0.5)+x13*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x14*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,2)\
-+(x15+x16*CosThetaK+x17*(1.5*pow(CosThetaK,2)-0.5)+x18*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x19*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,3)"; Nx3=20
++(x15+x16*CosThetaK+x17*(1.5*pow(CosThetaK,2)-0.5)+x18*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x19*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,3)\
++(x20+x21*CosThetaK+x22*(1.5*pow(CosThetaK,2)-0.5)+x23*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x24*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,4)\
++(x25+x26*CosThetaK+x27*(1.5*pow(CosThetaK,2)-0.5)+x28*(2.5*pow(CosThetaK,3)-1.5*CosThetaK)+x29*(4.375*pow(CosThetaK, 4)-3.75*pow(CosThetaK, 2)+0.375))*pow(CosThetaL,4)"; Nx5=30
 
 pdfL1A = "l1*exp(-0.5*pow((CosThetaL-l2)/l3,2)) + exp(-0.5*pow((CosThetaL-l4)/l5,2)) + exp(-0.5*pow((CosThetaL-l6)/l7,2))"; nLc=7
 pdfK1A = "1+k1*CosThetaK+k2*pow(CosThetaK,2)+k3*pow(CosThetaK,3)+k4*pow(CosThetaK,4)+k5*pow(CosThetaK,5)+k6*pow(CosThetaK,6)"; nK1A=7
@@ -65,12 +80,29 @@ f_effiSigA_format['Poly5_Poly4_XTerm'] = ["l{}[-10,10]".format(i) for i in range
 + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}[-30,30]".format(i) for i in range(n)]) + "}")] \
                 + ["prod::effi_sigA(effi_norm[0.5,0,10], effi_cosl, effi_cosK, effi_xTerm)"]
 
-f_effiSigA_format['Poly6_Poly6_XTerm'] = ["l{}[-10,10]".format(i) for i in range(1, 7)] \
-                + ["k{}[-10,10]".format(i) for i in range(1, 7)] \
-                + ["RooPolynomial::effi_cosl(CosThetaL, {l1, l2, l3, l4, l5, l6})"] \
-                + ["RooPolynomial::effi_cosK(CosThetaK, {k1, k2, k3, k4, k5, k6})"] + ["hasXTerm[0]"] \
-+ ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=xTerm, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}[-30,30]".format(i) for i in range(n)]) + "}")] \
-                + ["prod::effi_sigA(effi_norm[0.5,0,10], effi_cosl, effi_cosK, effi_xTerm)"]
+for ver, numb, term in [('', n, xTerm), ('2', n1A, xTerm2), ('3', Nx3, xTerm3), ('4', Nx4, xTerm4), ('5', Nx5, xTerm5)]:
+    f_effiSigA_format['Poly6_Poly6_XTerm{}'.format(ver)] = ["l{}[-10,10]".format(i) for i in range(1, 7)] \
+                    + ["k{}[-10,10]".format(i) for i in range(1, 7)] \
+                    + ["RooPolynomial::effi_cosl(CosThetaL, {l1, l2, l3, l4, l5, l6})"] \
+                    + ["RooPolynomial::effi_cosK(CosThetaK, {k1, k2, k3, k4, k5, k6})"] + ["hasXTerm[0]"] \
+    + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=term, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}[-30,30]".format(i) for i in range(numb)]) + "}")] \
+                    + ["prod::effi_sigA(effi_norm[0.5,0,10], effi_cosl, effi_cosK, effi_xTerm)"]
+
+    f_effiSigA_format['Gaus3_Poly6_XTerm{}'.format(ver)] = ["l1[.1,0,10]", "l2[0,-0.5,0.5]", "l3[0.2,.01,5.]", "l4[.2,-0.5,0.5]", "l5[.2,0.01,5.0]", "l6[0,-.5,.5]", "l7[.2,.001,5.]", "l8[.1,0,10]"] \
+        + ["k{0}[-10,10]".format(i) for i in range(1, 7)] \
+        + ["RooGaussian::G1(CosThetaL, l2, l3)", "RooGaussian::G2(CosThetaL, l4, l5)", "RooGaussian::G3(CosThetaL, l6, l7)"] \
+        + ["SUM::effi_cosl(l1*G1, l8*G2, G3)"]\
+        + ["RooPolynomial::effi_cosK(CosThetaK, {k1, k2, k3, k4, k5, k6})"] + ["hasXTerm[0]"] \
+        + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=term, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}[-30,30]".format(i) for i in range(numb)]) + "}")] \
+        + ["prod::effi_sigA(effi_norm[0.5,0,10], effi_cosl, effi_cosK, effi_xTerm)"]
+
+    f_effiSigA_format['Gaus3_Poly8_XTerm{}'.format(ver)] = ["l1[.1,0,10]", "l2[0,-1.5,1.5]", "l3[0.2,.01,5.]", "l4[.2,-2.5,2.5]", "l5[.2,0.01,5.0]", "l6[0,-1.5,1.5]", "l7[.2,.001,5.]", "l8[.1,0,10]"] \
+        + ["k{0}[-20,20]".format(i) for i in range(1, 9)] \
+        + ["RooGaussian::G1(CosThetaL, l2, l3)", "RooGaussian::G2(CosThetaL, l4, l5)", "RooGaussian::G3(CosThetaL, l6, l7)"] \
+        + ["SUM::effi_cosl(l1*G1, l8*G2, G3)"]\
+        + ["RooPolynomial::effi_cosK(CosThetaK, {k1, k2, k3, k4, k5, k6, k7, k8})"] + ["hasXTerm[0]"] \
+        + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=term, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}[-30,30]".format(i) for i in range(numb)]) + "}")] \
+        + ["prod::effi_sigA(effi_norm[0.5,0,100], effi_cosl, effi_cosK, effi_xTerm)"]
 
 f_effiSigA_format['Poly7_Poly4_XTerm'] = ["l{}[-10,10]".format(i) for i in range(1, 8)] \
                 + ["k{}[-10,10]".format(i) for i in range(1, 5)] \

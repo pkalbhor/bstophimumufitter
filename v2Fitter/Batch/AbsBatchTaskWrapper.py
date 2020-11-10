@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set sts=4 sw=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import os
+import os, time
 import abc
 import tempfile
 from copy import copy
@@ -51,9 +51,9 @@ class AbsBatchTaskWrapper:
         #transfer_output_files = job$(Process),job$(Process).tar.gz
         templateJdl = """
 getenv      = True
-log         = log/log.$(Cluster).{binKey}
-output      = log/out.$(Cluster).{binKey}
-error       = log/err.$(Cluster).{binKey}
+log         = log/{time}_{seqKey}_{binKey}.log
+output      = log/{time}_{seqKey}_{binKey}.out
+error       = log/{time}_{seqKey}_{binKey}.err
 +JobFlavour = "{JobFlavour}"
 
 initialdir  = {initialdir}
@@ -62,6 +62,8 @@ Notify_user = physics.pritam@gmail.com
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 """.format(
+        time=str(time.localtime().tm_yday)+'_'+str(time.localtime().tm_hour)+str(time.localtime().tm_min)+str(time.localtime().tm_sec),
+        seqKey="{seqKey}",
         initialdir=self.task_dir,
         JobFlavour=self.cfg['queue'],
         executable="{executable}",

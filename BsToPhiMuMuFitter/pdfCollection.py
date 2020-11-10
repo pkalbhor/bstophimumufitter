@@ -84,7 +84,7 @@ def buildGenericObj(self, objName, factoryCmd, varNames, CopyObj=None):
                 getattr(wspace, 'import')(tspace.obj(Obj), ROOT.RooFit.RenameAllNodes(suffix), ROOT.RooFit.RenameAllVariablesExcept(suffix, 'Bmass,CosThetaL,CosThetaK'))
             else:
                 getattr(wspace, 'import')(wspace.obj(Obj), ROOT.RooFit.RenameAllNodes(suffix), ROOT.RooFit.RenameAllVariablesExcept(suffix, 'Bmass,CosThetaL,CosThetaK'))
-            self.cfg['source'][objName+'_'+suffix]=wspace.obj(Obj+'_'+suffix)
+            self.cfg['source'][Obj+'_'+suffix]=wspace.obj(Obj+'_'+suffix)
     del tspace
     self.cfg['source'][objName] = obj
 
@@ -94,14 +94,16 @@ def GetEffiSigAList(self):
     Args=self.process.cfg['args']
     if Args.Year==2016:
         f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
-        f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-        f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
+        f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2'] #['Gaus3_Poly6_XTerm_v2']
+        f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm'] #['Poly6_Poly6_XTerm']
+        f_effiSigA_format['belowJpsiC']   = f_effiSigA_format['Poly9_Poly8_XTerm']
+        f_effiSigA_format['betweenPeaks'] = f_effiSigA_format['Poly7_Poly6_XTerm']
         f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
 
     if Args.Year==2017:
         f_effiSigA_format['DEFAULT']      = f_effiSigA_format['Poly8_Poly6_XTerm']
         f_effiSigA_format['belowJpsiA']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
-        f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
+        f_effiSigA_format['belowJpsiB']   = f_effiSigA_format['Poly9_Poly6_XTerm']
         f_effiSigA_format['summaryLowQ2'] = f_effiSigA_format['Gaus3_Poly6_XTerm_v2']
 
     if Args.Year==2018:
@@ -114,7 +116,8 @@ def GetEffiSigAList(self):
 setupBuildEffiSigA = {
     'objName': "effi_sigA",
     'varNames': ["CosThetaK", "CosThetaL"],
-    'factoryCmd': [  ]
+    'factoryCmd': [  ],
+    'CopyObj': [('ts', 'effi_sigA'), ('ts', 'effi_cosl'), ('ts', 'effi_cosK')]
 }
 
 def Get_AccEff_List(self):
@@ -203,7 +206,7 @@ def buildSigA(self):
     f_sigA = wspace.pdf("f_sigA")
     if f_sigA == None:
         wspace.factory("unboundFl[0.6978,-3e3,3e3]")
-        wspace.factory("unboundAfb[-0.01,-3e3,3e3]")
+        wspace.factory("unboundAfb[0.00,-3e4,3e4]")
         wspace.factory("expr::fl('0.5+TMath::ATan(unboundFl)/TMath::Pi()',{unboundFl})")
         wspace.factory("expr::afb('2.*(1-fl)*TMath::ATan(unboundAfb)/TMath::Pi()',{unboundAfb,fl})")
         wspace.factory("EXPR::f_sigA_original('(9.0/16.0)*((0.5*(1.0-fl)*(1.0-CosThetaK*CosThetaK)*(1.0+CosThetaL*CosThetaL)) + (2.0*fl*CosThetaK*CosThetaK*(1.0-CosThetaL*CosThetaL)) + (afb*(1.0-CosThetaK*CosThetaK)*CosThetaL))', {CosThetaK, CosThetaL, fl, afb})")
@@ -226,10 +229,14 @@ def buildSig(self):
     wspace.factory("prod::effi_sigA_comb(effi_sigA_acc, effi_sigA_rec)")
     effi_sigA_comb = wspace.obj("effi_sigA_comb")
     if f_sig3D == None or f_sig3DAltM == None or f_sig3DAltM_Alt == None:
-        for k in ['effi_sigA', 'f_sigA', 'f_sigM', 'f_sigM_Alt', 'f_sigMDCB', 'f_sigM_DCBG_Alt']:
+        for k in ['effi_sigA',  'effi_sigA_ts', 'f_sigA', 'f_sigM', 'f_sigM_Alt', 'f_sigMDCB', 'f_sigM_DCBG_Alt']:
             locals()[k] = self.cfg['source'][k] if k in self.cfg['source'] else self.process.sourcemanager.get(k)
-        f_sig2D = RooEffProd("f_sig2D", "", locals()['f_sigA'], effi_sigA_comb) #locals()['effi_sigA'])
+        f_sig2D         = RooEffProd("f_sig2D", "", locals()['f_sigA'], locals()['effi_sigA'])
+        f_sig2D_ts      = RooEffProd("f_sig2D_ts", "", locals()['f_sigA'], locals()['effi_sigA_ts'])
+        f_sig2D_ce      = RooEffProd("f_sig2D_ce", "", locals()['f_sigA'], effi_sigA_comb) 
         getattr(wspace, 'import')(f_sig2D, ROOT.RooFit.RecycleConflictNodes())
+        getattr(wspace, 'import')(f_sig2D_ts, ROOT.RooFit.RecycleConflictNodes())
+        getattr(wspace, 'import')(f_sig2D_ce, ROOT.RooFit.RecycleConflictNodes())
         if wspace.obj("f_sigM") == None:
             getattr(wspace, 'import')(locals()['f_sigM'])
         if wspace.obj("f_sigM_Alt") == None:
@@ -239,16 +246,24 @@ def buildSig(self):
         if wspace.obj("f_sigM_DCBG_Alt") == None:
             getattr(wspace, 'import')(locals()['f_sigM_DCBG_Alt'])
         wspace.factory("PROD::f_sig3D(f_sigM, f_sig2D)")
+        wspace.factory("PROD::f_sig3D_ts(f_sigM, f_sig2D_ts)")
+        wspace.factory("PROD::f_sig3D_ce(f_sigM, f_sig2D_ce)")
         wspace.factory("PROD::f_sig3DAltM(f_sigMDCB, f_sig2D)")
         wspace.factory("PROD::f_sig3D_Alt(f_sigM_Alt, f_sig2D)")
         wspace.factory("PROD::f_sig3DAltM_Alt(f_sigM_DCBG_Alt, f_sig2D)")
         f_sig3D = wspace.pdf("f_sig3D")
+        f_sig3D_ts = wspace.pdf("f_sig3D_ts")
+        f_sig3D_ce = wspace.pdf("f_sig3D_ce")
         f_sig3DAltM = wspace.pdf("f_sig3DAltM")
         f_sig3D_Alt = wspace.pdf("f_sig3D_Alt")
         f_sig3DAltM_Alt = wspace.pdf("f_sig3DAltM_Alt")
 
-    self.cfg['source']['f_sig2D'] = f_sig2D
-    self.cfg['source']['f_sig3D'] = f_sig3D
+    self.cfg['source']['f_sig2D']    = f_sig2D
+    self.cfg['source']['f_sig2D_ts'] = f_sig2D_ts
+    self.cfg['source']['f_sig2D_ce'] = f_sig2D_ce
+    self.cfg['source']['f_sig3D']    = f_sig3D
+    self.cfg['source']['f_sig3D_ts'] = f_sig3D_ts
+    self.cfg['source']['f_sig3D_ce'] = f_sig3D_ce
     self.cfg['source']['f_sig3D_Alt'] = f_sig3D_Alt
     self.cfg['source']['f_sig3DAltM_Alt'] = f_sig3DAltM_Alt
 
@@ -284,7 +299,7 @@ def GetAnalyticBkgAList(self):
     if Args.Year==2016:
         f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
         f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Gaus2Poly2_Poly6'] #['Gaus3Poly4_Exp']
-        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Gaus2Poly2_Poly6'] 
+        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Gaus3Poly4_Exp'] 
         f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Poly6_Poly6' if AltRange else 'Gaus2Poly2_Poly6']
         f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Poly6_Poly4']
         f_analyticBkgCombA_format['abovePsi2s']     = f_analyticBkgCombA_format['Poly6_Poly4']

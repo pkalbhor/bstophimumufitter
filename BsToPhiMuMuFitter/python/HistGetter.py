@@ -5,9 +5,10 @@
 #
 ##################################################################################################
 
-import os, re, math, ROOT
+import os, re, math, ROOT, pdb
 from BsToPhiMuMuFitter.anaSetup import q2bins, modulePath
 from BsToPhiMuMuFitter.seqCollection import args
+from BsToPhiMuMuFitter.varCollection import CosThetaL, CosThetaK
 
 ROOT.gROOT.SetBatch(1)
 ROOT.gStyle.SetPadTopMargin(0.05)
@@ -44,20 +45,57 @@ def SetStyles(obj, obj2):
     obj.SetMarkerStyle(8); obj.SetMarkerColor(4); obj.SetLineColor(ROOT.kBlue); obj.SetLineWidth(1);obj.SetFillColorAlpha(4,.2)
     obj2.SetMarkerStyle(8); obj2.SetMarkerColor(2); obj2.SetLineColor(2); obj2.SetLineWidth(1); obj2.SetFillColorAlpha(2, .2)
 
-for i in List:
+def GetPDFlist(binkey):
+    from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
+    cwd=os.getcwd()
+    os.chdir("../input/")
+    mfile = "wspace_{}_{}.root".format(args.Year, binkey)
+    ifile = ROOT.TFile.Open(mfile, 'READ')
+    wspace = ifile.Get("wspace.{}.{}".format(args.Year, binkey))
+    pdf = { 'pdfL': wspace.obj("effi_cosl"),
+            'pdfK': wspace.obj("effi_cosK"),
+            'pdfL_ts': wspace.obj("effi_cosl_ts"),
+            'pdfK_ts': wspace.obj("effi_cosK_ts")}
+    os.chdir(cwd)
+    os.chdir('../plots_{}/'.format(args.Year))
+    odbfile = 'fitResults_{}.db'.format(binkey)
+    
+    for key in pdf.keys():
+        arguments = pdf[key].getParameters(ROOT.RooArgSet(CosThetaL, CosThetaK))
+        FitDBPlayer.initFromDB(odbfile, arguments)
+    os.chdir(cwd)
+    return pdf
+
+for i in List: # 2 Step list
     obj=f.Get(i.GetName())
     if obj.InheritsFrom(ROOT.TH1D.Class()):
-        for j in List2:
+        for j in List2: # One Step list
             obj2=f2.Get(j.GetName())
             key=[k for k in q2bins.keys() if k in obj.GetName()]
             if j.GetName()==i.GetName():
+                pdf = GetPDFlist(q2bins[key[0]]['label'])
+                print(pdf)
                 h1Canvas = ROOT.TCanvas(); h1Canvas.cd()
                 res=ROOT.NewResPlot('TH1D')(obj, obj2)
                 scale = 1./obj.Integral();          scale2= 1./obj2.Integral()
                 obj.Scale(scale);                   obj2.Scale(scale2)
 
                 res.fUpperPad.Draw(); res.fLowerPad.Draw(); res.fUpperPad.cd()
-                obj.Draw("E1 HIST");                obj2.Draw("E1 HIST same");
+                obj.Draw("HIST");   
+                if "ProjectionX" in obj.GetName():
+                    pdfhist = pdf['pdfL_ts'].createHistogram("pdfL_ts", CosThetaL, ROOT.RooFit.Binning(20))
+                else:
+                    pdfhist = pdf['pdfK_ts'].createHistogram("pdfK_ts", CosThetaK, ROOT.RooFit.Binning(20))
+                pdfhist.Draw('c same')
+                pdfhist.SetLineColor(ROOT.kBlue)
+
+                obj2.Draw("HIST same")
+                if "ProjectionX" in obj.GetName():
+                    pdfhist2 = pdf['pdfL'].createHistogram("pdfL", CosThetaL, ROOT.RooFit.Binning(20))
+                else:
+                    pdfhist2 = pdf['pdfK'].createHistogram("pdfK", CosThetaK, ROOT.RooFit.Binning(20))
+                pdfhist2.Draw('c same')
+                pdfhist2.SetLineColor(2)
                 SetStyles(obj, obj2)
                 obj.GetYaxis().SetTitle("Total Efficiency")
                 leg=ROOT.TLegend(0.77,0.87,.99,.99)

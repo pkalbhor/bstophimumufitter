@@ -7,7 +7,7 @@
 import os, pdb, ROOT
 from BsToPhiMuMuFitter.seqCollection import args as Args
 from BsToPhiMuMuFitter.StdProcess import p
-from BsToPhiMuMuFitter.python.datainput import GetInputFiles, ExtraCuts, ExtraCutsKStar
+from BsToPhiMuMuFitter.python.datainput import GetInputFiles, ExtraCuts, ExtraCutsKStar, genSel
 p.cfg['args'] = Args
 GetInputFiles(p)
 
@@ -23,6 +23,12 @@ Var=['Bmass']
 if Args.seqKey=='KStar':
     files = p.cfg['KStarSigMC']
     Var=['Kst0mass'] #, 'Phimass', 'CosThetaK', 'CosThetaL', 'Bmass']
+if Args.seqKey=='genPhiMuMu':
+    files = p.cfg['genonly']['PhiMuMu']
+    Var=['genBpid', 'genBPhi', 'genMupPt', 'genMupEta', 'genMupPhi', 'genMumPt', 'genMumEta', 'genMumPhi', 'gendimuPt', 'genPhipt', 'gendimuEta', 'gendimuPhi', 'genPhieta', 'genPhiphi', 'genKpPt', 'genKpEta', 'genKmPt', 'genKmEta', 'genQ2', 'genCosThetaL', 'genCosThetaK']
+if Args.seqKey=='genOff_PhiMuMu':
+    files = p.cfg['genOff']['PhiMuMu']
+    Var=['genBpid', 'genBPhi', 'genMupPt', 'genMupEta', 'genMupPhi', 'genMumPt', 'genMumEta', 'genMumPhi', 'gendimuPt', 'genPhipt', 'gendimuEta', 'gendimuPhi', 'genPhieta', 'genPhiphi', 'genKpPt', 'genKpEta', 'genKmPt', 'genKmEta', 'genQ2', 'genCosThetaL', 'genCosThetaK']
 if Args.seqKey=='Data':
     files = p.cfg['dataFilePath']
     Var=['Bmass']
@@ -31,13 +37,13 @@ for ch in files:
 c1=ROOT.TCanvas("c1", "c1"); c1.cd()
 
 XXTra = "(1)"
-if True: XXTra = '!(CosThetaL >-.5 && CosThetaL <.5)'
+if False: XXTra = '!(CosThetaL >-.5 && CosThetaL <.5)'
 tcut    =" && ".join([p.cfg['cuts'][-1], ExtraCutsKStar if Args.seqKey=='KStar' else ExtraCuts, XXTra])
 for var in Var:
-    for binKey in q2bins.keys():
+    for binKey in ['summary']: #q2bins.keys():
         #if not binKey in ['belowJpsiB']: continue
-        finalcut=" && ".join([q2bins[binKey]['cutString'], tcut, bMassRegions['Fit']['cutString']])
-        #finalcut=q2bins[binKey]['cutString']
+        #finalcut=" && ".join([q2bins[binKey]['cutString'], tcut, bMassRegions['Fit']['cutString']])
+        finalcut=q2bins[binKey]['cutString'] if not Args.seqKey in ['genPhiMuMu', 'genOff_PhiMuMu'] else q2bins[binKey]['cutString'].replace("Q2", "genQ2") + "&&" +genSel
         print(finalcut)
         f.Draw(var, finalcut)#, 'E1')
         hist=ROOT.gPad.GetPrimitive("htemp"); 

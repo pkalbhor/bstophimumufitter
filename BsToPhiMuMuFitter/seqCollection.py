@@ -73,6 +73,7 @@ predefined_sequence['sigMCValidation'] = ['stdWspaceReader', 'sigMCReader', 'sig
 predefined_sequence['seqCollection']   = []
 predefined_sequence['FinalDataResult'] = ['FinalDataResult']
 predefined_sequence['EffiTable']       = ['EffiTable']
+predefined_sequence['CompPlots']       = ['GetCompPlots']
 
 #For Validation Study
 predefined_sequence['fitSigM_JP'] = ['sigMCReader_JP', 'stdWspaceReader', 'sigMFitter_JP']
@@ -121,6 +122,7 @@ def Instantiate(self, seq):
             sequence.append(batchTask_sigMCValidation.GetToyObject(self))
         if s is 'FinalDataResult': sequence.append(dataCollection.FinalDataResult)
         if s is 'EffiTable': sequence.append(dataCollection.EffiTable)
+        if s is 'GetCompPlots': sequence.append(dataCollection.GetCompPlots)
     return sequence
 
 if __name__ == '__main__':
@@ -128,9 +130,11 @@ if __name__ == '__main__':
     from BsToPhiMuMuFitter.anaSetup import q2bins
     from BsToPhiMuMuFitter.python.datainput import GetInputFiles
     from copy import deepcopy
-
+   
+    if args.OneStep is False: args.TwoStep = True
     p.work_dir="plots_"+str(args.Year)
     p.cfg['args'] = deepcopy(args)
+    p.cfg['sysargs'] = sys.argv
     GetInputFiles(p)
     p.cfg['bins'] = p.cfg['allBins'] if args.binKey=="all" else [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
 

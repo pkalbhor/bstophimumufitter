@@ -11,7 +11,10 @@ class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
         jdl += """ 
 arguments = -b {binKey} -s {seqKey} --Year {Year} {TwoStep}
 queue {nJobs}""" 
-        jdl = jdl.format(binKey=q2bins[parser_args.process.cfg['binKey']]['label'], seqKey=parser_args.process.cfg['args'].seqKey, nJobs=self.cfg['nJobs'], executable=os.path.join(modulePath,"seqCollection.py"), Year=parser_args.Year, TwoStep="--TwoStep" if parser_args.TwoStep else "")
+        jdl = jdl.format(binKey=q2bins[parser_args.process.cfg['binKey']]['label'], 
+                    seqKey=parser_args.process.cfg['args'].seqKey, nJobs=self.cfg['nJobs'], 
+                    executable=os.path.join(modulePath,"seqCollection.py"), Year=parser_args.Year, 
+                    TwoStep='--TwoStep' if '--TwoStep' in parser_args.process.cfg['sysargs'] else '')
         return jdl    
 
 setupBatchTask = deepcopy(BatchTaskWrapper.templateCfg())

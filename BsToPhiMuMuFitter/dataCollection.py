@@ -76,7 +76,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
             )
         )    
     # Customize preload TFile
-    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{binLabel}.root".format(datasetName=self.cfg['name'].split('.')[0], binLabel=q2bins[self.process.cfg['binKey']]['label'])
+    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{Year}_{binLabel}.root".format(datasetName=self.cfg['name'].split('.')[0], Year=self.process.cfg['args'].Year,  binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
 # sigMCGENReader
 def customizeGEN(self):
@@ -94,7 +94,7 @@ def customizeGEN(self):
         )
     )
     # Customize preload TFile
-    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{binLabel}.root".format(datasetName=self.cfg['name'].split('.')[0], binLabel=q2bins[self.process.cfg['binKey']]['label'])
+    self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{Year}_{binLabel}.root".format(datasetName=self.cfg['name'].split('.')[0], Year=self.process.cfg['args'].Year, binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
 def GetDataReader(self, seq):
     if seq is 'dataReader':
@@ -533,6 +533,12 @@ FinalDataResult = ObjProvider({
 EffiTable = ObjProvider({
     'name': "EffiTable",
     'obj': {'EffiTable': [makeTables.EffiTable, ], }
+})
+
+import BsToPhiMuMuFitter.python.CompVar as CompVar
+GetCompPlots = ObjProvider({
+    'name': "GetCompPlots",
+    'obj': {'GetCompPlots': [CompVar.GetCompPlots, ], }
 })
 
 if __name__ == '__main__':
