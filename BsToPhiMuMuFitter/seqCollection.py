@@ -44,6 +44,7 @@ predefined_sequence['fitEff']    = ['effiHistReader', 'stdWspaceReader', 'effiFi
 predefined_sequence['fitAccEff'] = ['effiHistReader', 'stdWspaceReader', 'accEffiFitter']
 predefined_sequence['fitRecEff'] = ['effiHistReader', 'stdWspaceReader', 'recEffiFitter']
 predefined_sequence['fitSig2D']  = (['sigMCReader', 'stdWspaceReader'], ['SimultaneousFitter_sig2D'] if args.SimFit else ['sig2DFitter'])
+predefined_sequence['fitSig3D']  = (['sigMCReader', 'stdWspaceReader'], ['SimultaneousFitter_sig3D'] if args.SimFit else ['sig3DFitter'])
 predefined_sequence['fitSigMCGEN']=(['sigMCGENReader', 'stdWspaceReader'], ['SimulFitter_sigGEN'] if args.SimFit else ['sigAFitter'])
 predefined_sequence['fitSigMCGENc']=['sigMCGENReader', 'stdWspaceReader', 'sigAFitterCorrected'] # Corrected Decay Formula
 predefined_sequence['fitBkgCombA']=(['dataReader', 'stdWspaceReader'], ['SimulFitter_bkgCombA'] if args.SimFit else ['bkgCombAFitter'])
@@ -93,7 +94,7 @@ def Instantiate(self, seq):
     sequence=[]
     dataSequence=['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader', 'sigMCReader_JP', 'sigMCReader_PP', 'bkgMCReader_JK', 'bkgMCReader_PK', 'sigMCGENcReader']
     fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'accEffiFitter', 'recEffiFitter', 'sigMFitter', 'sigMDCBFitter',
-                'finalFitter_AltM', 'sigAFitterCorrected',
+                'finalFitter_AltM', 'sigAFitterCorrected', 'sig3DFitter',
                 'bkgM_KStarFitter', 'bkgA_KStarFitter', 'finalFitter_WithKStar', 'finalFitter_AltM_WithKStar', 'finalMFitter', 'sigMFitter_JP',
                 'bkgMFitter_JK', 'sigMFitter_PP', 'bkgMFitter_PK', 'finalMFitter_JP', 'finalMFitter_PP',
                 'SimulFitter_bkgCombA']
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     from BsToPhiMuMuFitter.python.datainput import GetInputFiles
     from copy import deepcopy
    
-    if args.OneStep is False: args.TwoStep = True
+    if args.OneStep is False: args.OneStep = True
     p.work_dir="plots_"+str(args.Year)
     p.cfg['args'] = deepcopy(args)
     p.cfg['sysargs'] = sys.argv

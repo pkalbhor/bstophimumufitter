@@ -101,8 +101,8 @@ for ver, numb, term in [('', n, xTerm), ('2', n1A, xTerm2), ('3', Nx3, xTerm3), 
         + ["RooGaussian::G1(CosThetaL, l2, l3)", "RooGaussian::G2(CosThetaL, l4, l5)", "RooGaussian::G3(CosThetaL, l6, l7)"] \
         + ["SUM::effi_cosl(l1*G1, l8*G2, G3)"]\
         + ["RooPolynomial::effi_cosK(CosThetaK, {k1, k2, k3, k4, k5, k6, k7, k8})"] + ["hasXTerm[0]"] \
-        + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=term, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}[-30,30]".format(i) for i in range(numb)]) + "}")] \
-        + ["prod::effi_sigA(effi_norm[0.5,0,100], effi_cosl, effi_cosK, effi_xTerm)"]
+        + ["EXPR::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=term, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}[-30,30]".format(i) for i in range(numb)]) + "}")] \
+        + ["PROD::effi_sigA(effi_norm[0.5,0,100], effi_cosl, effi_cosK, effi_xTerm)"]
 
 f_effiSigA_format['Poly7_Poly4_XTerm'] = ["l{}[-10,10]".format(i) for i in range(1, 8)] \
                 + ["k{}[-10,10]".format(i) for i in range(1, 5)] \

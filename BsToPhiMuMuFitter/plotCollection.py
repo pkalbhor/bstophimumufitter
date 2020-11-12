@@ -67,7 +67,7 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
 
     plotFuncs = {
-        'B': {'func': Plotter.plotFrameB_fine, 'tag': ""},
+        'B': {'func': Plotter.plotFrameB_fine, 'tag': "_Bmass"},
         'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
         'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
     }
@@ -750,6 +750,14 @@ def GetPlotterObject(self):
             'pdfPlots': [["f_sig2D{}.{}".format('_ts' if TwoStep else '', Year), plotterCfg_sigStyle, fitCollection.ArgAliasRECO, None], ],
             'marks': {'marks': ['sim']}}
     }
+    plotterCfg['plots']['plot_sig3D']= {
+        'func': [functools.partial(plotSimpleBLK, frames='BLK')],
+        'kwargs': {
+            'pltName': "plot_sig3D.{0}".format(Year),
+            'dataPlots': [["sigMCReader.{0}.Fit".format(Year), plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [["f_sig3D{}.{}".format('_ts' if TwoStep else '', Year), plotterCfg_sigStyle, fitCollection.ArgAliasRECO, None], ],
+            'marks': {'marks': ['sim']}}
+    }
     plotterCfg['plots']['plot_sigMCGEN']= {
         'func': [functools.partial(plotSimpleGEN, frames='LK')],
         'kwargs': {
@@ -774,14 +782,12 @@ def GetPlotterObject(self):
             'pdfPlots': [["f_bkgCombA{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_bkgStyle, None, "Analytic Bkg."], ],
             'marks': None},
     }
-    PdfForSigM = "f_sigM{}.{}".format('_Alt' if AltRange else '', Year)
-    #PdfForSigM = "f_sigM{}.{}".format('_DCBG_Alt' if (AltRange and binKey not in ['summary', 'summaryLowQ2'] and Year==2017) else ('_Alt' if AltRange else ''), Year)
     plotterCfg['plots']['plot_sigM'] = {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
         'kwargs': {
             'pltName': "plot_sigM{}.{}".format('_Alt' if AltRange else '', Year),
             'dataPlots': [["sigMCReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''), plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [[PdfForSigM, plotterCfg_sigStyle, fitCollection.ArgAliasDCB, "Total fit"], ],
+            'pdfPlots': [["f_sigM{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_sigStyle, fitCollection.ArgAliasDCB, "Total fit"], ],
             'marks': {'marks': ['sim']}}
     }
     plotterCfg['plots']['plot_finalM'] = {
@@ -856,7 +862,7 @@ def GetPlotterObject(self):
             'pltName': "plot_final_AltM_WithKStar{}.{}".format('_Alt' if AltRange else '', Year),
             'dataReader': "dataReader.{}".format(Year),
             'pdfPlots': [["f_final_AltM_WithKStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_styles['allStyleBase'], None, "Total fit"],
-                         [PdfForSigM, plotterCfg_styles['sigStyleBase'], None, "Sigal"],
+                         ["f_sigM{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_styles['sigStyleBase'], None, "Sigal"],
                          ["f_bkgComb{}.{}".format('_Alt' if AltRange else '', Year),   plotterCfg_styles['bkgStyleBase'], None, "Background"],
                          ["f_bkg_KStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_bkgStyle_KStar,         None, "K*0MuMu Background"], ],
         }

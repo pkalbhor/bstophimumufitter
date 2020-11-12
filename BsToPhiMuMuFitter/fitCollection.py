@@ -94,6 +94,19 @@ def GetFitterObjects(self, seq):
             'argAliasInDB': ArgAliasRECO_Alt if AltRange else ArgAliasRECO,
         })
         return StdFitter(setupSig2DFitter)
+    if seq is 'sig3DFitter':
+        setupSig2DFitter = deepcopy(setupTemplateFitter)
+        setupSig2DFitter.update({
+            'name': "sig3DFitter.{0}".format(Year),
+            'data': "sigMCReader.{0}.{1}".format(Year, "altFit" if AltRange else "Fit"),
+            'pdf': "f_sig3D{}.{}".format('_ts' if TwoStep else '', Year),
+            'FitHesse': True,
+            'FitMinos': [True, ()],
+            'argPattern': ['unboundAfb', 'unboundFl', '^sigM.*'],
+            'createNLLOpt': [],
+            'argAliasInDB': ArgAliasRECO_Alt if AltRange else ArgAliasRECO,
+        })
+        return StdFitter(setupSig2DFitter)
     if seq is 'sigAFitter':
         setupSigAFitter = deepcopy(setupTemplateFitter)
         setupSigAFitter.update({
@@ -145,7 +158,7 @@ def GetFitterObjects(self, seq):
             'Years'     : [Year, Year],
             #'argPattern': [r'bkgComb[KL]_c[\d]+', ],
             'argAliasInDB': None,
-            'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(0)],],
+            'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit2', 'minimize'), ROOT.RooFit.Minos(0)],],
         })
         return SimultaneousFitter(setupSimulFitter_bkgCombA)
     if seq is 'finalFitter':
