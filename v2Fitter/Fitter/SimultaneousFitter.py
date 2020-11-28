@@ -119,32 +119,34 @@ Following functions to be overloaded to customize the full procedure...
         frameK = CosThetaK.frame(ROOT.RooFit.Bins(24)) 
         c1=ROOT.TCanvas()
         binKey= q2bins[self.process.cfg['binKey']]['label']
+        if self.process.cfg['args'].seqKey in ['fitBkgCombA', 'fitFinal3D_WithKStar']:
+            marks=None
+        else:
+            marks=['sim']
         for ID, Category, Year in zip(range(len(self.Years)), self.cfg['category'], self.Years):
             CopyFrameL = frameL.Clone()
             self.category.setIndex(ID); sampleSet = ROOT.RooArgSet(self.category)
             self.dataWithCategories.plotOn(CopyFrameL, ROOT.RooFit.Cut("({0}==({0}::{1}))".format(self.category.GetName(), Category)))
-            self.minimizer.plotOn(CopyFrameL, ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components( self.pdf[ID].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed)) # ROOT.RooFit.Components( self.pdf[ID].GetName())
+            self.minimizer.plotOn(CopyFrameL, ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components( self.pdf[ID].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed), ROOT.RooFit.LineColor(2 if self.process.cfg['args'].seqKey=='fitBkgCombA' else 3)) # ROOT.RooFit.Components( self.pdf[ID].GetName())
             #CopyFrameL.Draw()
             CopyFrameL.SetMaximum(1.5 * CopyFrameL.GetMaximum())
             c1.Clear()
             Plotter.DrawWithResidue(CopyFrameL)
             Plotter.latexQ2(self.process.cfg['binKey'])
             Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries("{0}=={0}::{1}".format(self.category.GetName(), Category))) )
-            Plotter.latexCMSSim()
-            Plotter.latexCMSExtra()
+            Plotter.latexDataMarks(marks=marks)
             c1.SaveAs("Simultaneous_Cosl_{0}_{1}_{2}.pdf".format(Category, self.process.cfg['args'].seqKey, binKey))
 
             CopyFrameK = frameK.Clone()
             self.dataWithCategories.plotOn(CopyFrameK, ROOT.RooFit.Cut("{0}=={0}::{1}".format(self.category.GetName(), Category)))
-            self.minimizer.plotOn(CopyFrameK, ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components( self.pdf[ID].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed)) #, ROOT.RooFit.Components(self.pdf[ID].GetName())
+            self.minimizer.plotOn(CopyFrameK, ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components( self.pdf[ID].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed), ROOT.RooFit.LineColor(2 if self.process.cfg['args'].seqKey=='fitBkgCombA' else 3) ) #, ROOT.RooFit.Components(self.pdf[ID].GetName())
             #CopyFrameK.Draw()
             CopyFrameK.SetMaximum(1.5 * CopyFrameK.GetMaximum())
             c1.Clear()
             Plotter.DrawWithResidue(CopyFrameK)
             Plotter.latexQ2(self.process.cfg['binKey'])
             Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries("{0}=={0}::{1}".format(self.category.GetName(), Category))) )
-            Plotter.latexCMSSim()
-            Plotter.latexCMSExtra()
+            Plotter.latexDataMarks(marks=marks)
             c1.SaveAs("Simultaneous_CosK_{0}_{1}_{2}.pdf".format(Category, self.process.cfg['args'].seqKey, binKey))
 
         """

@@ -141,9 +141,9 @@ def table_dataresAFBFL(self):
     binKeyToLine['psi2s'] = ["4", r"12.5 -- 15.00", r"\multicolumn{3}{|c|} {$\psi'$ resonance region}"]
     #binKeyToLine['abovePsi2sA'] = ["5A", r"15.00 -- 17.00"]
     #binKeyToLine['abovePsi2sB'] = ["5B", r"17.00 -- 19.00"]
-    binKeyToLine['abovePsi2s'] = ["5", r"15.00 -- 19.00"]
+    #binKeyToLine['abovePsi2s'] = ["5", r"15.00 -- 19.00"]
     binKeyToLine['summaryLowQ2'] = ["LowQ2", r"1.00 -- 6.00"]
-    binKeyToLine['summary'] = ["0", r"$1A$+$1B$+$1C$+$3$+$5$"]
+    #binKeyToLine['summary'] = ["0", r"$1A$+$1B$+$1C$+$3$+$5$"]
 
     syst_sources = [
         #'syst_randEffi',
@@ -157,7 +157,7 @@ def table_dataresAFBFL(self):
     for binKey, latexLine in binKeyToLine.items():
         if binKey not in ['jpsi', 'psi2s']:
             db = shelve.open(r"{0}/fitResults_{1}.db".format(self.process.dbplayer.absInputDir, q2bins[binKey]['label']))
-            latexLine.append(r"${0:.01f} \pm {1:.01f}$".format(db['nSig']['getVal'], db['nSig']['getError'])) #(0., 0.))
+            latexLine.append(r"${0:.01f} \pm {1:.01f}$".format(*(db['nSig']['getVal'], db['nSig']['getError']) if not self.process.cfg['args'].SimFitPlots else (0.,0.)))
             fl = unboundFlToFl(db['unboundFl']['getVal'])
             afb = unboundAfbToAfb(db['unboundAfb']['getVal'], fl)
 

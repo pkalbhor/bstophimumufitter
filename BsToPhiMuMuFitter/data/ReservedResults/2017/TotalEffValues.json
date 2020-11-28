@@ -43,5 +43,28 @@
     "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 1.0 && genQ2 < 6.0",
     "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 1.0 && Q2 < 6.0",
     "ratio": 0.014896240956573568
+  },
+  "jpsi": {
+    "PeakNum": {
+      "getVal": 3209,
+      "getError": 0.017652862621712118
+    },
+    "PeakDen": {
+      "getVal": 21096734,
+      "getError": 0.00021771702259711903
+    },
+    "sigNum": {
+      "getVal": 166869,
+      "getError": 0.002448004254909269
+    },
+    "sigDen": {
+      "getVal": 12978780,
+      "getError": 0.00027757673595671465
+    },
+    "ratio": {
+      "getVal": 0.011830761450621114
+    },
+    "genSel": "fabs(genMupEta)<2.5 && fabs(genMumEta)<2.5 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.4 && genKmPt>0.4 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 8.0 && genQ2 < 11.0",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.52)&&(fabs(Mupeta)<2.5&&fabs(Mumeta)<2.5 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.4&&Kmpt>0.4 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5) && Q2 > 8.0 && Q2 < 11.0"
   }
 }

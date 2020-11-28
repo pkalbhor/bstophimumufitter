@@ -63,8 +63,11 @@ class DataReader(Path):
         Range  = ROOT.RooFit.CutRange(dname.split(".")[2]) # Not taking effect, need review
         if self.argset.find("Bmass"): self.argset.find("Bmass").removeRange() # Analysis specific line introduced
         data = RooDataSet(dname, "", self.argset, Import, RooCut, Range)
+        if self.argset.find("Phimass"): self.argset.find("Phimass").setBins(20)
+        datahist = ROOT.RooDataHist(dname+".hist", "", ROOT.RooArgSet(self.argset.find("Phimass")), data)
         data.Write(); tempfile_preload.Close() #Pritam
         self.dataset[dname] = data
+        self.dataset[dname+".hist"] = datahist
         print("\033[0;34;47m Creating Dataset: ", dname, ": \033[0m", dcut, data.sumEntries())
         return data
 
@@ -74,8 +77,10 @@ class DataReader(Path):
             if self.cfg['preloadFile'] and os.path.exists(self.cfg['preloadFile']):
                 file_preload = ROOT.TFile(self.cfg['preloadFile'])
                 data = file_preload.Get(name)
+                datahist = file_preload.Get(name+'.hist')
                 if not data == None:
                     self.dataset[name] = data
+                    self.dataset[name+'.hist'] = datahist
                 file_preload.Close()
             self.createDataSet(name, cut)
         return self.dataset

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set sts=4 sw=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import os, time
+import os, time, pdb
 import abc
 import tempfile
 from copy import copy
@@ -85,13 +85,13 @@ when_to_transfer_output = ON_EXIT
             wrapper_kwargs = {}
         p = self.getWrappedProcess(process, jobId, **wrapper_kwargs)
         if self.cfg['work_dir'] is None:
-            p.work_dir = os.path.join(self.task_dir, "job{jobId:04d}".format(jobId=jobId))
+            p.work_dir = os.path.join(self.task_dir, "{0}_{1}_{jobId:04d}".format(p.cfg['args'].Year, p.cfg['args'].binKey, jobId=jobId))
         elif isinstance(self.cfg['work_dir'], str):
             p.work_dir = os.path.join(self.task_dir, self.cfg['work_dir'])
         else:
             p.work_dir = os.path.join(self.task_dir, self.cfg['work_dir'][jobId])
         
-        p.setSequence(p._sequence)
+        p.setSequence(p._sequence) ## ALERT
         try:
             p.beginSeq()
             p.runSeq()

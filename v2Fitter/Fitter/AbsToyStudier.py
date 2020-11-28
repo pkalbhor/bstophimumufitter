@@ -67,7 +67,9 @@ Decide the number of entries of this subset.
         raise NotImplementedError
 
     def _runSetsLoop(self):
-        for iSet in range(self.cfg['nSetOfToys']):
+        #for iSet in range(max(self.cfg['nSetOfToys'], self.process.cfg['args'].nSetOfToys)):
+        iSet=0; rSet=0
+        while rSet < max(self.cfg['nSetOfToys'], self.process.cfg['args'].nSetOfToys):
             self._preRunFitSteps(iSet)
             self.fitter.hookProcess(self.process)
             self.fitter.customize()
@@ -75,14 +77,16 @@ Decide the number of entries of this subset.
             self.currentSubDataEntries = self.getSubDataEntries(iSet)
 
             self.fitter.pdf = self.process.sourcemanager.get(self.fitter.cfg['pdf'])
-            self.fitter.data = self.getSubData().next()
+            self.fitter.data = next(self.getSubData())
             #self.fitter.data = ROOT.RooDataSet(self.fitter.data.GetName(), self.fitter.data.GetTitle(),self.fitter.data,self.fitter.data.get(),"{0}".format(q2bins[self.fitter.process.cfg['binKey']]['cutString']))  #Added for applying Q2 cut, change line from getSubDataEntries() and from dataCollection.py
             self.fitter._bookMinimizer()
             self.fitter._preFitSteps()
             self.fitter._runFitSteps()
             self._postRunFitSteps(iSet)
-
             self.fitter.reset()
+            iSet += 1
+            if not self.fitter.fitResult['{}.migrad'.format(self.fitter.name)]['status']: rSet += 1
+        print("Failed subsamples: ", iSet-rSet)
 
     @abc.abstractmethod
     def _postSetsLoop(self):

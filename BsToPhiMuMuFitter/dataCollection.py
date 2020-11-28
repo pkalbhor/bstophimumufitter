@@ -38,7 +38,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
     # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
     self.cfg['dataset'] = []
     for key, val in bMassRegions.items():
-        finalcut = self.process.cfg['cuts'][-1] if not key in ['USB', 'LSB'] else self.process.cfg['cuts'][-1].replace(re.search("Bdt \>(.*?)\)\&\&", self.process.cfg['cuts'][-1]).group(0).strip(), 'Bdt > 0.30)&&')
+        finalcut = self.process.cfg['cuts'][-1] if not key in ['USB', 'LSB'] else self.process.cfg['cuts'][-1].replace(re.search("Bdt \>(.*?)\)\&\&", self.process.cfg['cuts'][-1]).group(0).strip(), 'Bdt > 0.40)&&')
         if any([re.match(pat, key) for pat in targetBMassRegion]):
             self.cfg['dataset'].append(
                 (
@@ -46,7 +46,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
                     "({0}) && ({1}) && ({2}) && ({3})".format(
                         val['cutString'],
                         q2bins[self.process.cfg['binKey']]['cutString'],
-                        self.process.cfg['cuts'][-1],
+                        finalcut, #self.process.cfg['cuts'][-1],
                         "1" if not extraCuts else extraCuts,
                     )
                 )
@@ -68,7 +68,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
             (
                 "{0}.Fit_antiResVeto".format(self.cfg['name'], key),
                 "({0}) && ({1}) && ({2}) && ({3})".format(
-                    bMassRegions['Fit']['cutString'],
+                    bMassRegions['SR']['cutString'],
                     q2bins[self.process.cfg['binKey']]['cutString'],
                     self.process.cfg['cuts_antiResVeto'],
                     extraCuts,
@@ -97,12 +97,13 @@ def customizeGEN(self):
     self.cfg['preloadFile'] = modulePath + "/data/preload_{datasetName}_{Year}_{binLabel}.root".format(datasetName=self.cfg['name'].split('.')[0], Year=self.process.cfg['args'].Year, binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
 def GetDataReader(self, seq):
+    Year=self.cfg['args'].Year
     if seq is 'dataReader':
         dataReaderCfg = copy(CFG)
         dataReaderCfg.update({
-            'name': "dataReader.{Year}".format(Year=self.cfg['args'].Year),
+            'name': "dataReader.{Year}".format(Year=Year),
             'ifile': self.cfg['dataFilePath'],
-            'lumi': 35.9,    })
+            'lumi': 35.92 if Year==2016 else 41.53 if Year==2017 else 59.74, })
         dataReader = DataReader(dataReaderCfg)
         customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^.{0,1}SB$', 'ResVeto', 'antiResVeto'], extraCuts=ExtraCuts) #'^Fit$', '^.{0,1}SB$',
         dataReader.customize = types.MethodType(customizeData, dataReader)
@@ -114,7 +115,7 @@ def GetDataReader(self, seq):
         sigMCReaderCfg.update({
             'name': "sigMCReader.{Year}".format(Year=self.cfg['args'].Year),
             'ifile': self.cfg['sigMC'],
-            'lumi': 66226.56,
+            'lumi': 66362.21 if Year==2016 else 36139.99 if Year==2017 else 26998.25,
         })
         sigMCReader = DataReader(sigMCReaderCfg)
         customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'ResVeto'], extraCuts=ExtraCuts)
@@ -128,7 +129,7 @@ def GetDataReader(self, seq):
             'name': "KsigMCReader.{Year}".format(Year=self.cfg['args'].Year),
             'ifile': self.cfg['peaking']['KstarMuMu'],
             'argset': dataArgsKStar,
-            'lumi': 2765.2853,
+            'lumi': 5837.74 if Year==2016 else 8920.86 if Year==2017 else 8105.82,
         })
         KsigMCReader = DataReader(KsigMCReaderCfg)
         customizeKSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'], extraCuts=ExtraCuts)
@@ -158,7 +159,7 @@ def GetDataReader(self, seq):
         bkgJpsiMCReaderCfg = copy(CFG)
         bkgJpsiMCReaderCfg.update({
             'name': "sigMCReader_JP.{}".format(self.cfg['args'].Year),
-            'ifile': self.cfg['control']['JpsiPhi'],
+            'ifile': self.cfg['control']['JpsiPhi'], #[:len(self.cfg['control']['JpsiPhi'])-18],
             'lumi': 295.761,
         })
         bkgJpsiMCReader = DataReader(bkgJpsiMCReaderCfg)

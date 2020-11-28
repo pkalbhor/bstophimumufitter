@@ -35,8 +35,8 @@ predefined_sequence['loadMC']    = ['sigMCReader']
 predefined_sequence['loadMCGEN'] = ['sigMCGENReader']
 predefined_sequence['loadMCGENc'] = ['sigMCGENcReader'] # from official GEN MC
 predefined_sequence['loadMCk']   = ['KsigMCReader']
-predefined_sequence['loadMCJ']   = ['bkgJpsiMCReader']
-predefined_sequence['loadMCP']   = ['bkgPsi2sMCReader']
+predefined_sequence['loadMCJ']   = ['sigMCReader_JP']
+predefined_sequence['loadMCP']   = ['sigMCReader_PP']
 predefined_sequence['buildPdfs'] = ['dataReader', 'stdWspaceReader', 'stdPDFBuilder']
 predefined_sequence['buildEff']  = ['effiHistReader']
 
@@ -54,7 +54,7 @@ predefined_sequence['fitBkgM_KStar'] = ['KsigMCReader', 'stdWspaceReader', 'bkgM
 predefined_sequence['fitBkgA_KStar'] = ['KsigMCReader', 'stdWspaceReader', 'bkgA_KStarFitter']
 
 predefined_sequence['fitFinal3D_AltM']          = (['dataReader', 'stdWspaceReader'], ['SimulFitter_Final_AltM'] if args.SimFit else ['finalFitter_AltM'])
-predefined_sequence['fitFinal3D_WithKStar']     = ['dataReader', 'stdWspaceReader', 'finalFitter_WithKStar']
+predefined_sequence['fitFinal3D_WithKStar']     = (['dataReader', 'stdWspaceReader'], ['SimFitter_Final_WithKStar'] if args.SimFit else ['finalFitter_WithKStar'])
 predefined_sequence['fitFinal3D_AltM_WithKStar']= (['dataReader', 'stdWspaceReader'], ['SimFitter_Final_AltM_WithKStar'] if args.SimFit else ['finalFitter_AltM_WithKStar'])
 predefined_sequence['fitFinalM']     = ['dataReader', 'stdWspaceReader', 'finalMFitter']
 
@@ -62,19 +62,20 @@ predefined_sequence['loadAll'] = ['dataReader', 'sigMCReader', 'KsigMCReader', '
 predefined_sequence['fitAll']  = predefined_sequence['loadAll'] + ['effiFitter', 'sig2DFitter', 'sigAFitter']
 predefined_sequence['fitFinalAll'] = predefined_sequence['loadAll'] + ['fitSigMDCB', 'bkgCombAFitter', 'fitBkgM_KStar', 'fitBkgA_KStar', 'finalFitter_AltM_WithKStar']
 
-predefined_sequence['createplots']=['effiHistReader', 
+predefined_sequence['createplots']=[#'effiHistReader', 
                                     'dataReader', 
-                                    'sigMCReader', 
-                                    'sigMCGENReader', 
-                                    'KsigMCReader', 
-                                    #'bkgJpsiMCReader', 
+                                    #'sigMCReader', 
+                                    #'sigMCGENReader', 
+                                    #'KsigMCReader', 
+                                    'sigMCReader_JP', 
                                     'stdWspaceReader', 'plotter']
 #'effiHistReader', 'KsigMCReader', 'sigMCReader', 'sigMCGENReader', 
 predefined_sequence['sigMCValidation'] = ['stdWspaceReader', 'sigMCReader', 'sigMCStudier']
+predefined_sequence['mixedToyValidation'] = ['stdWspaceReader', 'sigMCReader', 'bkgCombToyGenerator', 'bkgPeakToyGenerator', 'mixedToyStudier']
 predefined_sequence['seqCollection']   = []
 predefined_sequence['FinalDataResult'] = ['FinalDataResult']
 predefined_sequence['EffiTable']       = ['EffiTable']
-predefined_sequence['CompPlots']       = ['GetCompPlots']
+predefined_sequence['CompPlots']       = ['stdWspaceReader', 'GetCompPlots']
 
 #For Validation Study
 predefined_sequence['fitSigM_JP'] = ['sigMCReader_JP', 'stdWspaceReader', 'sigMFitter_JP']
@@ -83,6 +84,8 @@ predefined_sequence['fitSigM_PP'] = ['sigMCReader_PP', 'stdWspaceReader', 'sigMF
 predefined_sequence['fitBkgM_PK'] = ['bkgMCReader_PK', 'stdWspaceReader', 'bkgMFitter_PK']
 predefined_sequence['fitFinalM_JP'] = ['dataReader', 'stdWspaceReader', 'finalMFitter_JP']
 predefined_sequence['fitFinalM_PP'] = ['dataReader', 'stdWspaceReader', 'finalMFitter_PP']
+predefined_sequence['fitSigPhiM_JP'] = ['sigMCReader_JP', 'stdWspaceReader', 'sigPhiMFitter_JP']
+predefined_sequence['fitFinalPhiM_JP'] = ['dataReader', 'stdWspaceReader', 'finalPhiMFitter_JP']
 
 def Instantiate(self, seq):
     """All objects are initalized here. This is needed when you want to run over all the bins in one go. Or if you want to run over different year dataset"""
@@ -96,7 +99,7 @@ def Instantiate(self, seq):
     fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'accEffiFitter', 'recEffiFitter', 'sigMFitter', 'sigMDCBFitter',
                 'finalFitter_AltM', 'sigAFitterCorrected', 'sig3DFitter',
                 'bkgM_KStarFitter', 'bkgA_KStarFitter', 'finalFitter_WithKStar', 'finalFitter_AltM_WithKStar', 'finalMFitter', 'sigMFitter_JP',
-                'bkgMFitter_JK', 'sigMFitter_PP', 'bkgMFitter_PK', 'finalMFitter_JP', 'finalMFitter_PP',
+                'bkgMFitter_JK', 'sigMFitter_PP', 'bkgMFitter_PK', 'finalMFitter_JP', 'finalMFitter_PP', 'sigPhiMFitter_JP', 'finalPhiMFitter_JP',
                 'SimulFitter_bkgCombA']
     for s in seq:
         if s in dataSequence:
@@ -113,14 +116,24 @@ def Instantiate(self, seq):
             sequence.append(GetPlotterObject(self))
         if s is 'SimultaneousFitter_sig2D':
             sequence.append(fitCollection.SimultaneousFitter_sig2D)
+        if s is 'SimultaneousFitter_sig3D':
+            sequence.append(fitCollection.SimultaneousFitter_sig3D)
         if s is 'SimulFitter_sigGEN':
             sequence.append(fitCollection.SimulFitter_sigGEN)
         if s is 'SimulFitter_Final_AltM':
             sequence.append(fitCollection.SimultaneousFitter_Final_AltM)
         if s is 'SimFitter_Final_AltM_WithKStar':
             sequence.append(fitCollection.SimFitter_Final_AltM_WithKStar)
+        if s is 'SimFitter_Final_WithKStar':
+            sequence.append(fitCollection.SimFitter_Final_WithKStar)
         if s is 'sigMCStudier':
             sequence.append(batchTask_sigMCValidation.GetToyObject(self))
+        if s is 'mixedToyStudier':
+            import BsToPhiMuMuFitter.script.batchTask_mixedToyValidation as batchTask_mixedToyValidation
+            sequence.append(batchTask_mixedToyValidation.GetMixedToyObject(self))
+        if s in ['bkgCombToyGenerator', 'bkgPeakToyGenerator']:
+            import BsToPhiMuMuFitter.toyCollection as toyCollection
+            sequence.append(toyCollection.GetToyObject(self, s))
         if s is 'FinalDataResult': sequence.append(dataCollection.FinalDataResult)
         if s is 'EffiTable': sequence.append(dataCollection.EffiTable)
         if s is 'GetCompPlots': sequence.append(dataCollection.GetCompPlots)
@@ -132,7 +145,7 @@ if __name__ == '__main__':
     from BsToPhiMuMuFitter.python.datainput import GetInputFiles
     from copy import deepcopy
    
-    if args.OneStep is False: args.OneStep = True
+    if args.OneStep is False: args.TwoStep = True
     p.work_dir="plots_"+str(args.Year)
     p.cfg['args'] = deepcopy(args)
     p.cfg['sysargs'] = sys.argv
@@ -162,16 +175,22 @@ if __name__ == '__main__':
                 sequence=Instantiate(p, predefined_sequence[args.seqKey][1])
                 p.setSequence(sequence)
                 p.beginSeq()
-            elif args.Function_name in ['submit', 'run']:
+            elif args.Function_name in ['submit', 'run', 'postproc']:
                 print("INFO: Processing {0} year data".format(args.Year))
                 from BsToPhiMuMuFitter.anaSetup import modulePath
                 import BsToPhiMuMuFitter.script.batchTask_sigMCValidation as batchTask_sigMCValidation
+                import BsToPhiMuMuFitter.script.batchTask_mixedToyValidation as batchTask_mixedToyValidation
                 import BsToPhiMuMuFitter.script.batchTask_seqCollection as batchTask_seqCollection
                 if p.name=='sigMCValidationProcess':
                     wrappedTask = batchTask_sigMCValidation.BatchTaskWrapper(
                         "myBatchTask",
                         os.path.join(modulePath, "batchTask_sigMCValidation"),
                         cfg=batchTask_sigMCValidation.setupBatchTask)
+                elif args.seqKey=='mixedToyValidation':
+                     wrappedTask = batchTask_mixedToyValidation.BatchTaskWrapper(
+                        "myBatchTask_MixedToy",
+                        os.path.join(modulePath, "batchTask_mixedToyValidation"),
+                        cfg=batchTask_mixedToyValidation.setupBatchTask)               
                 else:
                     wrappedTask = batchTask_seqCollection.BatchTaskWrapper(
                         "BatchTaskseqCollection",
@@ -180,7 +199,16 @@ if __name__ == '__main__':
                 parser.set_defaults(
                     wrapper=wrappedTask,
                     process=p)
-                p.cfg['args'] = args = parser.parse_args()   
+
+                args = parser.parse_args()
+                if args.Function_name=='postproc':
+                    if args.seqKey=='sigMCValidation':
+                        args.func = batchTask_sigMCValidation.func_postproc
+                    if args.seqKey=='mixedToyValidation':
+                        args.func = batchTask_mixedToyValidation.func_postproc
+
+                if args.OneStep is False: args.TwoStep = True
+                p.cfg['args'] = deepcopy(args)
                 sequence=Instantiate(p, predefined_sequence[args.seqKey])
                 p.setSequence(sequence)
                 args.func(args) 

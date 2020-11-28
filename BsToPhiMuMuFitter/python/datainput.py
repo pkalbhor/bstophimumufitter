@@ -30,7 +30,7 @@ def GetInputFiles(self):
                             'JpsiPhi':[path2+File+"/gentree" for File in os.listdir(path2) if "sel_BsToJpsiPhi_2016MC_Official" in File],
                             'PsiPhi':[path2+File+"/gentree" for File in os.listdir(path2) if "sel_BsToPsiPhi_2016MC_Official" in File],
                             'KstarMuMu':[path+File+"/gentree" for File in os.listdir(path) if "sel_BdTokstarMuMu_2016MC_Official" in File]}
-        self.cfg['genonly']      = {'PhiMuMu': [path3+"sel_BsToPhiMuMu_2016MC_Nofilter_mc.lite_genonly.root/gentree"],
+        self.cfg['genonly']      = {'PhiMuMu': [path3+"sel_BsToPhiMuMu_2016MC_Nofilter_mc.lite_genonly.root/gentree"]+[path3+"sel_BsToPhiMuMu_NofilterMC_signal_2017_mc.lite_genonly.root/gentree"]+[path3+"sel_BsToPhiMuMu_NofilterMC_signal_2018_mc.lite_genonly.root/gentree"],
                                     'JpsiPhi': [path3+"sel_BsToJpsiPhi_2016_mc_genonly_s0.root/gentree"],
                                     'PsiPhi' : [path3+"sel_BsToPsiPhi_2016_mc_genonly_s0.root/gentree"]}
         self.cfg['peaking']    ={'KstarMuMu': [path+File+"/tree" for File in os.listdir(path) if "sel_BdTokstarMuMu_2016MC_Official" in File],
@@ -41,11 +41,11 @@ def GetInputFiles(self):
     if Args.Year==2017:
         self.cfg['dataFilePath'] = [path4+"sel_Combine_2017_Mini_Presel_data_cut_bdt-Correction-s04.root/tree"]
         self.cfg['sigMC']        = [path4+File+"/tree" for File in os.listdir(path4) if "sel_BsToPhiMuMu_OfficialMC_signal_2017M" in File] 
-        self.cfg['genOff']={'PhiMuMu':[path2+File+"/gentree" for File in os.listdir(path2) if "sel_BsToPhiMuMu_OfficialMC_signal_2017" in File],
+        self.cfg['genOff']={'PhiMuMu':[path4+File+"/gentree" for File in os.listdir(path2) if "sel_BsToPhiMuMu_OfficialMC_signal_2017" in File],
                             'JpsiPhi':[path2+File+"/gentree" for File in os.listdir(path2) if "sel_BsToJpsiPhi_2017MC_Official" in File],
                             'PsiPhi':[path2+File+"/gentree" for File in os.listdir(path2) if "sel_BsToPsiPhi_2017MC_Official" in File],
                             'KstarMuMu':[path4+File+"/gentree" for File in os.listdir(path4) if "sel_BdTokstarMuMu_2017MC_Official" in File]}
-        self.cfg['genonly']      = {'PhiMuMu': [path3+"sel_BsToPhiMuMu_NofilterMC_signal_2017_mc.lite_genonly.root/gentree"],
+        self.cfg['genonly']      = {'PhiMuMu': [path3+"sel_BsToPhiMuMu_2016MC_Nofilter_mc.lite_genonly.root/gentree"]+[path3+"sel_BsToPhiMuMu_NofilterMC_signal_2017_mc.lite_genonly.root/gentree"]+[path3+"sel_BsToPhiMuMu_NofilterMC_signal_2018_mc.lite_genonly.root/gentree"],
                                     'JpsiPhi': [path3+"sel_BsToJpsiPhi_2017_mc_genonly_s0.root/gentree"],
                                     'PsiPhi' : [path3+"sel_BsToPsiPhi_2017_mc_genonly_s0.root/gentree"]}
         self.cfg['peaking']    ={'KstarMuMu':[path4+File+"/tree" for File in os.listdir(path4) if "sel_BdTokstarMuMu_2017MC_Official" in File],
@@ -61,7 +61,7 @@ def GetInputFiles(self):
                             'JpsiPhi':[path2+File+"/gentree" for File in os.listdir(path2) if "sel_BsToJpsiPhi_2018MC_Official" in File],
                             'PsiPhi':[path2+File+"/gentree" for File in os.listdir(path2) if "sel_BsToPsiPhi_2018MC_Official" in File],
                             'KstarMuMu':[path4+File+"/gentree" for File in os.listdir(path4) if "sel_BdTokstarMuMu_2018MC_Official" in File]}
-        self.cfg['genonly']      = {'PhiMuMu': [path3+"sel_BsToPhiMuMu_NofilterMC_signal_2018_mc.lite_genonly.root/gentree"],
+        self.cfg['genonly']      = {'PhiMuMu': [path3+"sel_BsToPhiMuMu_2016MC_Nofilter_mc.lite_genonly.root/gentree"]+[path3+"sel_BsToPhiMuMu_NofilterMC_signal_2017_mc.lite_genonly.root/gentree"]+[path3+"sel_BsToPhiMuMu_NofilterMC_signal_2018_mc.lite_genonly.root/gentree"],
                                     'JpsiPhi': [path3+"sel_BsToJpsiPhi_2018_mc_genonly_s0.root/gentree"],
                                     'PsiPhi' : [path3+"sel_BsToPsiPhi_2018_mc_genonly_s0.root/gentree"]}
         self.cfg['peaking']    ={'KstarMuMu':[path4+File+"/tree" for File in os.listdir(path4) if "sel_BdTokstarMuMu_2018MC_Official" in File],
@@ -73,7 +73,7 @@ def GetInputFiles(self):
     # Cut strings
     cut_passTrigger = "JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0"
     cut_resonanceRej = "(Mumumass > 3.0969+3.5*Mumumasserr || Mumumass < 3.0969-5.5*Mumumasserr) && (Mumumass > 3.6861+3.5*Mumumasserr || Mumumass < 3.6861-3.5*Mumumasserr)"
-    cut_resonanceSel = "(Mumumass > 3.0969+3.0*Mumumasserr || Mumumass < 3.0969-3.5*Mumumasserr) && (Mumumass > 3.6861+3.0*Mumumasserr || Mumumass < 3.6861-3.0*Mumumasserr)"
+    cut_resonanceSel = "(Mumumass > 3.0969+2.5*Mumumasserr || Mumumass < 3.0969-2.5*Mumumasserr) && (Mumumass > 3.6861+3.0*Mumumasserr || Mumumass < 3.6861-3.0*Mumumasserr)"
     cut_antiRadiation = "abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090"
     cut_phiWindow = "Phimass>1.0 && Phimass < 1.04"
 
@@ -95,7 +95,7 @@ def GetInputFiles(self):
     cuts_Signal = "({0}) && (({1}) && ({2}))".format(cuts_noResVeto, cut_resonanceRej, cut_antiRadiation)
     cuts_antiSignal = "({0}) && !(({1}) && ({2}))".format(cuts_noResVeto, cut_resonanceRej, cut_antiRadiation)
     #cuts_antiResVeto = "({0}) && !({1}) && !({2})".format(cuts_noResVeto, cut_resonanceSel, cut_antiRadiation)
-    cuts_antiResVeto = "({0}) && ({1}) && !({2})".format(cut_passTrigger, cut_Bdt, cut_resonanceSel)
+    cuts_antiResVeto = "({0}) && ({1}) && !({2})".format(cut_passTrigger, 1, cut_resonanceSel)
     self.cfg['cuts'] = cuts
     self.cfg['cuts_antiResVeto'] = cuts_antiResVeto
     self.cfg['cuts_Signal'] = cuts_Signal
@@ -109,21 +109,21 @@ def MCLumiCalc(self):
         FiltEff = 0.000365
         Xsec = 5.68e10
         BF = 9.4e-7
-        DBF = 0.489
+        DBF = 1. #0.489
         return Events / (FiltEff*Xsec*BF*DBF)
     if Args.Year==2017:
         Events = 127500766.
         FiltEff = 0.02833
         Xsec = 5.367e8
         BF = 9.4e-7
-        DBF = 0.489
+        DBF = 1. #0.489
         return Events / (FiltEff*Xsec*BF*DBF)
     if Args.Year==2018:
         Events = 115851869.
         FiltEff = 0.02833
         Xsec = 5.367e8
         BF = 9.4e-7
-        DBF = 0.489
+        DBF = 1. #0.489
         return Events / (FiltEff*Xsec*BF*DBF)
 
 def GetPeakingFraction(self):
@@ -144,19 +144,19 @@ def GetPeakingFraction(self):
     binkey = self.process.cfg['binKey']
     if binkey in data.keys():
         if 'ratio' in data[binkey].keys(): 
-            return data[binkey]['ratio']
+            return data[binkey]['ratio']['getVal']
     else:
-        PeakNum = self.cfg['peaking']['KstarMuMu']
-        PeakDen = self.cfg['genOff']['KstarMuMu']
-        sigNum = self.cfg['sigMC']
-        sigDen = self.cfg['genOff']['PhiMuMu']
+        PeakNum = self.process.cfg['peaking']['KstarMuMu']
+        PeakDen = self.process.cfg['genOff']['KstarMuMu']
+        sigNum = self.process.cfg['sigMC']
+        sigDen = self.process.cfg['genOff']['PhiMuMu']
         #self.cfg['genonly']['PhiMuMu']
         def GetTree(File):
             ch = ROOT.TChain()
             for f in File: ch.Add(f)
             return ch
-        gensel = genSel + " && " + q2bins[self.cfg['binKey']]['cutString'].replace('Q2', 'genQ2')
-        finalcut = self.cfg['cuts'][-1] + " && " + recBaseSel + " && " + q2bins[self.cfg['binKey']]['cutString']
+        gensel = genSel + " && " + q2bins[binkey]['cutString'].replace('Q2', 'genQ2')
+        finalcut = self.process.cfg['cuts'][-1] + " && " + q2bins[binkey]['cutString']
         print (gensel)
         print (finalcut)
         data[binkey]={}

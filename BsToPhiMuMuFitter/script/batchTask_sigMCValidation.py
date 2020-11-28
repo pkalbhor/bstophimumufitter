@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # vim: set sts=4 sw=4 fdm=indent fdl=1 fdn=3 et:
 
 import os, pdb, sys, shelve, math, glob
@@ -33,7 +33,7 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
     """"""
     def getSubDataEntries(self, setIdx):
         try:
-            db = shelve.open(self.process.dbplayer.odbfile)
+            db = shelve.open(os.path.join(modulePath, "plots_{}".format(self.process.cfg['args'].Year), self.process.dbplayer.odbfile) )
             expectedYield = db['nSig']['getVal']
         finally:
             db.close()
@@ -44,23 +44,27 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
     def _preSetsLoop(self):
         self.otree = ROOT.TTree("tree", "")
         self.treeContent = ROOT.MyTreeContent()
-        self.otree.Branch("fl", ROOT.AddressOf(self.treeContent, 'fl'), 'fl/D')
-        self.otree.Branch("afb", ROOT.AddressOf(self.treeContent, 'afb'), 'afb/D')
-        self.otree.Branch("fitstatus", ROOT.AddressOf(self.treeContent, 'fitstatus'), 'fitstatus/D')
-        self.otree.Branch("events", ROOT.AddressOf(self.treeContent, 'events'), 'events/D')
-        self.otree.Branch("nSig", ROOT.AddressOf(self.treeContent, 'nSig'), 'nSig/D')
-        self.otree.Branch("nBkgComb", ROOT.AddressOf(self.treeContent, 'nBkgComb'), 'nBkgComb/D')
-        self.otree.Branch("nll", ROOT.AddressOf(self.treeContent, 'nll'), 'nll/D')
+        self.otree.Branch("fl", ROOT.addressof(self.treeContent, 'fl'), 'fl/D')
+        self.otree.Branch("afb", ROOT.addressof(self.treeContent, 'afb'), 'afb/D')
+        self.otree.Branch("fitstatus", ROOT.addressof(self.treeContent, 'fitstatus'), 'fitstatus/D')
+        self.otree.Branch("events", ROOT.addressof(self.treeContent, 'events'), 'events/D')
+        self.otree.Branch("nSig", ROOT.addressof(self.treeContent, 'nSig'), 'nSig/D')
+        self.otree.Branch("nBkgComb", ROOT.addressof(self.treeContent, 'nBkgComb'), 'nBkgComb/D')
+        self.otree.Branch("nll", ROOT.addressof(self.treeContent, 'nll'), 'nll/D')
         pass
 
     def _preRunFitSteps(self, setIdx):
-        self.process.dbplayer.resetDB(True)  # Force same starting point
+        #self.process.dbplayer.resetDB(False)  # Force same starting point
+        import shutil
+        cwd=os.getcwd()
+        workdir = os.path.join(modulePath, "plots_{}".format(self.process.cfg['args'].Year))
+        shutil.copy(os.path.join(workdir, self.process.dbplayer.odbfile), self.process.dbplayer.odbfile)
 
     def _postRunFitSteps(self, setIdx):
-        if math.fabs(self.fitter._nll.getVal()) < 1e20:
-            self.treeContent.fl = self.process.sourcemanager.get('fl').getVal()
-            self.treeContent.afb = self.process.sourcemanager.get('afb').getVal()
-            self.treeContent.fitstatus = self.fitter.fitResult['sig2DFitter.migrad']['status']
+        if math.fabs(self.fitter._nll.getVal()) < 1e20 and self.fitter.fitResult['{}.migrad'.format(self.fitter.name)]['status']==0:
+            self.treeContent.fl = self.process.sourcemanager.get('fl.{}'.format(self.process.cfg['args'].Year)).getVal()
+            self.treeContent.afb = self.process.sourcemanager.get('afb.{}'.format(self.process.cfg['args'].Year)).getVal()
+            self.treeContent.fitstatus = self.fitter.fitResult['{}.migrad'.format(self.fitter.name)]['status']
             self.treeContent.events = self.fitter.data.numEntries()
             self.treeContent.nSig = 0
             self.treeContent.nBkgComb = 0
@@ -68,7 +72,7 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
             self.otree.Fill()
 
     def _postSetsLoop(self):
-        ofile = ROOT.TFile("setSummary_{0}.root".format(q2bins[self.process.cfg['binKey']]['label']), 'RECREATE')
+        ofile = ROOT.TFile("setSummary_{}_{}.root".format(self.process.cfg['args'].Year, q2bins[self.process.cfg['binKey']]['label']), 'RECREATE')
         ofile.cd()
         self.otree.Write()
         ofile.Close()
@@ -81,7 +85,7 @@ def GetToyObject(self):
     setupSigMCStudier.update({
         'name': "sigMCStudier.{0}".format(self.cfg['args'].Year),
         'data': "sigMCReader.{0}.Fit".format(self.cfg['args'].Year),
-        'fitter': fitCollection.GetFitterObjects(self, 'sig2DFitter'),
+        'fitter': fitCollection.GetFitterObjects(self, 'sig3DFitter'),
         'nSetOfToys': 5,
     })
     sigMCStudier = SigMCStudier(setupSigMCStudier)
@@ -93,17 +97,22 @@ import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
 class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
     def createJdl(self, parser_args):
         jdl = self.createJdlBase()
+        jdl += """Transfer_Input_Files = {0}/seqCollection.py""".format(modulePath)
         jdl += """
-arguments = -b {binKey} -t {nSetOfToys} run $(Process)
+arguments = -b {binKey} -s {seqKey} -y {Year} -t {nSetOfToys} run $(Cluster)
 queue {nJobs}
 """
-        jdl = jdl.format(binKey=q2bins[parser_args.process.cfg['binKey']]['label'], nSetOfToys=parser_args.nSetOfToys, nJobs=self.cfg['nJobs'], executable=os.path.abspath(__file__),)
+        jdl = jdl.format(binKey = q2bins[parser_args.process.cfg['binKey']]['label'], 
+                        nSetOfToys=parser_args.nSetOfToys, nJobs=self.cfg['nJobs'], 
+                        seqKey  = parser_args.process.cfg['args'].seqKey,
+                        Year    = parser_args.process.cfg['args'].Year,
+                        executable=os.path.join(modulePath,"seqCollection.py"),)
         return jdl
 
 setupBatchTask = deepcopy(BatchTaskWrapper.templateCfg())
 setupBatchTask.update({
-    'nJobs': 20,
-    'queue': "longlunch",
+    'nJobs': 1,
+    'queue': "tomorrow",
 })
 
 # Customize taskSubmitter and jobRunner if needed
@@ -112,7 +121,7 @@ def GetParams(f, h, binKey, GEN, name):
     ROOT.TLatex().DrawLatexNDC(.73, .89, r"#scale[0.7]{{#chi^{{2}} / NDF: {chi2}/{ndf}}}".format(chi2=round(f.GetChisquare(), 0),ndf=f.GetNDF()) )
     ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
     plotCollection.Plotter.latexDataMarks(['sim'])
-    plotCollection.Plotter.latexLumi()
+    #plotCollection.Plotter.latexLumi()
     
     ROOT.TLatex().DrawLatexNDC(.73,.85,r"#scale[0.7]{{#color[2]{{Gen {Name}}}: {param}}}".format(Name="F_{L}" if name=="fl" else "A_{6}", param=round(GEN, 5)) )
     ROOT.TLatex().DrawLatexNDC(.73,.81,r"#scale[0.7]{{#color[4]{{Fit {Name}}}   : {param}}}".format(Name="F_{L}" if name=="fl" else "A_{6}", param=round(f.GetParameter(1), 5)) )
@@ -124,11 +133,11 @@ def GetParams(f, h, binKey, GEN, name):
 def func_postproc(args):
     """ Fit to fit result and make plots """
     os.chdir(args.wrapper.task_dir)
-    p.addService("dbplayer", FitDBPlayer(absInputDir=os.path.join(modulePath, "input", "selected")))
-    for binKey in args.binKey:
-        ifilename = "setSummary_{0}.root".format(q2bins[binKey]['label'])
+    args.process.addService("dbplayer", FitDBPlayer(absInputDir=os.path.join(modulePath, "plots_{}".format(args.Year))))
+    for binKey in args.process.cfg['bins']:
+        ifilename = "setSummary_{}_{}.root".format(args.Year, q2bins[binKey]['label'])
         if not os.path.exists(ifilename) or args.forceHadd:
-            call(["hadd", "-f", ifilename] + glob.glob('*/setSummary_{0}.root'.format(q2bins[binKey]['label'])))
+            call(["hadd", "-f", ifilename] + glob.glob('*/setSummary_{}_{}.root'.format(args.Year, q2bins[binKey]['label'])))
         ifile = ROOT.TFile(ifilename)
         tree = ifile.Get("tree")
 
@@ -148,7 +157,7 @@ def func_postproc(args):
         h_setSummary_fl.Fit("f_setSummary_fl", "RL")
 
         # Draw
-        db = shelve.open(os.path.join(p.dbplayer.absInputDir, "fitResults_{0}.db".format(q2bins[binKey]['label'])))
+        db = shelve.open(os.path.join(args.process.dbplayer.absInputDir, "fitResults_{0}.db".format(q2bins[binKey]['label'])))
         fl_GEN = StdFitter.unboundFlToFl(db['unboundFl_GEN']['getVal'])
         afb_GEN = StdFitter.unboundAfbToAfb(db['unboundAfb_GEN']['getVal'], fl_GEN)
         line = ROOT.TLine()
@@ -165,7 +174,7 @@ def func_postproc(args):
         GetParams(f_setSummary_afb, h_setSummary_afb, binKey, afb_GEN, "a6")
         if args.drawGEN:
             line.DrawLine(afb_GEN, 0, afb_GEN, h_setSummary_afb.GetMaximum())
-        plotCollection.Plotter.canvas.Print("h_setSummary_sigMCValidation_a6_{0}.pdf".format(q2bins[binKey]['label']))
+        plotCollection.Plotter.canvas.Print("h_setSummary_sigMCValidation_a6_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
 
         h_setSummary_fl.SetXTitle("F_{L}")
         h_setSummary_fl.SetYTitle("Number of test samples")
@@ -175,11 +184,11 @@ def func_postproc(args):
         GetParams(f_setSummary_fl, h_setSummary_fl, binKey, fl_GEN, "fl")
         if args.drawGEN:
             line.DrawLine(fl_GEN, 0, fl_GEN, h_setSummary_fl.GetMaximum())
-        plotCollection.Plotter.canvas.Print("h_setSummary_sigMCValidation_fl_{0}.pdf".format(q2bins[binKey]['label']))
+        plotCollection.Plotter.canvas.Print("h_setSummary_sigMCValidation_fl_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
 
         db.close()
 
-if __name__ == '__main__':
+if __name__ == '__main__': # Unsupported! This module should be accessible from seqCollection.py
     parser = AbsBatchTaskWrapper.BatchTaskParser
     parser._add_container_actions(parentParser) # Connect with main parser
     parser.add_argument(
@@ -236,13 +245,4 @@ if __name__ == '__main__':
         args.binKey = p.cfg['bins']
     args.func(args)
 
-    #sys.exit()
-"""
-from v2Fitter.Fitter.ObjProvider import ObjProvider
-BatchJob = ObjProvider({
-    'name': "BatchJob",
-    'obj': {
-        'BatchJob.test': [__main__, ],
-    }
-})   
-"""
+

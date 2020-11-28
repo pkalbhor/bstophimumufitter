@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import types
+import types, pdb, os
 from copy import deepcopy
 import functools
 import shelve
@@ -13,7 +13,6 @@ from BsToPhiMuMuFitter.varCollection import Bmass, CosThetaL, CosThetaK
 from v2Fitter.Fitter.ToyGenerator import ToyGenerator
 from v2Fitter.Fitter.FitterCore import FitterCore
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
-from BsToPhiMuMuFitter.fitCollection import setupSigAFitter
 
 import ROOT
 
@@ -62,20 +61,23 @@ def decorator_fluctuateParams(parList=None):
 def decorator_setExpectedEvents(yieldVars=None):
     """Generate from fixed dbfile. Default yieldVars  = ["nSig", "nBkgComb"]"""
     if yieldVars is None:
-        yieldVars = ["nSig", "nBkgComb"]
+        yieldVars = ["nSig", "nBkgComb", "nBkgPeak"]
     def wrapper(func):
         @functools.wraps(func)
         def wrapped_f(self):
             func(self)
 
             expectedYields = 0
-            try:
+            try:        
                 db = shelve.open(self.cfg['db'].format(binLabel=q2bins[self.process.cfg['binKey']]['label']))
                 for yVar in yieldVars:
                     try:
                         expectedYields += self.params.find(yVar).getVal()
                     except AttributeError:
-                        expectedYields += db[self.cfg['argAliasInDB'].get(yVar, yVar)]['getVal']
+                        if yVar=="nBkgPeak":
+                            expectedYields += db['PeakFrac']['getVal']*db['nSig']['getVal']
+                        else:
+                            expectedYields += db[self.cfg['argAliasInDB'].get(yVar, yVar)]['getVal']
             finally:
                 self.cfg['expectedYields'] = expectedYields
                 #  self.logger.logINFO("Will generate {0} events from p.d.f {1}.".format(expectedYields, self.pdf.GetName()))
@@ -83,50 +85,79 @@ def decorator_setExpectedEvents(yieldVars=None):
         return wrapped_f
     return wrapper
 
-# sigToyGenerator - validation
-setupSigToyGenerator = deepcopy(CFG)
-setupSigToyGenerator.update({
-    'name': "sigToyGenerator",
-    'pdf': "f_sig3D",
-    'saveAs': "sigToyGenerator.root",
-})
-sigToyGenerator = ToyGenerator(setupSigToyGenerator)
-@decorator_setExpectedEvents(["nSig"])
-@decorator_initParameters
-def sigToyGenerator_customize(self):
-    pass
-sigToyGenerator.customize = types.MethodType(sigToyGenerator_customize, sigToyGenerator)
+def GetToyObject(self, seq):
+    import BsToPhiMuMuFitter.dataCollection as dataCollection
+    Year = self.cfg['args'].Year
 
-# bkgCombToyGenerator - validation
-setupBkgCombToyGenerator = deepcopy(CFG)
-setupBkgCombToyGenerator.update({
-    'name': "bkgCombGenerator",
-    'pdf': "f_bkgComb",
-    'saveAs': "bkgCombToyGenerator.root",
-})
-bkgCombToyGenerator = ToyGenerator(setupBkgCombToyGenerator)
-@decorator_setExpectedEvents(["nBkgComb"])
-@decorator_initParameters
-def bkgCombToyGenerator_customize(self):
-    pass
-bkgCombToyGenerator.customize = types.MethodType(bkgCombToyGenerator_customize, bkgCombToyGenerator)
+    # sigToyGenerator - validation
+    if seq is 'sigToyGenerator':
+        setupSigToyGenerator = deepcopy(CFG)
+        setupSigToyGenerator.update({
+            'name': "sigToyGenerator",
+            'pdf': "f_sig3D",
+            'saveAs': "sigToyGenerator.root",
+        })
+        sigToyGenerator = ToyGenerator(setupSigToyGenerator)
+        @decorator_setExpectedEvents(["nSig"])
+        @decorator_initParameters
+        def sigToyGenerator_customize(self):
+            pass
+        sigToyGenerator.customize = types.MethodType(sigToyGenerator_customize, sigToyGenerator)
 
-# Systematics
+    # bkgCombToyGenerator - validation
+    if seq is 'bkgCombToyGenerator':
+        setupBkgCombToyGenerator = deepcopy(CFG)
+        setupBkgCombToyGenerator.update({
+            'name'  : "bkgCombGenerator.{}".format(Year),
+            'pdf'   : "f_bkgComb.{}".format(Year),
+            'mixWith':"sigMCReader.{}.Fit".format(Year),
+            'scale' : dataCollection.GetDataReader(self,'sigMCReader').cfg['lumi']/dataCollection.GetDataReader(self,'dataReader').cfg['lumi'],
+            'db'    : os.path.join(modulePath, 'plots_{}'.format(Year), 'fitResults_{binLabel}.db'),
+            'saveAs': None,
+        })
+        bkgCombToyGenerator = ToyGenerator(setupBkgCombToyGenerator)
+        @decorator_setExpectedEvents(["nBkgComb"])
+        @decorator_initParameters
+        def bkgCombToyGenerator_customize(self):
+            pass
+        bkgCombToyGenerator.customize = types.MethodType(bkgCombToyGenerator_customize, bkgCombToyGenerator)
+        return bkgCombToyGenerator
 
-# sigAToyGenerator - systematics
-setupSigAToyGenerator = deepcopy(CFG)
-setupSigAToyGenerator.update({
-    'name': "sigAToyGenerator",
-    'pdf': "f_sigA",
-    'argAliasInDB': setupSigAFitter['argAliasInDB'],
-    'saveAs': "sigAToyGenerator.root",
-})
-sigAToyGenerator = ToyGenerator(setupSigAToyGenerator)
-@decorator_setExpectedEvents(["nSig"])
-@decorator_initParameters
-def sigAToyGenerator_customize(self):
-    pass
-sigAToyGenerator.customize = types.MethodType(sigAToyGenerator_customize, sigAToyGenerator)
+    # bkgPeakToyGenerator - validation
+    if seq is 'bkgPeakToyGenerator':
+        setupBkgPeakToyGenerator = deepcopy(CFG)
+        setupBkgPeakToyGenerator.update({
+            'name'  : "bkgPeakGenerator.{}".format(Year),
+            'pdf'   : "f_bkg_KStar.{}".format(Year),
+            'mixWith':"sigMCReader.{}.Fit".format(Year),
+            'scale' : dataCollection.GetDataReader(self,'KsigMCReader').cfg['lumi']/dataCollection.GetDataReader(self,'dataReader').cfg['lumi'],
+            'db'    : os.path.join(modulePath, 'plots_{}'.format(Year), 'fitResults_{binLabel}.db'),
+            'saveAs': None,
+        })
+        bkgPeakToyGenerator = ToyGenerator(setupBkgPeakToyGenerator)
+        @decorator_setExpectedEvents(["nBkgPeak"])
+        @decorator_initParameters
+        def bkgPeakToyGenerator_customize(self):
+            pass
+        bkgPeakToyGenerator.customize = types.MethodType(bkgPeakToyGenerator_customize, bkgPeakToyGenerator)
+        return bkgPeakToyGenerator
+
+    # Systematics
+    # sigAToyGenerator - systematics
+    if seq is 'sigAToyGenerator':
+        setupSigAToyGenerator = deepcopy(CFG)
+        setupSigAToyGenerator.update({
+            'name': "sigAToyGenerator",
+            'pdf': "f_sigA",
+            'argAliasInDB': setupSigAFitter['argAliasInDB'],
+            'saveAs': "sigAToyGenerator.root",
+        })
+        sigAToyGenerator = ToyGenerator(setupSigAToyGenerator)
+        @decorator_setExpectedEvents(["nSig"])
+        @decorator_initParameters
+        def sigAToyGenerator_customize(self):
+            pass
+        sigAToyGenerator.customize = types.MethodType(sigAToyGenerator_customize, sigAToyGenerator)
 
 if __name__ == '__main__':
     try:

@@ -32,6 +32,14 @@ ArgAliasSigM={'sigMGauss1_sigma': 'sigMGauss1_sigma_RECO', 'sigMGauss2_sigma': '
 ArgAliasDCB ={'cbs1_sigma': 'cbs1_sigma_RECO', 'cbs2_sigma': 'cbs2_sigma_RECO', 'cbs1_alpha': 'cbs1_alpha_RECO', 'cbs2_alpha': 'cbs2_alpha_RECO', 'cbs1_n': 'cbs1_n_RECO', 'cbs2_n': 'cbs2_n_RECO', 'cbs_mean': 'cbs_mean_RECO', 'sigMDCB_frac': 'sigMDCB_frac_RECO'}
 ArgAliasJP = {}
 ArgAliasJK = {}
+ArgAlias_PhiM_JP = {'Phicbs1_alpha': 'Phicbs1_alpha_MC', 'Phicbs1_n':'Phicbs1_n_MC', 'Phicbs1_sigma':'Phicbs1_sigma_MC', 
+        'Phicbs2_alpha':'Phicbs2_alpha_MC', 'Phicbs2_n':'Phicbs2_n_MC', 'Phicbs2_sigma':'Phicbs2_sigma_MC', 
+        'Phicbs_mean':'Phicbs_mean_MC', 'sigPhiM_DCB_frac':'sigPhiM_DCB_frac_MC', 
+        'sigPhiM_TCB_frac1':'sigPhiM_TCB_frac1_MC', 'sigPhiM_TCB_frac2':'sigPhiM_TCB_frac2_MC',
+        'Phicbs3_alpha': 'Phicbs3_alpha_MC', 'Phicbs3_n':'Phicbs3_n_MC', 'Phicbs3_sigma':'Phicbs3_sigma_MC',
+        'sigPhiMG_mean':'sigPhiMG_mean_MC', 'sigPhiM_frac':'sigPhiM_frac_MC', 
+        'sigPhiMG1_sigma':'sigPhiMG1_sigma_MC', 'sigPhiMG2_sigma':'sigPhiMG2_sigma_MC', 'sigPhiMG3_sigma':'sigPhiMG3_sigma_MC', 
+        'sigPhiM3_frac1':'sigPhiM3_frac1_MC', 'sigPhiM3_frac2':'sigPhiM3_frac2_MC'}
 
 def GetFitterObjects(self, seq):
     Year=self.cfg['args'].Year
@@ -101,8 +109,8 @@ def GetFitterObjects(self, seq):
             'data': "sigMCReader.{0}.{1}".format(Year, "altFit" if AltRange else "Fit"),
             'pdf': "f_sig3D{}.{}".format('_ts' if TwoStep else '', Year),
             'FitHesse': True,
-            'FitMinos': [True, ()],
-            'argPattern': ['unboundAfb', 'unboundFl', '^sigM.*'],
+            'FitMinos': [False if self.cfg['args'].seqKey=='sigMCValidation' else True, ()],
+            'argPattern': ['unboundAfb', 'unboundFl'] if self.cfg['args'].seqKey=='sigMCValidation' else ['unboundAfb', 'unboundFl', '^sigM.*'],
             'createNLLOpt': [],
             'argAliasInDB': ArgAliasRECO_Alt if AltRange else ArgAliasRECO,
         })
@@ -158,7 +166,7 @@ def GetFitterObjects(self, seq):
             'Years'     : [Year, Year],
             #'argPattern': [r'bkgComb[KL]_c[\d]+', ],
             'argAliasInDB': None,
-            'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit2', 'minimize'), ROOT.RooFit.Minos(0)],],
+            'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(0)],],
         })
         return SimultaneousFitter(setupSimulFitter_bkgCombA)
     if seq is 'finalFitter':
@@ -242,9 +250,9 @@ def GetFitterObjects(self, seq):
     if seq is 'finalFitter_WithKStar':
         setupFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                         # 3D = nSig(Sig2D*SigM) + nBkg(fBkgM*fBkgA)
         setupFinalFitter_WithKStar.update({
-            'name': "finalFitter_WithKStar{}.{}".format('_Alt' if AltRange else '', Year),
+            'name': "finalFitter_WithKStar{}.{}".format('_Alt' if AltRange else '_ts' if TwoStep else '', Year),
             'data': "dataReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''),
-            'pdf': "f_final_WithKStar{}.{}".format('_Alt' if AltRange else '', Year),
+            'pdf': "f_final_WithKStar{}.{}".format('_Alt' if AltRange else '_ts' if TwoStep else '', Year),
             'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombM_c[\d]+', r'bkgCombM_c[\d]_Alt+'],
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
             'FitHesse': True,
@@ -269,6 +277,31 @@ def GetFitterObjects(self, seq):
         return StdFitter(setupFinalFitter_AltM_WithKStar)
 
     #For Validation
+    if seq is 'sigPhiMFitter_JP': #Phi mass for comparison
+        setupSigMFitter_JP = deepcopy(setupTemplateFitter)
+        setupSigMFitter_JP.update({
+            'name': "sigPhiMFitter_JP.{}".format(Year),
+            'data': "sigMCReader_JP.{}.Fit_antiResVeto".format(Year),
+            'pdf': "f_sigPhiM3.{}".format(Year),
+            'FitHesse': True,
+            'FitMinos': [False, ()],
+            'argAliasInDB': {**ArgAlias_PhiM_JP},
+            'createNLLOpt': [ROOT.RooFit.Range(1.016, 1.024),],
+        })
+        return StdFitter(setupSigMFitter_JP)
+    if seq is 'finalPhiMFitter_JP': #Phi mass from data for comparison with MC
+        setupfinalPhiMFitter_JP = deepcopy(setupTemplateFitter)
+        setupfinalPhiMFitter_JP.update({
+            'name': "finalPhiMFitter_JP.{}".format(Year),
+            'data': "dataReader.{}.Fit_antiResVeto".format(Year),
+            'pdf': "f_finalPhiM.{}".format(Year),
+            'FitHesse': True,
+            'FitMinos': [False, ()],
+            'argAliasInDB': {**ArgAlias_PhiM_JP},
+            'createNLLOpt': [ROOT.RooFit.Range(1.016, 1.024),],
+            'argAliasSaveToDB': False,
+        })
+        return StdFitter(setupfinalPhiMFitter_JP)
     if seq is 'sigMFitter_JP': #Singal fit for JpsiPhi peak fit
         setupSigMFitter_JP = deepcopy(setupTemplateFitter)
         setupSigMFitter_JP.update({
@@ -425,12 +458,24 @@ setupSimultaneousFitter = deepcopy(setupTemplateSimFitter)
 setupSimultaneousFitter.update({
     'category'  : ['cat16', 'cat17', 'cat18'],
     'data'      : ["sigMCReader.2016.Fit", "sigMCReader.2017.Fit", "sigMCReader.2018.Fit"],
-    'pdf'       : ["f_sig2D.2016", "f_sig2D.2017", "f_sig2D.2018"],
+    'pdf'       : ["f_sig2D_ts.2016", "f_sig2D_ts.2017", "f_sig2D_ts.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
     'argAliasInDB': ArgAliasRECO,
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
 })
 SimultaneousFitter_sig2D = SimultaneousFitter(setupSimultaneousFitter)
+
+setupeSig3DFitter = deepcopy(setupTemplateSimFitter)
+setupeSig3DFitter.update({
+    'category'  : ['cat16', 'cat17', 'cat18'],
+    'data'      : ["sigMCReader.2016.Fit", "sigMCReader.2017.Fit", "sigMCReader.2018.Fit"],
+    'pdf'       : ["f_sig3D_ts.2016", "f_sig3D_ts.2017", "f_sig3D_ts.2018"],
+    'argPattern': ['unboundAfb', 'unboundFl'],
+    'Years'     : [2016, 2017, 2018],
+    'argAliasInDB': ArgAliasRECO,
+    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
+})
+SimultaneousFitter_sig3D = SimultaneousFitter(setupeSig3DFitter)
 
 setupSimulFitter_sigGEN = deepcopy(setupTemplateSimFitter)
 setupSimulFitter_sigGEN.update({
@@ -438,6 +483,7 @@ setupSimulFitter_sigGEN.update({
     'data'      : ["sigMCGENReader.2016.Fit", "sigMCGENReader.2017.Fit", "sigMCGENReader.2018.Fit"],
     'pdf'       : ["f_sigA.2016", "f_sigA.2017", "f_sigA.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
+    'Years'     : [2016, 2017, 2018],
     'argAliasInDB': ArgAliasGEN,
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)], ],
 })
@@ -454,6 +500,19 @@ setupSimFitterFinal_AltM.update({
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
 })
 SimultaneousFitter_Final_AltM = SimultaneousFitter(setupSimFitterFinal_AltM)
+
+setupSimFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgM*fBkgA)
+setupSimFinalFitter_WithKStar.update({
+    'category'  : ['cat16', 'cat17', 'cat18'],
+    'data'      : ["dataReader.2016.Fit", "dataReader.2017.Fit", "dataReader.2018.Fit"],
+    'pdf'       : ["f_final_WithKStar_ts.2016", "f_final_WithKStar_ts.2017", "f_final_WithKStar_ts.2018"],
+    'argPattern': ['unboundAfb', 'unboundFl'],
+    'Years'     : [2016, 2017, 2018],
+    'argAliasInDB': {**ArgAliasGEN},
+    'argAliasSaveToDB': False,
+    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(0)],],
+})
+SimFitter_Final_WithKStar = SimultaneousFitter(setupSimFinalFitter_WithKStar)
 
 setupSimFinalFitter_AltM_WithKStar = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgM*fBkgA)
 setupSimFinalFitter_AltM_WithKStar.update({

@@ -92,6 +92,9 @@ class Plotter(Path):
             Plotter.latexLumi()
             Plotter.latexCMSExtra(**extraArgs)
 
+    frameP = Phimass.frame()
+    frameP_binning = ROOT.RooBinning(400, 1.0, 1.04)
+
     Bmass.setRange(Bmass.getMin(defaultPlotRegion), Bmass.getMax(defaultPlotRegion))
     frameB = Bmass.frame(ROOT.RooFit.Range(defaultPlotRegion))
     frameB.SetMinimum(0)
@@ -141,12 +144,14 @@ class Plotter(Path):
                 self.logger.logERROR(errorMsg)
                 raise RuntimeError("pdfPlot not found in source manager.")
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
+        FitterCore.ArgLooper(args, lambda p: p.Print())
         if type(p[2]) is str:  # In case ArgAlias is to be defined with string at the end for all args
             tag = p[2]; p[2] = {}; arglist=[]
             FitterCore.ArgLooper(args, lambda p: arglist.append(p.GetName()))
             for var in arglist: p[2].update({var: var+tag})
         if self.process.cfg['args'].NoFit: self.process.cfg['args'].NoImport=True
         if (not self.process.cfg['args'].NoImport): FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
+        FitterCore.ArgLooper(args, lambda p: p.Print())
         return p
 
     def initDataPlotCfg(self, p):
@@ -165,13 +170,16 @@ class Plotter(Path):
         return p
 
     @staticmethod
-    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, legend=False, scaleYaxis=1.4, Plotpdf=True):
+    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, legend=False, scaleYaxis=1.4, Plotpdf=True, NoPull=False):
         """
             Use initXXXPlotCfg to ensure elements in xxxPlots fit the format
         """
         # Major plot
         cloned_frame = frame.emptyClone("cloned_frame") # No need to call RefreshNorm
         if frame is Plotter.frameB:
+            cloned_frame.SetNdivisions(510, "X")
+            cloned_frame.SetYTitle("Events / {0:.3f} GeV".format(binning.averageBinWidth()))
+        elif frame is Plotter.frameP:
             cloned_frame.SetNdivisions(510, "X")
             cloned_frame.SetYTitle("Events / {0:.3f} GeV".format(binning.averageBinWidth()))
         elif frame is Plotter.frameL:
@@ -193,7 +201,7 @@ class Plotter(Path):
         #cloned_frame.SetMaximum(scaleYaxis * p0.GetMaximum())
         cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
         Plotter.canvas.cd()
-        if Plotpdf:
+        if Plotpdf and (not NoPull):
             Plotter.DrawWithResidue(cloned_frame)
         else:
             cloned_frame.Draw()
@@ -216,6 +224,7 @@ class Plotter(Path):
         # Some marks
         Plotter.latexDataMarks(**marks)
 
+    plotFrameP = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameP, 'binning': frameP_binning}))
     plotFrameB = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning}))
     plotFrameK = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning}))
     plotFrameL = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning}))

@@ -81,7 +81,7 @@ for i in List: # 2 Step list
                 obj.Scale(scale);                   obj2.Scale(scale2)
 
                 res.fUpperPad.Draw(); res.fLowerPad.Draw(); res.fUpperPad.cd()
-                obj.Draw("HIST");   
+                obj.Draw("E1 HIST");   
                 if "ProjectionX" in obj.GetName():
                     pdfhist = pdf['pdfL_ts'].createHistogram("pdfL_ts", CosThetaL, ROOT.RooFit.Binning(20))
                 else:
@@ -89,7 +89,7 @@ for i in List: # 2 Step list
                 pdfhist.Draw('c same')
                 pdfhist.SetLineColor(ROOT.kBlue)
 
-                obj2.Draw("HIST same")
+                obj2.Draw("E1 HIST same")
                 if "ProjectionX" in obj.GetName():
                     pdfhist2 = pdf['pdfL'].createHistogram("pdfL", CosThetaL, ROOT.RooFit.Binning(20))
                 else:

@@ -60,32 +60,25 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     self.canvasPrint(pltName)
 types.MethodType(plotSpectrumWithSimpleFit, Plotter)
 
-def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
+def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='PBLK'):
     for pIdx, plt in enumerate(dataPlots):
         dataPlots[pIdx] = self.initDataPlotCfg(plt)
     for pIdx, plt in enumerate(pdfPlots):
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
 
     plotFuncs = {
+        'P': {'func': Plotter.plotFrameP, 'tag': "_Phimass"},
         'B': {'func': Plotter.plotFrameB_fine, 'tag': "_Bmass"},
         'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
         'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
     }
-    ############################--------TEST---------###########################
-    """mmFrame=Mumumass.frame(sqrt(q2bins[self.process.cfg['binKey']]['q2range'][0]), sqrt(q2bins[self.process.cfg['binKey']]['q2range'][1]))
-    phiFrame=Phimass.frame(1.01, 1.03)
-    dataPlots[0][0].plotOn(mmFrame, ROOT.RooFit.Name("dataMuMuMass"))
-    cmm=ROOT.TCanvas("cmm", "cmm"); mmFrame.Draw(); self.latexQ2(); cmm.Print("MuMuMass_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
-    dataPlots[0][0].plotOn(phiFrame, ROOT.RooFit.Name("dataPhiMass"))
-    cphi=ROOT.TCanvas("cphi", "cphi"); phiFrame.Draw(); self.latexQ2(); cphi.Print("PhiMass_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))"""
-    ############################--------TEST---------###########################
     cwd=os.getcwd()
     for frame in frames:
         NoFit= self.process.cfg['args'].NoFit
-        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks, legend=False if NoFit else True, Plotpdf=(not NoFit))
+        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks, legend=False if NoFit else True, Plotpdf=(not NoFit), NoPull=self.process.cfg['args'].NoPull)
         Plotter.latexQ2(self.process.cfg['binKey'])
         #if not frame =='B': self.DrawParams(pdfPlots)
-        ####################################
+        #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
         def chdir(path):
             if not os.path.exists(path):                                                                                                       
                 os.mkdir(path)   
@@ -99,7 +92,20 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         if pltName.split('.')[0].strip('_Alt') in ["plot_bkgA_KStar", "plot_bkgM_KStar"]:
             path=os.path.join(modulePath, self.process.work_dir, "KStarPlots")
             chdir(path)       
-        ####################################
+        #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
+        if pltName=="plot_sigPhiM_JP.{}".format(self.process.cfg['args'].Year):
+            from math import sqrt
+            pdb.set_trace()
+            args = pdfPlots[0][0].getParameters(dataPlots[0][0])
+            f1 = args.find('sigPhiM3_frac1').getVal()
+            #f1 = args.find('sigPhiM_frac').getVal()
+            f2 = args.find('sigPhiM3_frac2').getVal()
+            s1 = args.find('sigPhiMG1_sigma').getVal()
+            s2 = args.find('sigPhiMG2_sigma').getVal()
+            s3 = args.find('sigPhiMG3_sigma').getVal()
+            #s_eff = sqrt(f1*s1*s1 + (1.-f1)*s2*s2)
+            s_eff = sqrt(f1*s1*s1 + f2*s2*s2 + (1.-f1-f2)*s3*s3)
+            Plotter.latex.DrawLatexNDC(.19, .77, "#sigma_{{Eff}} = {0:2f}".format(s_eff))
         self.canvasPrint(pltName.replace('.', '_') + plotFuncs[frame]['tag'])
         Plotter.canvas.cd()
     os.chdir(cwd)
@@ -121,16 +127,17 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
 
     cwd=os.getcwd()
     for frame in frames:
-        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+        NoFit= self.process.cfg['args'].NoFit
+        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks, legend=False if NoFit else True, Plotpdf=(not NoFit), NoPull=self.process.cfg['args'].NoPull)
         Plotter.latexQ2(self.process.cfg['binKey'])
         #self.DrawParams(pdfPlots)
-        ########################################
+        #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
         if pltName=="plot_sigMCGEN.{0}".format(str(self.process.cfg['args'].Year)):
             path=os.path.join(modulePath, self.process.work_dir, "SignalFits")
             if not os.path.exists(path):                                                        
                 os.mkdir(path)                                                                 
             os.chdir(path)
-        ######################################33
+        #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
         self.canvasPrint(pltName.replace('.', '_') + plotFuncs[frame]['tag'])
         Plotter.canvas.cd()
     os.chdir(cwd)
@@ -146,13 +153,13 @@ def plotEfficiency(self, data_name, pdf_name, data_hist, label):
     args = pdf.getParameters(data)
     if (not self.process.cfg['args'].NoImport): FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
 
-    #####################################
+    #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
     cwd=os.getcwd()
     path=os.path.join(modulePath, self.process.work_dir, "Efficiency")
     if not os.path.exists(path):
         os.mkdir(path)  
     os.chdir(path)  
-    #####################################
+    #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
 
     binningL = ROOT.RooBinning(len(dataCollection.accXEffThetaLBins) - 1, dataCollection.accXEffThetaLBins)
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
@@ -222,13 +229,13 @@ def plotEfficiency(self, data_name, pdf_name, data_hist, label):
 #types.MethodType(plotEfficiency, Plotter)
 setattr(Plotter, 'plotEfficiency', plotEfficiency)
 
-def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
+def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='PBLK'):
     """Specification of plotSimpleBLK for post-fit plots"""
     for pIdx, plt in enumerate(pdfPlots):
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
 
     # Calculate normalization and then draw
-    args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL))
+    args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Phimass, Bmass, CosThetaK, CosThetaL))
     nSigDB = args.find('nSig').getVal()
     nSigErrorDB = args.find('nSig').getError()
     nBkgCombDB = args.find('nBkgComb').getVal()
@@ -293,35 +300,48 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots, frames='BLK'):
                  "Background"], ]
 
         plotFuncs = {
+            'P': {'func': Plotter.plotFrameP, 'tag': "_Phimass"},
             'B': {'func': Plotter.plotFrameB_fine, 'tag': "_Bmass"},
             'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
             'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
         }
 
-        drawLatexFitResults = True
+        NoFit = self.process.cfg['args'].NoFit
+        drawLatexFitResults = False if NoFit else True
         cwd=os.getcwd()
         for frame in frames:
-            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots)
+            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots, legend=False if NoFit else True, Plotpdf=(not NoFit), NoPull=self.process.cfg['args'].NoPull)
             if drawLatexFitResults:
-                if frame == 'B':
+                if frame in ['B', 'P']:
                     Plotter.latex.DrawLatexNDC(.19, .77, "Y_{Signal}")
                     Plotter.latex.DrawLatexNDC(.35, .77, "= {0:.2f}".format(nSigDB))# * sigFrac[regionName]))
                     Plotter.latex.DrawLatexNDC(.50, .77, "#pm {0:.2f}".format(nSigErrorDB))# * sigFrac[regionName]))
                     Plotter.latex.DrawLatexNDC(.19, .70, "Y_{Background}")
                     Plotter.latex.DrawLatexNDC(.35, .70, "= {0:.2f}".format(nBkgCombDB))# * bkgCombFrac[regionName]))
                     Plotter.latex.DrawLatexNDC(.50, .70, "#pm {0:.2f}".format(nBkgCombErrorDB))# * bkgCombFrac[regionName]))
+                    if pltName=="plot_finalPhiM_JP.{0}".format(self.process.cfg['args'].Year):
+                        from math import sqrt
+                        f1 = args.find('sigPhiM3_frac1').getVal()
+                        #f1 = args.find('sigPhiM_frac').getVal()
+                        f2 = args.find('sigPhiM3_frac2').getVal()
+                        s1 = args.find('sigPhiMG1_sigma').getVal()
+                        s2 = args.find('sigPhiMG2_sigma').getVal()
+                        s3 = args.find('sigPhiMG3_sigma').getVal()
+                        #s_eff = sqrt(f1*s1*s1 + (1.-f1)*s2*s2)
+                        s_eff = sqrt(f1*s1*s1 + f2*s2*s2 + (1.-f1-f2)*s3*s3)
+                        Plotter.latex.DrawLatexNDC(.19, .63, "#sigma_{{Eff}} = {0:2f}".format(s_eff))
                 elif frame == 'L':
                     Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}".format(afbDB))
                 elif frame == 'K':
                     Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
             Plotter.latexQ2(self.process.cfg['binKey'])
             
-            ##################################
+            #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
             path=os.path.join(modulePath, self.process.work_dir, "FinalFit") 
             if not os.path.exists(path):
                 os.mkdir(path)
             os.chdir(path)
-            ##################################
+            #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
             self.canvasPrint(pltName.replace('.','_') + '_' + regionName + plotFuncs[frame]['tag'])
         os.chdir(cwd)
 types.MethodType(plotPostfitBLK, Plotter)
@@ -439,7 +459,7 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
         cwd=os.getcwd()
         for frame in frames:
             NoFit= self.process.cfg['args'].NoFit
-            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots, legend=False if NoFit else True, Plotpdf=(not NoFit))
+            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots, legend=False if NoFit else True, Plotpdf=(not NoFit), NoPull=self.process.cfg['args'].NoPull)
             if drawLatexFitResults and not self.process.cfg['args'].NoFit:
                 if frame == 'B':
                     Plotter.latex.DrawLatexNDC(.19, .77, "Y_{Signal}")
@@ -549,7 +569,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         yyFlErrHi = array('d', [0] * len(binKeys))
         yyFlErrLo = array('d', [0] * len(binKeys))
 
-        yyAfb = array('d', [0] * len(binKeys))
+        yyAfb = array('d', [1] * len(binKeys))
         yyAfbStatErrHi = array('d', [0] * len(binKeys))
         yyAfbStatErrLo = array('d', [0] * len(binKeys))
         yyAfbSystErrHi = array('d', [0] * len(binKeys))
@@ -568,9 +588,9 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 fl = unboundFlToFl(unboundFl['getVal'])
                 afb = unboundAfbToAfb(unboundAfb['getVal'], fl)
                 print("Parameter values, Bin:", binKey, " A6:", unboundAfb['getVal'], " -> ", afb, "  FL:", unboundFl['getVal'], " -> ", fl)
-            
+           
                 yyFl[binKeyIdx] = fl
-                yyAfb[binKeyIdx] = afb
+                yyAfb[binKeyIdx] = afb 
                 yyFlStatErrHi[binKeyIdx], yyFlStatErrLo[binKeyIdx],\
                     yyAfbStatErrHi[binKeyIdx], yyAfbStatErrLo[binKeyIdx] = statErrorMethods.get(statErrorKey, getStatError_Minuit)(db)
                 if withSystError:
@@ -656,7 +676,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle("q^{2} [GeV^{2}]")
         gr.GetYaxis().SetTitle("A_{6}")
-        gr.GetYaxis().SetRangeUser(-.05, .05) if not drawSM else gr.GetYaxis().SetRangeUser(-1., 1.)#+-0.02
+        gr.GetYaxis().SetRangeUser(-.5, .5) if not drawSM else gr.GetYaxis().SetRangeUser(-1., 1.)#+-0.02
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
@@ -664,15 +684,15 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 gr.Draw("A" + opt if optIdx == 0 else opt)
             else:
                 gr.Draw(opt + " SAME")
-    jpsiBox = ROOT.TBox(8.00, -.05, 11.0, .05) if not drawSM else ROOT.TBox(8.00, -1., 11.0, 1.) 
-    psi2sBox = ROOT.TBox(12.5, -.05, 15.0, .05) if not drawSM else ROOT.TBox(12.5, -1., 15.0, 1.) 
+    jpsiBox = ROOT.TBox(8.00, -.5, 11.0, .5) if not drawSM else ROOT.TBox(8.00, -1., 11.0, 1.) 
+    psi2sBox = ROOT.TBox(12.5, -.5, 15.0, .5) if not drawSM else ROOT.TBox(12.5, -1., 15.0, 1.) 
     jpsiBox.SetFillColorAlpha(17, .35)
     psi2sBox.SetFillColorAlpha(17, .35)
     jpsiBox.Draw()
     psi2sBox.Draw()
     legend.Draw()
     Plotter.legend.Draw()
-    Plotter.latexDataMarks(marks)
+    Plotter.latexDataMarks(**marks)
     self.canvasPrint(pltName + '_afb', False)
 
     for grIdx, gr in enumerate(grFls):
@@ -695,7 +715,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     psi2sBox.Draw()
     legend.Draw()
     Plotter.legend.Draw()
-    Plotter.latexDataMarks(marks)
+    Plotter.latexDataMarks(**marks)
     self.canvasPrint(pltName + '_fl', False)
 types.MethodType(plotSummaryAfbFl, Plotter)
 
@@ -815,7 +835,7 @@ def GetPlotterObject(self):
         'kwargs': {
             'pltName': "plot_bkgM_KStar{}.{}".format('_Alt' if AltRange else '', Year),
             'dataPlots': [["KsigMCReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''), plotterCfg_styles['mcStyleBase'], "Simulation"], ],
-            'pdfPlots' : [["f_bkgM_KStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_styles['sigStyleBase'], None, "Total fit"], ],
+            'pdfPlots' : [["f_bkgM_KStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_bkgStyle_KStar, None, "Peaking bkg mass fit"], ],
             'marks': {'marks': ['sim']}}
     }
     plotterCfg['plots']['plot_bkgA_KStar'] = {  #Plot K*0MuMu Fits
@@ -823,9 +843,28 @@ def GetPlotterObject(self):
         'kwargs': {
             'pltName'  : "plot_bkgA_KStar{}.{}".format('_Alt' if AltRange else '', Year),
             'dataPlots': [["KsigMCReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''), plotterCfg_styles['mcStyleBase'], "Simulation"], ],
-            'pdfPlots' : [["f_bkgA_KStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_styles['sigStyleBase'], None, "Analytic KStar0MuMu Bkg."], ],
+            'pdfPlots' : [["f_bkgA_KStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_bkgStyle_KStar, None, "Analytic KStar0MuMu Bkg."], ],
             'marks': {'marks': ['sim']}}
     } 
+    plotterCfg['plots']['plot_sigPhiM_JP'] = {
+        'func': [functools.partial(plotSimpleBLK, frames='P')],
+        'kwargs': {
+            'pltName': "plot_sigPhiM_JP.{0}".format(Year),
+            'dataPlots': [["sigMCReader_JP.{}.Fit_antiResVeto".format(Year), plotterCfg_styles['mcStyleBase'], "Simulation"], ],
+            'pdfPlots' : [["f_sigPhiM3.{}".format(Year), plotterCfg_styles['sigStyleBase']+(ROOT.RooFit.Range(1.016, 1.024),), fitCollection.ArgAlias_PhiM_JP, "Total fit"], ],
+            'marks': {'marks': ['sim']}}
+    }
+    plotterCfg['plots']['plot_finalPhiM_JP'] = {
+        'func': [functools.partial(plotPostfitBLK, frames='P')],
+        'kwargs': {
+            'pltName': "plot_finalPhiM_JP.{0}".format(Year),
+            'dataReader': "dataReader.{}".format(Year),
+            'pdfPlots' : [["f_finalPhiM.{}".format(Year), plotterCfg_allStyle+(ROOT.RooFit.Range(1.016,1.024),), None, "Total fit"], 
+                          ["f_sigPhiM3.{}".format(Year), plotterCfg_styles['sigStyleBase']+(ROOT.RooFit.Range(1.016,1.024),), None, "Signal fit"],
+                          ["f_bkgPhiM.{}".format(Year), plotterCfg_styles['bkgStyleBase']+(ROOT.RooFit.Range(1.016,1.024),), None, "Bkg fit"],
+                            ],
+            }
+    }
     plotterCfg['plots']['plot_bkgM_JP'] = {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
         'kwargs': {
@@ -848,9 +887,9 @@ def GetPlotterObject(self):
     plotterCfg['plots']['plot_final_WithKStar'] = {
         'func': [plotPostfitBLK_WithKStar],
         'kwargs': {
-            'pltName': "plot_final_WithKStar{}.{}".format('_Alt' if AltRange else '',Year),
+            'pltName': "plot_final_WithKStar{}.{}".format('_Alt' if AltRange else '_ts' if TwoStep else '',Year),
             'dataReader': "dataReader.{}".format(Year),
-            'pdfPlots': [["f_final_WithKStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_styles['allStyleBase'], None, "Total fit"],
+            'pdfPlots': [["f_final_WithKStar{}.{}".format('_Alt' if AltRange else '_ts' if TwoStep else '', Year), plotterCfg_styles['allStyleBase'], None, "Total fit"],
                          ["f_sigM{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_styles['sigStyleBase'], None, "Sigal"],
                          ["f_bkgComb{}.{}".format('_Alt' if AltRange else '', Year),   plotterCfg_styles['bkgStyleBase'], None, "Background"],
                          ["f_bkg_KStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_bkgStyle_KStar,         None, "K*0MuMu Background"], ],
@@ -892,7 +931,7 @@ def GetPlotterObject(self):
                          'legendOpt': "LPE",
                          },
                         ],
-            'marks'  : {'marks': ['sim']}, },
+            'marks'  : {'marks': ['sim']}}
     }
     plotterCfg['plots']['Combined_plot_bkgCombA'] = {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],

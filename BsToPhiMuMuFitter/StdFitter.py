@@ -63,7 +63,13 @@ class StdFitter(FitterCore):
             FitterCore.ArgLooper(self.pdf.getParameters(self.data), lambda p: arglist.append(p.GetName()))
             for var in arglist: self.cfg['argAliasInDB'].update({var: var+self.cfg['AliasTag']})
 
-        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgComb', 'nSig', 'nBkgPeak', 'PeakFrac', 'unboundFl', 'unboundAfb']) #
+        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgComb', 'nSig', 'nBkgPeak', 'PeakFrac', 'unboundFl', 'unboundAfb'])
+
+        if self.process.cfg['args'].seqKey =='sigMCValidation': #implemented for resetting parameters to initial values. (Needed in case of multiple toy processing)
+            wspace='wspace.{}.{}'.format(self.process.cfg['args'].Year, self.process.cfg['args'].binKey)
+            self.pdf.getParameters(self.data).find('unboundAfb').setVal(0.0)
+            self.pdf.getParameters(self.data).find('unboundFl').setVal(0.6978)
+            FitterCore.ArgLooper(self.pdf.getParameters(self.data), lambda p:p.Print())
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
 
@@ -103,14 +109,14 @@ class StdFitter(FitterCore):
     def _postFitSteps(self):
         """Post-processing"""
         #  FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
-        """pdb.set_trace()
+        '''pdb.set_trace()
         c2=ROOT.TCanvas(); c2.cd()
-        Bmass=ROOT.RooRealVar("Bmass", "Bmass", 4.9, 5.8)
-        frame=Bmass.frame()
-        self.pdf.plotOn(frame, ROOT.RooFit.Normalization(1136.0, ROOT.RooAbsReal.NumEvent))
+        Phimass=ROOT.RooRealVar("Phimass", "Phimass", 1.0, 1.04)
+        frame=Phimass.frame()
         self.data.plotOn(frame)
+        self.pdf.plotOn(frame) #, ROOT.RooFit.Normalization(1136.0, ROOT.RooAbsReal.NumEvent))
         frame.Draw()
-        c2.SaveAs("PlotInstant.pdf")"""
+        c2.SaveAs("PlotInstant.pdf")'''
         ####
         self.ToggleConstVar(self.args, True)
         if self.cfg['saveToDB']:
@@ -118,11 +124,14 @@ class StdFitter(FitterCore):
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
 
     def _runFitSteps(self):
-        self.FitMigrad()
-        if self.cfg.get('FitHesse', False):
-            self.FitHesse()
-        if self.cfg.get('FitMinos', [False, ()])[0]:
-            self.FitMinos()
+        if False:
+            self.pdf.fitTo(self.data, ROOT.RooFit.Range(1.016, 1.024))
+        else:
+            self.FitMigrad()
+            if self.cfg.get('FitHesse', False):
+                self.FitHesse()
+            if self.cfg.get('FitMinos', [False, ()])[0]:
+                self.FitMinos()
 
     def FitMigrad(self):
         """Migrad"""
