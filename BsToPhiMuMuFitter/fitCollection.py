@@ -256,7 +256,7 @@ def GetFitterObjects(self, seq):
             'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombM_c[\d]+', r'bkgCombM_c[\d]_Alt+'],
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
             'FitHesse': True,
-            'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
+            'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
             'argAliasInDB': {**ArgAliasGEN},
             'argAliasSaveToDB': False,
         })
@@ -349,14 +349,14 @@ def GetFitterObjects(self, seq):
         return StdFitter(setupBkgMFitter_PK)
 
     if seq is 'finalMFitter':
-        setupFinalMFitter = deepcopy(setupTemplateFitter)                        # Final Mass PDF = nSig(SigM)+nBkg(fBkgM)
+        setupFinalMFitter = deepcopy(setupTemplateFitter)               # Final Mass PDF = nSig(SigM)+nBkg(fBkgM)+nBkgP(fBkgP)
         setupFinalMFitter.update({
             'name': "finalMFitter.{}".format(Year),
             'data': "dataReader.{}.Fit".format(Year),
             'pdf': "f_finalM.{}".format(Year),
-            'argPattern': ['nSig', 'nBkgComb', r'bkgCombM_c[\d]+'],
+            'argPattern': ['nSig', 'nBkgComb', 'nBkgPeak', r'bkgCombM_c[\d]+'],
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
-            'FitMinos': [True, ('nSig', 'nBkgComb')],
+            'FitMinos': [True, ('nSig', 'nBkgComb', 'nBkgPeak')],
         })
         return StdFitter(setupFinalMFitter)
     if seq is 'finalMFitter_JP':

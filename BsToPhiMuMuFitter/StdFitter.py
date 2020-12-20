@@ -34,7 +34,7 @@ class StdFitter(FitterCore):
 
     def _bookMinimizer(self):
         """_bookMinimizer from StdFitter"""
-        ###
+        #-----------------------------------------------------------------------------------------
         import ctypes
         def myfunc(iArg):
             lo=ctypes.c_double(0.)
@@ -47,13 +47,14 @@ class StdFitter(FitterCore):
         except AttributeError:
             print("Error: PDF '{}' not found. Please make sure you have generated mentioned pdf in RooWorkspaces stored in './input' folder".format(self.cfg['pdf']))
             exit()
-        ###
+        #-----------------------------------------------------------------------------------------
 
         self.fitter = ROOT.StdFitter()
         for opt in self.cfg.get("createNLLOpt", []):
             self.fitter.addNLLOpt(opt)
         minuit=self.fitter.Init(self.pdf, self.data)
         minuit.setStrategy(2)
+        if self.process.cfg['args'].Function_name in ['submit', 'run']: minuit.setPrintLevel(-1)
         self._nll = self.fitter.GetNLL()
 
     def _preFitSteps_initFromDB(self):
@@ -65,11 +66,10 @@ class StdFitter(FitterCore):
 
         if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgComb', 'nSig', 'nBkgPeak', 'PeakFrac', 'unboundFl', 'unboundAfb'])
 
-        if self.process.cfg['args'].seqKey =='sigMCValidation': #implemented for resetting parameters to initial values. (Needed in case of multiple toy processing)
+        if self.process.cfg['args'].seqKey in ['sigMCValidation', 'mixedToyValidation']: #Resetting parameters to initial values.
             wspace='wspace.{}.{}'.format(self.process.cfg['args'].Year, self.process.cfg['args'].binKey)
             self.pdf.getParameters(self.data).find('unboundAfb').setVal(0.0)
             self.pdf.getParameters(self.data).find('unboundFl').setVal(0.6978)
-            FitterCore.ArgLooper(self.pdf.getParameters(self.data), lambda p:p.Print())
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
 
@@ -125,7 +125,14 @@ class StdFitter(FitterCore):
 
     def _runFitSteps(self):
         if False:
-            self.pdf.fitTo(self.data, ROOT.RooFit.Range(1.016, 1.024))
+            RooList = [ROOT.RooFit.Minimizer("Minuit2"), ROOT.RooFit.Save(1)]
+            for opt in self.cfg.get("createNLLOpt", []):
+                RooList.append(opt)
+            fitResult = self.pdf.fitTo(self.data,  *RooList)
+            self.fitResult = {
+                "{0}.{1}".format(self.name, self.cfg['argAliasInDB'].get('minuit2', 'minuit2')): {
+                'status': fitResult.status(),
+                'nll': fitResult.minNll(),}}
         else:
             self.FitMigrad()
             if self.cfg.get('FitHesse', False):
@@ -146,7 +153,13 @@ class StdFitter(FitterCore):
 
     def FitHesse(self):
         """Hesse"""
-        self.fitter.FitHesse()
+        hesseResult = self.fitter.FitHesse()
+        self.fitResult.update({
+            "{0}.{1}".format(self.name, self.cfg['argAliasInDB'].get('hesse', 'hesse')): {
+                'status': hesseResult.status(),
+                'nll': hesseResult.minNll(),
+            }
+        })
 
     def FitMinos(self):
         """Minos"""

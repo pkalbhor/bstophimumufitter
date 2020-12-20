@@ -144,14 +144,14 @@ class Plotter(Path):
                 self.logger.logERROR(errorMsg)
                 raise RuntimeError("pdfPlot not found in source manager.")
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Phimass))
-        FitterCore.ArgLooper(args, lambda p: p.Print())
+        if not self.process.cfg['args'].Function_name in ['submit', 'run']: FitterCore.ArgLooper(args, lambda p: p.Print())
         if type(p[2]) is str:  # In case ArgAlias is to be defined with string at the end for all args
             tag = p[2]; p[2] = {}; arglist=[]
             FitterCore.ArgLooper(args, lambda p: arglist.append(p.GetName()))
             for var in arglist: p[2].update({var: var+tag})
         if self.process.cfg['args'].NoFit: self.process.cfg['args'].NoImport=True
         if (not self.process.cfg['args'].NoImport): FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
-        FitterCore.ArgLooper(args, lambda p: p.Print())
+        if not self.process.cfg['args'].Function_name in ['submit']: FitterCore.ArgLooper(args, lambda p: p.Print())
         return p
 
     def initDataPlotCfg(self, p):

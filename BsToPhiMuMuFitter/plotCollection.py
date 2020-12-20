@@ -95,7 +95,6 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='PBLK'):
         #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
         if pltName=="plot_sigPhiM_JP.{}".format(self.process.cfg['args'].Year):
             from math import sqrt
-            pdb.set_trace()
             args = pdfPlots[0][0].getParameters(dataPlots[0][0])
             f1 = args.find('sigPhiM3_frac1').getVal()
             #f1 = args.find('sigPhiM_frac').getVal()
@@ -811,14 +810,14 @@ def GetPlotterObject(self):
             'marks': {'marks': ['sim']}}
     }
     plotterCfg['plots']['plot_finalM'] = {
-        'func': [functools.partial(plotPostfitBLK, frames='B')],
+        'func': [functools.partial(plotPostfitBLK_WithKStar, frames='B')],
         'kwargs': {       
             'pltName': "plot_finalM.{}".format(Year),
             'dataReader': "dataReader.{}".format(Year),
             'pdfPlots': [["f_finalM.{}".format(Year), plotterCfg_styles['allStyleBase'], None, "Total fit"],
                          ["f_sigM.{}".format(Year), plotterCfg_styles['sigStyleBase'], None, "Sigal"],
                          ["f_bkgCombM.{}".format(Year), plotterCfg_styles['bkgStyleBase'], None, "Background"],                               
-                        ],
+                         ["f_bkgM_KStar.{}".format(Year), plotterCfg_bkgStyle_KStar, None, "Peaking Background"],],
         }
     }
     plotterCfg['plots']['plot_sigMDCB'] = {

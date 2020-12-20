@@ -141,6 +141,22 @@ class EfficiencyFitter(FitterCore):
                     print (">> ** Warning ** Empty bins: (l, k)", lBin, KBin)                                                              
                 else:                                                                                                                      
                     h2_effi_2D_comp.SetBinContent(lBin, KBin, pdfhist.GetBinContent(lBin, KBin) / h2_accXrec.GetBinContent(lBin, KBin))
+
+            #Text plot comparison
+            canvas2 = ROOT.TCanvas()
+            ROOT.gStyle.SetPalette(ROOT.kLightTemperature) #kColorPrintableOnGrey)
+            h2_effi_2D_text = h2_effi_2D_comp.Clone("h2_effi_2D_text")#; h2_effi_2D_text.Reset("ICESM")
+            h2_effi_2D_text.Draw("COLZ")
+            h2_effi_2D_text.GetYaxis().SetTitleOffset(1)
+            ROOT.gStyle.SetPaintTextFormat("6.4g")
+            pdfhist.SetBarOffset(0.25); pdfhist.Draw("TEXT SAME")
+            canvas2.SetRightMargin(0.115)
+            canvas2.SetLeftMargin(0.1)
+            h2_accXrec.SetBarOffset(0.); h2_accXrec.Draw("TEXT SAME")
+            h2_effi_2D_comp.SetBarOffset(-0.25); h2_effi_2D_comp.Draw("TEXT SAME")
+            ROOT.TLatex().DrawLatexNDC(0.12, 0.96, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[self.process.cfg['binKey']]['latexLabel']))
+
+            canvas.cd() 
             h2_effi_2D_comp.SetMinimum(0)                
             h2_effi_2D_comp.SetMaximum(1.5)              
             h2_effi_2D_comp.SetTitleOffset(1.6, "X")     
@@ -149,7 +165,7 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_comp.SetZTitle("#varepsilon_{fit}/#varepsilon_{measured}")
             h2_effi_2D_comp.Draw("LEGO2")                
             latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-
+        
         else:
             f2_effi_sigA=GetTFunction()
             fitter = ROOT.EfficiencyFitter()
@@ -216,6 +232,7 @@ class EfficiencyFitter(FitterCore):
         os.chdir(path)
         ####################################
         canvas.Print("effi_2D_comp{}_{}.pdf".format(self.cfg['label'], q2bins[self.process.cfg['binKey']]['label']))
+        canvas2.cd(); canvas2.Print("effi_2D_TEXT{}_{}.pdf".format(self.cfg['label'], q2bins[self.process.cfg['binKey']]['label']))
         os.chdir(cwd) 
 
     @staticmethod

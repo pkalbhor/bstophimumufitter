@@ -2,7 +2,7 @@
 # vim: set sts=4 sw=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
 import os, time, pdb
-import abc
+import abc, random
 import tempfile
 from copy import copy
 from subprocess import call
@@ -51,9 +51,9 @@ class AbsBatchTaskWrapper:
         #transfer_output_files = job$(Process),job$(Process).tar.gz
         templateJdl = """
 getenv      = True
-log         = log/{time}_{seqKey}_{binKey}.log
-output      = log/{time}_{seqKey}_{binKey}.out
-error       = log/{time}_{seqKey}_{binKey}.err
+log         = log/{time}_{seqKey}_{binKey}_$(Process).log
+output      = log/{time}_{seqKey}_{binKey}_$(Process).out
+error       = log/{time}_{seqKey}_{binKey}_$(Process).err
 +JobFlavour = "{JobFlavour}"
 
 initialdir  = {initialdir}

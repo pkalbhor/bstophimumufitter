@@ -144,7 +144,10 @@ def GetPeakingFraction(self):
     binkey = self.process.cfg['binKey']
     if binkey in data.keys():
         if 'ratio' in data[binkey].keys(): 
-            return data[binkey]['ratio']['getVal']
+            if type(data[binkey]['ratio']) is float:
+                return data[binkey]['ratio']
+            else:
+                return data[binkey]['ratio']['getVal']
     else:
         PeakNum = self.process.cfg['peaking']['KstarMuMu']
         PeakDen = self.process.cfg['genOff']['KstarMuMu']

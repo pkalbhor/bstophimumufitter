@@ -33,7 +33,7 @@ args = parser.parse_known_args()[0]
 predefined_sequence['loadData']  = ['dataReader']
 predefined_sequence['loadMC']    = ['sigMCReader']
 predefined_sequence['loadMCGEN'] = ['sigMCGENReader']
-predefined_sequence['loadMCGENc'] = ['sigMCGENcReader'] # from official GEN MC
+predefined_sequence['loadMCGENc']= ['sigMCGENcReader'] # from official GEN MC
 predefined_sequence['loadMCk']   = ['KsigMCReader']
 predefined_sequence['loadMCJ']   = ['sigMCReader_JP']
 predefined_sequence['loadMCP']   = ['sigMCReader_PP']
@@ -49,14 +49,14 @@ predefined_sequence['fitSigMCGEN']=(['sigMCGENReader', 'stdWspaceReader'], ['Sim
 predefined_sequence['fitSigMCGENc']=['sigMCGENReader', 'stdWspaceReader', 'sigAFitterCorrected'] # Corrected Decay Formula
 predefined_sequence['fitBkgCombA']=(['dataReader', 'stdWspaceReader'], ['SimulFitter_bkgCombA'] if args.SimFit else ['bkgCombAFitter'])
 predefined_sequence['fitSigMDCB']    = ['sigMCReader', 'stdWspaceReader', 'sigMDCBFitter']
-predefined_sequence['fitSigM']    = ['sigMCReader', 'stdWspaceReader', 'sigMFitter']
+predefined_sequence['fitSigM']       = ['sigMCReader', 'stdWspaceReader', 'sigMFitter']
 predefined_sequence['fitBkgM_KStar'] = ['KsigMCReader', 'stdWspaceReader', 'bkgM_KStarFitter']
 predefined_sequence['fitBkgA_KStar'] = ['KsigMCReader', 'stdWspaceReader', 'bkgA_KStarFitter']
 
 predefined_sequence['fitFinal3D_AltM']          = (['dataReader', 'stdWspaceReader'], ['SimulFitter_Final_AltM'] if args.SimFit else ['finalFitter_AltM'])
 predefined_sequence['fitFinal3D_WithKStar']     = (['dataReader', 'stdWspaceReader'], ['SimFitter_Final_WithKStar'] if args.SimFit else ['finalFitter_WithKStar'])
 predefined_sequence['fitFinal3D_AltM_WithKStar']= (['dataReader', 'stdWspaceReader'], ['SimFitter_Final_AltM_WithKStar'] if args.SimFit else ['finalFitter_AltM_WithKStar'])
-predefined_sequence['fitFinalM']     = ['dataReader', 'stdWspaceReader', 'finalMFitter']
+predefined_sequence['fitFinalM']     = ['dataReader', 'stdWspaceReader', 'finalMFitter'] #1D Bmass Fit
 
 predefined_sequence['loadAll'] = ['dataReader', 'sigMCReader', 'KsigMCReader', 'effiHistReader', 'stdWspaceReader', 'stdPDFBuilder']
 predefined_sequence['fitAll']  = predefined_sequence['loadAll'] + ['effiFitter', 'sig2DFitter', 'sigAFitter']
@@ -64,17 +64,18 @@ predefined_sequence['fitFinalAll'] = predefined_sequence['loadAll'] + ['fitSigMD
 
 predefined_sequence['createplots']=[#'effiHistReader', 
                                     'dataReader', 
-                                    #'sigMCReader', 
+                                    'sigMCReader', 
                                     #'sigMCGENReader', 
-                                    #'KsigMCReader', 
-                                    'sigMCReader_JP', 
+                                    'KsigMCReader', 
+                                    #'sigMCReader_JP', 
                                     'stdWspaceReader', 'plotter']
 #'effiHistReader', 'KsigMCReader', 'sigMCReader', 'sigMCGENReader', 
 predefined_sequence['sigMCValidation'] = ['stdWspaceReader', 'sigMCReader', 'sigMCStudier']
-predefined_sequence['mixedToyValidation'] = ['stdWspaceReader', 'sigMCReader', 'bkgCombToyGenerator', 'bkgPeakToyGenerator', 'mixedToyStudier']
+predefined_sequence['mixedToyValidation'] = ['stdWspaceReader', 'sigMCReader', 'bkgCombToyGenerator', 'bkgPeakToyGenerator', 'mixedToyStudier'] if not args.Toy2 else ['stdWspaceReader', 'sigMCReader', 'mixedToyStudier']
 predefined_sequence['seqCollection']   = []
 predefined_sequence['FinalDataResult'] = ['FinalDataResult']
 predefined_sequence['EffiTable']       = ['EffiTable']
+predefined_sequence['PeakFracTable']   = ['PeakFracTable']
 predefined_sequence['CompPlots']       = ['stdWspaceReader', 'GetCompPlots']
 
 #For Validation Study
@@ -136,6 +137,7 @@ def Instantiate(self, seq):
             sequence.append(toyCollection.GetToyObject(self, s))
         if s is 'FinalDataResult': sequence.append(dataCollection.FinalDataResult)
         if s is 'EffiTable': sequence.append(dataCollection.EffiTable)
+        if s is 'PeakFracTable': sequence.append(dataCollection.PeakFracTable)
         if s is 'GetCompPlots': sequence.append(dataCollection.GetCompPlots)
     return sequence
 

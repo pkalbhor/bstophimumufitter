@@ -251,7 +251,7 @@ f_analyticBkgCombA_format['Poly6_Poly5'] = [ # pdfL: Poly6, pdfK: Poly5
         args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombL_c6, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4, bkgCombK_c5}")
 ]
 f_analyticBkgCombA_format['Poly6_Poly4'] = [ # pdfL: Poly6, pdfK: Poly4
-    "bkgCombL_c1[-10.,10.]", "bkgCombL_c2[-10.,10.]", "bkgCombL_c3[-10.,10.]", "bkgCombL_c4[-10.,10.]", "bkgCombL_c5[-10.,10.]", "bkgCombL_c6[-10.,10.]",
+    "bkgCombL_c1[-10.,10.]", "bkgCombL_c2[-10.,10.]", "bkgCombL_c3[-10.,10.]", "bkgCombL_c4[-20.,20.]", "bkgCombL_c5[-10.,10.]", "bkgCombL_c6[-10.,10.]",
     "bkgCombK_c1[-10,10]", "bkgCombK_c2[-10,10]", "bkgCombK_c3[-10,10]", "bkgCombK_c4[-10,10]",
     "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
         pdfL="1.+bkgCombL_c1*CosThetaL+bkgCombL_c2*pow(CosThetaL,2)+bkgCombL_c3*pow(CosThetaL, 3)+bkgCombL_c4*pow(CosThetaL,4)+bkgCombL_c5*pow(CosThetaL,5)+bkgCombL_c6*pow(CosThetaL,6)",

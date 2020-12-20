@@ -531,10 +531,8 @@ FinalDataResult = ObjProvider({
     'name': "FinalDataResult",
     'obj': {'FinalDataResult': [makeTables.table_dataresAFBFL, ], }
 })
-EffiTable = ObjProvider({
-    'name': "EffiTable",
-    'obj': {'EffiTable': [makeTables.EffiTable, ], }
-})
+EffiTable = ObjProvider({'name': "EffiTable",  'obj': {'EffiTable': [makeTables.EffiTable] }})
+PeakFracTable = ObjProvider({'name': "PeakFracTable",  'obj': {'PeakFracTable': [makeTables.PeakFracTable] }})
 
 import BsToPhiMuMuFitter.python.CompVar as CompVar
 GetCompPlots = ObjProvider({

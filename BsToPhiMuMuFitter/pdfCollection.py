@@ -440,7 +440,7 @@ def GetAnalyticBkgA_KStarList(self):
         f_analyticBkgA_KStar_format['DEFAULT']     = f_analyticBkgA_KStar_format['Gaus2_Poly4']
         f_analyticBkgA_KStar_format['belowJpsiA']  = f_analyticBkgA_KStar_format['Gaus2_Poly4']
         f_analyticBkgA_KStar_format['belowJpsiB']  = f_analyticBkgA_KStar_format['Gaus2_Poly4']
-        f_analyticBkgA_KStar_format['belowJpsiC']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['belowJpsiC']  = f_analyticBkgA_KStar_format['Gaus2_Poly4']
         f_analyticBkgA_KStar_format['betweenPeaks']= f_analyticBkgA_KStar_format['Poly6_Poly4']
         f_analyticBkgA_KStar_format['abovePsi2s']  = f_analyticBkgA_KStar_format['Poly6_Poly4']
         f_analyticBkgA_KStar_format['summary']     = f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
@@ -548,7 +548,16 @@ def InitParams_KStar(self):
 def GetBkgM_KStarList(self):
     """Return list containing PDF for current bin/year"""
     Args=self.process.cfg['args']
-    if Args.Year==2016 or Args.Year==2017:
+    if Args.Year==2016:
+        f_BkgM_KStar_format['DEFAULT']    = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['DCB_Gaus']]
+        f_BkgM_KStar_format['belowJpsiA'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        f_BkgM_KStar_format['belowJpsiB'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        f_BkgM_KStar_format['belowJpsiC'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        f_BkgM_KStar_format['betweenPeaks'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['DCB_Gaus']]
+        f_BkgM_KStar_format['abovePsi2s'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        f_BkgM_KStar_format['summaryLowQ2']=[var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
+        return f_BkgM_KStar_format.get(self.process.cfg['binKey'], f_BkgM_KStar_format['DEFAULT'])
+    if Args.Year==2017:
         f_BkgM_KStar_format['DEFAULT']    = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['DCB_Gaus']]
         f_BkgM_KStar_format['belowJpsiA'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
         f_BkgM_KStar_format['belowJpsiB'] = [var.format(**InitParams_KStar(self)) for var in f_BkgM_KStar_format['Double_Crystal_Ball']]
@@ -659,7 +668,6 @@ def buildFinal(self):
                   #("f_finalAltMAltBkgCombA", "f_sig3DAltM", "f_bkgCombAltA"),                   #3D=nSig(Sig2D*SigMDCB)+nBkg(fBkgM*fBkgAltA)
                   ("f_finalAltBkgCombM", "f_sig3D", "f_bkgCombAltM"),
                   #("f_finalAltM_AltBkgCombM_AltBkgCombA", "f_sig3DAltM","f_bkgCombAltM_AltA"), #3D=nSig(Sig2D*SigMDCB)+nBkg(fBkgAltM*fBkgAltA)
-                  ("f_finalM", "f_sigM", "f_bkgCombM"),                                         #Mass PDF = nSig(SigM)+nBkg(fBkgM)
                   ("f_finalMAltBkgCombM", "f_sigM", "f_bkgCombMAltM"),
                   ("f_finalMDCB", "f_sigMDCB", "f_bkgCombM"),
                   ("f_finalMDCB_AltBkgCombM", "f_sigMDCB", "f_bkgCombMAltM"),                   #Mass PDF = nSig(SigMDCB)+nBkg(fBkgAltM)
@@ -678,8 +686,9 @@ def buildFinal(self):
         self.cfg['source'][p] = f_final
 
     variations2 = [("f_final_WithKStar", "f_sig3D", "f_bkgComb", "f_bkg_KStar"),
-                   ("f_final_WithKStar_ts", "f_sig3D_ts", "f_bkgComb", "f_bkg_KStar"),          # Final PDF with 2Step eff
+                   ("f_final_WithKStar_ts", "f_sig3D_ts", "f_bkgComb", "f_bkg_KStar"),            #Final PDF with 2Step eff
                    ("f_final_WithKStar_Alt", "f_sig3D_Alt", "f_bkgComb_Alt", "f_bkg_KStar_Alt"),
+                   ("f_finalM", "f_sigM", "f_bkgCombM", "f_bkgM_KStar"),                      #Mass PDF = nSig(SigM)+nBkg(fBkgM)+nBkgP(fBkgP)
                    ("f_final_AltM_WithKStar", "f_sig3DAltM", "f_bkgComb", "f_bkg_KStar"),
                    ("f_finalM_JP", "f_sigM_DCBG_JP", "f_bkgCombM_JP", "f_sigM_DCBG_JK"),                #Mass PDF = nSig(BkgMDCBG)+nBkg(fBkgM)
                    ("f_finalM_PP", "f_sigM_DCBG_PP", "f_bkgCombM_PP", "f_sigM_DCBG_PK")]                #Mass PDF = nSig(BkgMDCBG)+nBkg(fBkgM)

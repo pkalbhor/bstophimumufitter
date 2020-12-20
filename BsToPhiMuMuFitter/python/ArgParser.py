@@ -19,6 +19,7 @@ def SetParser(add_help=True):
     Group=parser.add_mutually_exclusive_group()
     Group.add_argument('--SimFit', help='Fitting over 3 year data (Default: False)', action='store_true')
     Group.add_argument('--SimFitPlots', help='Plotting over 3 year data (Default: False)', action='store_true')
+    Group.add_argument('--Toy2', help='Use 2nd option for doing toy study (Default: True)', action='store_false')
     return parser
 
 def add_help(parser):

@@ -208,7 +208,7 @@ msgService.addStream(4,
 # default configuration for Process
 processCfg = {
     'isBatchJob': False,
-    'binKey': 'summary',
+    'binKey': 'belowJpsiA',
     'args': None,
 }
 p = Process("myProcess", "Plots", processCfg)

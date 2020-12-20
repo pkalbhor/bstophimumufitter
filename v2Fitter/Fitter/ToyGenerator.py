@@ -67,7 +67,7 @@ class ToyGenerator(Path):
             self.data.Write()
             ofile.Close()
 
-        if self.cfg['mixWith'] in self.process.sourcemanager:
+        if self.cfg['mixWith'] in self.process.sourcemanager and (not self.process.cfg['args'].Toy2):
             self.process.sourcemanager.get(self.cfg['mixWith']).append(self.data)
         else:
             self.cfg['source'][self.cfg['mixWith']] = self.data

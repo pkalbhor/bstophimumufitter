@@ -257,6 +257,44 @@ def EffiTable(self):
     print(indent * (baseIndentLevel + 0) + r"\end{tabular}")
     print("")
 
+def PeakFracTable(self):
+    import json
+    parentkey = self.process.cfg['args'].SimFitPlots
+    baseIndentLevel = 2                                                                                                                        
+    print("[table_FitResults] Printing table of fractions of peaking yield wrt to signal yield")
+    print("")
+    if parentkey:
+        print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{|c|c|c|c|}")
+    else:
+        print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{|c|c|}")
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    print(indent * (baseIndentLevel + 1) + r"$q^2$ bin & Fraction \\" if not parentkey else r"$q^2$ bin & 2016 Fraction & 2017 Fraction & 2018 Fraction\\")
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    binKeyToLine = OrderedDict()
+    for binKey in q2bins.keys():
+        if binKey in ['jpsi', 'psi2s', 'peaks', 'abovePsi2s', 'abovePsi2sA', 'abovePsi2sB', 'summary', 'summaryA', 'full', 'Test1', 'Test2']:
+            continue
+        binKeyToLine[binKey] = [q2bins[binKey]['label'].strip('bin')]
+    filename="TotalEffValues.json"
+    def GetDict():
+        File = open(filename, 'r')
+        if os.path.exists(filename):
+            EFile = json.load(File) 
+            return EFile
+        else:
+            print("Error:: File {} does not exists, please produce it first.".format(filename))
+            sys.exit(0)
+    for binKey, latexLine in binKeyToLine.items():
+        for year in [2016, 2017, 2018] if parentkey else [self.process.cfg['args'].Year]:
+            os.chdir("../plots_{}".format(year))
+            EFile = GetDict()
+            frac = EFile[binKey]['ratio']['getVal']*3.90625*(9.4E-7/(8.2E-7*0.492))
+            latexLine.append("${:.4%}$".format(frac).replace("%","\%"))
+        print(indent * (baseIndentLevel + 1) + " & ".join(latexLine) + r" \\")     
+    print(indent * (baseIndentLevel + 1) + r"\hline")
+    print(indent * (baseIndentLevel + 0) + r"\end{tabular}")
+    print("")
 
 if __name__ == '__main__':
     #  table_sysFL_sysAFB()

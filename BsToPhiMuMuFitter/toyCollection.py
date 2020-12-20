@@ -68,16 +68,23 @@ def decorator_setExpectedEvents(yieldVars=None):
             func(self)
 
             expectedYields = 0
+            #YieldError = 0.
             try:        
                 db = shelve.open(self.cfg['db'].format(binLabel=q2bins[self.process.cfg['binKey']]['label']))
                 for yVar in yieldVars:
                     try:
                         expectedYields += self.params.find(yVar).getVal()
+                        #YieldError += self.params.find(yVar).getError()
                     except AttributeError:
                         if yVar=="nBkgPeak":
                             expectedYields += db['PeakFrac']['getVal']*db['nSig']['getVal']
+                            PeakFrac = db['PeakFrac']['getVal']
+                            nSig = db['nSig']['getVal']
+                            nSigError = db['nSig']['getError']
+                            #YieldError += (nSig*0.0118) + (PeakFrac*nSigError) + (nSigError*0.0118)
                         else:
                             expectedYields += db[self.cfg['argAliasInDB'].get(yVar, yVar)]['getVal']
+                            #YieldError += db[self.cfg['argAliasInDB'].get(yVar, yVar)]['getError']
             finally:
                 self.cfg['expectedYields'] = expectedYields
                 #  self.logger.logINFO("Will generate {0} events from p.d.f {1}.".format(expectedYields, self.pdf.GetName()))
@@ -112,7 +119,7 @@ def GetToyObject(self, seq):
             'pdf'   : "f_bkgComb.{}".format(Year),
             'mixWith':"sigMCReader.{}.Fit".format(Year),
             'scale' : dataCollection.GetDataReader(self,'sigMCReader').cfg['lumi']/dataCollection.GetDataReader(self,'dataReader').cfg['lumi'],
-            'db'    : os.path.join(modulePath, 'plots_{}'.format(Year), 'fitResults_{binLabel}.db'),
+            'db'    : 'fitResults_{binLabel}.db',
             'saveAs': None,
         })
         bkgCombToyGenerator = ToyGenerator(setupBkgCombToyGenerator)
@@ -131,7 +138,7 @@ def GetToyObject(self, seq):
             'pdf'   : "f_bkg_KStar.{}".format(Year),
             'mixWith':"sigMCReader.{}.Fit".format(Year),
             'scale' : dataCollection.GetDataReader(self,'KsigMCReader').cfg['lumi']/dataCollection.GetDataReader(self,'dataReader').cfg['lumi'],
-            'db'    : os.path.join(modulePath, 'plots_{}'.format(Year), 'fitResults_{binLabel}.db'),
+            'db'    : 'fitResults_{binLabel}.db',
             'saveAs': None,
         })
         bkgPeakToyGenerator = ToyGenerator(setupBkgPeakToyGenerator)

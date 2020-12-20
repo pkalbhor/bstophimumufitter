@@ -1,47 +1,117 @@
 {
   "belowJpsiA": {
-    "PeakNum": 1445,
-    "PeakDen": 3412721,
-    "sigNum": 152553,
-    "sigDen": 5645627,
-    "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 1.0 && genQ2 < 2.0",
-    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 1.0 && Q2 < 2.0",
-    "ratio": 0.015669620953326135
+    "PeakNum": {
+      "getVal": 1640,
+      "getError": 0.02469323991623974
+    },
+    "PeakDen": {
+      "getVal": 4003400,
+      "getError": 0.0004997876353728643
+    },
+    "sigNum": {
+      "getVal": 60537,
+      "getError": 0.004064335517527472
+    },
+    "sigDen": {
+      "getVal": 2265710,
+      "getError": 0.0006643513766313266
+    },
+    "ratio": {
+      "getVal": 0.015331981608849849
+    },
+    "genSel": "fabs(genMupEta)<2.5 && fabs(genMumEta)<2.5 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.4 && genKmPt>0.4 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 1.0 && genQ2 < 2.0",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.52)&&(fabs(Mupeta)<2.5&&fabs(Mumeta)<2.5 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.4&&Kmpt>0.4 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5) && Q2 > 1.0 && Q2 < 2.0"
   },
   "belowJpsiB": {
-    "PeakNum": 4541,
-    "PeakDen": 9487827,
-    "sigNum": 484172,
-    "sigDen": 15492577,
-    "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 2.0 && genQ2 < 5.0",
-    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 2.0 && Q2 < 5.0",
-    "ratio": 0.015314708600944745
+    "PeakNum": {
+      "getVal": 5012,
+      "getError": 0.014125195547029415
+    },
+    "PeakDen": {
+      "getVal": 11181279,
+      "getError": 0.00029905719658785936
+    },
+    "sigNum": {
+      "getVal": 188521,
+      "getError": 0.0023031389105399504
+    },
+    "sigDen": {
+      "getVal": 6232664,
+      "getError": 0.0004005559087357463
+    },
+    "ratio": {
+      "getVal": 0.01481950024065059
+    },
+    "genSel": "fabs(genMupEta)<2.5 && fabs(genMumEta)<2.5 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.4 && genKmPt>0.4 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 2.0 && genQ2 < 5.0",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.52)&&(fabs(Mupeta)<2.5&&fabs(Mumeta)<2.5 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.4&&Kmpt>0.4 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5) && Q2 > 2.0 && Q2 < 5.0"
   },
   "belowJpsiC": {
-    "PeakNum": 4792,
-    "PeakDen": 12219887,
-    "sigNum": 627377,
-    "sigDen": 19267599,
-    "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 5.0 && genQ2 < 8.0",
-    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 5.0 && Q2 < 8.0",
-    "ratio": 0.012043386537595489
+    "PeakNum": {
+      "getVal": 5138,
+      "getError": 0.01395092326777534
+    },
+    "PeakDen": {
+      "getVal": 14341582,
+      "getError": 0.0002640593012974445
+    },
+    "sigNum": {
+      "getVal": 235579,
+      "getError": 0.002060305932405942
+    },
+    "sigDen": {
+      "getVal": 7759591,
+      "getError": 0.0003589885398918285
+    },
+    "ratio": {
+      "getVal": 0.011800469758760165
+    },
+    "genSel": "fabs(genMupEta)<2.5 && fabs(genMumEta)<2.5 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.4 && genKmPt>0.4 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 5.0 && genQ2 < 8.0",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.52)&&(fabs(Mupeta)<2.5&&fabs(Mumeta)<2.5 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.4&&Kmpt>0.4 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5) && Q2 > 5.0 && Q2 < 8.0"
   },
   "betweenPeaks": {
-    "PeakNum": 2578,
-    "PeakDen": 9742057,
-    "sigNum": 467981,
-    "sigDen": 15195406,
-    "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 11.0 && genQ2 < 12.5",
-    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 11.0 && Q2 < 12.5",
-    "ratio": 0.008592436552869414
+    "PeakNum": {
+      "getVal": 3009,
+      "getError": 0.018230093920774314
+    },
+    "PeakDen": {
+      "getVal": 11389348,
+      "getError": 0.0002963129065432141
+    },
+    "sigNum": {
+      "getVal": 188966,
+      "getError": 0.002300425457023289
+    },
+    "sigDen": {
+      "getVal": 6100310,
+      "getError": 0.0004048778773396716
+    },
+    "ratio": {
+      "getVal": 0.008528871277307483
+    },
+    "genSel": "fabs(genMupEta)<2.5 && fabs(genMumEta)<2.5 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.4 && genKmPt>0.4 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 11.0 && genQ2 < 12.5",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.52)&&(fabs(Mupeta)<2.5&&fabs(Mumeta)<2.5 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.4&&Kmpt>0.4 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5) && Q2 > 11.0 && Q2 < 12.5"
   },
   "summaryLowQ2": {
-    "PeakNum": 7531,
-    "PeakDen": 16492344,
-    "sigNum": 823600,
-    "sigDen": 26867222,
-    "genSel": "fabs(genMupEta)<2.4 && fabs(genMumEta)<2.4 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.5 && genKmPt>0.5 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 1.0 && genQ2 < 6.0",
-    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.57) && fabs(Mupeta)<2.4&&fabs(Mumeta)<2.4 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.5&&Kmpt>0.5 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5 && Q2 > 1.0 && Q2 < 6.0",
-    "ratio": 0.014896240956573568
+    "PeakNum": {
+      "getVal": 8331,
+      "getError": 0.010955985095400366
+    },
+    "PeakDen": {
+      "getVal": 19408639,
+      "getError": 0.000226987770338365
+    },
+    "sigNum": {
+      "getVal": 320448,
+      "getError": 0.0017665308138939972
+    },
+    "sigDen": {
+      "getVal": 10805384,
+      "getError": 0.0003042144908945314
+    },
+    "ratio": {
+      "getVal": 0.014473870820506118
+    },
+    "genSel": "fabs(genMupEta)<2.5 && fabs(genMumEta)<2.5 && genMupPt>2.5 && genMumPt>2.5 && genKpPt>0.4 && genKmPt>0.4 && fabs(genKpEta)<2.5 && fabs(genKmEta)<2.5 && genQ2 > 1.0 && genQ2 < 6.0",
+    "finSel": "(JpsiTriggers > 0 || PsiPTriggers > 0 || LMNTTriggers > 0)&&(abs(Bmass-Mumumass-2.270)>0.120 && abs(Bmass-Mumumass-1.681)>0.090)&&(Bdt > 0.52)&&(fabs(Mupeta)<2.5&&fabs(Mumeta)<2.5 && Muppt>2.5&&Mumpt>2.5 && Kppt>0.4&&Kmpt>0.4 && fabs(Kpeta)<2.5&&fabs(Kmeta)<2.5) && Q2 > 1.0 && Q2 < 6.0"
   }
 }

@@ -66,6 +66,16 @@ Decide the number of entries of this subset.
         """ Run at the end of each loop (only before the fitter reset)"""
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def _runToyCreater(self, Type):
+        """Get Toy DataSets"""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _postRunFitPlotter(self, idx):
+        """Run Plotter code."""
+        raise NotImplementedError
+
     def _runSetsLoop(self):
         #for iSet in range(max(self.cfg['nSetOfToys'], self.process.cfg['args'].nSetOfToys)):
         iSet=0; rSet=0
@@ -74,11 +84,15 @@ Decide the number of entries of this subset.
             self.fitter.hookProcess(self.process)
             self.fitter.customize()
 
-            self.currentSubDataEntries = self.getSubDataEntries(iSet)
+            for idx, YieldType, Type in self.cfg['Type']:
+                self.currentSubDataEntries = self.getSubDataEntries(iSet, YieldType)
+                if idx==0:
+                    self.fitter.data = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType)
+                else:
+                    TempData = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType)
+                    self.fitter.data.append(TempData)
 
             self.fitter.pdf = self.process.sourcemanager.get(self.fitter.cfg['pdf'])
-            self.fitter.data = next(self.getSubData())
-            #self.fitter.data = ROOT.RooDataSet(self.fitter.data.GetName(), self.fitter.data.GetTitle(),self.fitter.data,self.fitter.data.get(),"{0}".format(q2bins[self.fitter.process.cfg['binKey']]['cutString']))  #Added for applying Q2 cut, change line from getSubDataEntries() and from dataCollection.py
             self.fitter._bookMinimizer()
             self.fitter._preFitSteps()
             self.fitter._runFitSteps()
@@ -95,15 +109,15 @@ Decide the number of entries of this subset.
     def _runPath(self):
         """ Chain of pre-run-post steps"""
         self.fitter = self.cfg['fitter']
-        self.data = self.process.sourcemanager.get(self.cfg['data'])
+        self.data = [self.process.sourcemanager.get(i) for i in self.cfg['data']]
 
         self._preSetsLoop()
         self._runSetsLoop()
         self._postSetsLoop()
 
-def getSubData_random(self, checkCollision=True):
+def getSubData_random(self, idx, checkCollision=True):
     """ Pick random subset. Input dataset is asseumed to be large enough to avoid collision."""
-    sumEntries = int(self.data.sumEntries())
+    sumEntries = int(self.data[idx].sumEntries())
     evtBits = ROOT.TBits(int(sumEntries))
     while True:
         outputBits = ROOT.TBits(sumEntries)
@@ -122,10 +136,10 @@ def getSubData_random(self, checkCollision=True):
                 self.logger.logWARNING("Rate of random number collision may over 20%, please consider use larger input")
 
         # Sequential reading is highly recommanded by ROOT author
-        output = self.data.emptyClone("{0}Subset".format(self.data.GetName()))
+        output = self.data[idx].emptyClone("{0}Subset".format(self.data[idx].GetName()))
         startBit = outputBits.FirstSetBit(0)
         while startBit < sumEntries:
-            output.add(self.data.get(startBit))
+            output.add(self.data[idx].get(startBit))
             startBit = outputBits.FirstSetBit(startBit + 1)
         yield output
 
