@@ -31,13 +31,13 @@ CFG.update({
 
 def decorator_initParameters(func):
     @functools.wraps(func)
-    def wrapped_f(self):
+    def wrapped_f(self, Year):
         self.pdf = self.process.sourcemanager.get(self.cfg['pdf'])
         self.argset = self.cfg['argset']
         self.params = self.pdf.getParameters(self.argset)
-        FitDBPlayer.initFromDB(self.cfg['db'].format(binLabel=q2bins[self.process.cfg['binKey']]['label']), self.params, self.cfg.get('argAliasInDB', []))
-
-        func(self)
+        dbfile = os.path.join(self.process.cwd, "plots_{0}".format(Year), self.cfg['db'].format(binLabel=q2bins[self.process.cfg['binKey']]['label']))
+        FitDBPlayer.initFromDB(dbfile, self.params, self.cfg.get('argAliasInDB', []))
+        func(self, Year)
     return wrapped_f
 
 def decorator_fluctuateParams(parList=None):
@@ -64,8 +64,8 @@ def decorator_setExpectedEvents(yieldVars=None):
         yieldVars = ["nSig", "nBkgComb", "nBkgPeak"]
     def wrapper(func):
         @functools.wraps(func)
-        def wrapped_f(self):
-            func(self)
+        def wrapped_f(self, Year):
+            func(self, Year)
 
             expectedYields = 0
             #YieldError = 0.
@@ -92,9 +92,8 @@ def decorator_setExpectedEvents(yieldVars=None):
         return wrapped_f
     return wrapper
 
-def GetToyObject(self, seq):
+def GetToyObject(self, seq, Year):
     import BsToPhiMuMuFitter.dataCollection as dataCollection
-    Year = self.cfg['args'].Year
 
     # sigToyGenerator - validation
     if seq is 'sigToyGenerator':
@@ -125,7 +124,7 @@ def GetToyObject(self, seq):
         bkgCombToyGenerator = ToyGenerator(setupBkgCombToyGenerator)
         @decorator_setExpectedEvents(["nBkgComb"])
         @decorator_initParameters
-        def bkgCombToyGenerator_customize(self):
+        def bkgCombToyGenerator_customize(self, Year):
             pass
         bkgCombToyGenerator.customize = types.MethodType(bkgCombToyGenerator_customize, bkgCombToyGenerator)
         return bkgCombToyGenerator
@@ -144,7 +143,7 @@ def GetToyObject(self, seq):
         bkgPeakToyGenerator = ToyGenerator(setupBkgPeakToyGenerator)
         @decorator_setExpectedEvents(["nBkgPeak"])
         @decorator_initParameters
-        def bkgPeakToyGenerator_customize(self):
+        def bkgPeakToyGenerator_customize(self, Year):
             pass
         bkgPeakToyGenerator.customize = types.MethodType(bkgPeakToyGenerator_customize, bkgPeakToyGenerator)
         return bkgPeakToyGenerator

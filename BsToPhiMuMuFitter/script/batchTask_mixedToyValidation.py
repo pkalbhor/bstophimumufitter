@@ -20,20 +20,6 @@ import BsToPhiMuMuFitter.plotCollection as plotCollection
 import v2Fitter.Fitter.AbsToyStudier as AbsToyStudier
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
-# Define
-ROOT.gROOT.ProcessLine(
-"""struct MyTreeContent {
-   Double_t     fl;
-   Double_t     afb;
-   Double_t     status;
-   Double_t     hesse;
-   Double_t     minos;
-   Double_t     entries;
-   Double_t     nSig;
-   Double_t     nBkgComb;
-   Double_t     nBkgPeak;
-   Double_t     nll;
-};""")
 from ROOT import addressof
 
 class MixedToyStudier(AbsToyStudier.AbsToyStudier):
@@ -42,11 +28,31 @@ class MixedToyStudier(AbsToyStudier.AbsToyStudier):
         super(MixedToyStudier, self).__init__(cfg)
         self.plotflag = True
         self.DBFlag = True
+        # Define
+        ROOT.gROOT.ProcessLine(
+        """struct MyTreeContent {
+           Double_t     fl;
+           Double_t     afb;
+           Double_t     status;
+           Double_t     hesse;
+           Double_t     minos;
+           Double_t     entries;
+           Double_t     events16;           
+           Double_t     events17;           
+           Double_t     events18;
+           Double_t     nSig;
+           Double_t     nBkgComb;
+           Double_t     nBkgPeak;
+           Double_t     nll;
+        };""")
 
-    def getSubDataEntries(self, setIdx, Type):
+    def getSubDataEntries(self, setIdx, Type, Year=2016):
         expectedYield = 0
         try:
-            db = shelve.open(self.process.dbplayer.odbfile)
+            if self.process.cfg['args'].SimFit:
+                db = shelve.open(os.path.join(modulePath, "plots_{}".format(Year), self.process.dbplayer.odbfile), "r")
+            else:
+                db = shelve.open(self.process.dbplayer.odbfile)
             expectedYield += db['PeakFrac']['getVal']*db['nSig']['getVal'] if Type=='nBkgPeak' else db[Type]['getVal']
         finally:
             db.close()
@@ -62,7 +68,12 @@ class MixedToyStudier(AbsToyStudier.AbsToyStudier):
         self.otree.Branch("status", addressof(self.treeContent, 'status'), 'status/D')
         self.otree.Branch("hesse", addressof(self.treeContent, 'hesse'), 'hesse/D')
         self.otree.Branch("minos", addressof(self.treeContent, 'minos'), 'minos/D')
-        self.otree.Branch("entries", addressof(self.treeContent, 'entries'), 'entries/D')
+        if self.process.cfg['args'].SimFit: 
+            self.otree.Branch("events16", ROOT.addressof(self.treeContent, 'events16'), 'events16/D')
+            self.otree.Branch("events17", ROOT.addressof(self.treeContent, 'events17'), 'events17/D')
+            self.otree.Branch("events18", ROOT.addressof(self.treeContent, 'events18'), 'events18/D')
+        else:
+            self.otree.Branch("entries", addressof(self.treeContent, 'entries'), 'entries/D')
         self.otree.Branch("nSig", addressof(self.treeContent, 'nSig'), 'nSig/D')
         self.otree.Branch("nBkgComb", addressof(self.treeContent, 'nBkgComb'), 'nBkgComb/D')
         self.otree.Branch("nBkgPeak", addressof(self.treeContent, 'nBkgPeak'), 'nBkgPeak/D')
@@ -78,19 +89,21 @@ class MixedToyStudier(AbsToyStudier.AbsToyStudier):
             self.DBFlag = False
             shutil.copy(os.path.join(workdir, self.process.dbplayer.odbfile), self.process.dbplayer.odbfile)
 
-    def _runToyCreater(self, Type):                                                                                                            
+    def _runToyCreater(self, Type, Year): 
+        """Creating Toy Samples"""
+        print(">>>> Creating Toy Sample of Type: ", Type, " and Year:", Year)
         from BsToPhiMuMuFitter.toyCollection import GetToyObject
         if Type=='nBkgComb':
-            obj = GetToyObject(self.process, 'bkgCombToyGenerator')
-            obj.cfg['mixWith'] = "bkgCombToy.{}.Fit".format(self.process.cfg['args'].Year)
+            obj = GetToyObject(self.process, 'bkgCombToyGenerator', Year)
+            obj.cfg['mixWith'] = "bkgCombToy.{}.Fit".format(Year)
             obj.cfg['scale'] = 1.
         if Type=='nBkgPeak':
-            obj = GetToyObject(self.process, 'bkgPeakToyGenerator')
-            obj.cfg['mixWith'] = "bkgPeakToy.{}.Fit".format(self.process.cfg['args'].Year)
+            obj = GetToyObject(self.process, 'bkgPeakToyGenerator', Year)
+            obj.cfg['mixWith'] = "bkgPeakToy.{}.Fit".format(Year)
             obj.cfg['scale'] = 1.
         obj.hookProcess(self.process)
         setattr(obj, "logger", self.process.logger)
-        obj.customize()
+        obj.customize(Year)
         obj._runPath()
         return obj.data
 
@@ -114,23 +127,30 @@ class MixedToyStudier(AbsToyStudier.AbsToyStudier):
 
     def _postRunFitSteps(self, setIdx):
         if math.fabs(self.fitter._nll.getVal()) < 1e20:
-            unboundAfb = self.fitter.args.find('unboundAfb').getVal()
-            unboundFl  = self.fitter.args.find('unboundFl').getVal()
+            SimFit = self.process.cfg['args'].SimFit
+            unboundAfb = self.fitter.minimizer.getParameters(self.fitter.dataWithCategories).find('unboundAfb').getVal() if SimFit else self.fitter.args.find('unboundAfb').getVal()
+            unboundFl  = self.fitter.minimizer.getParameters(self.fitter.dataWithCategories).find('unboundFl').getVal() if SimFit else self.fitter.args.find('unboundFl').getVal()
             self.treeContent.fl = StdFitter.unboundFlToFl(unboundFl)
             self.treeContent.afb = StdFitter.unboundAfbToAfb(unboundAfb, self.treeContent.fl)
-            self.treeContent.status = self.fitter.fitResult['{}.migrad'.format(self.fitter.name)]['status']
-            self.treeContent.hesse = self.fitter.fitResult['{}.hesse'.format(self.fitter.name)]['status']
-            self.treeContent.minos = self.fitter.fitResult['{}.minos'.format(self.fitter.name)]['status']
-            self.treeContent.entries = self.fitter.data.numEntries()
-            self.treeContent.nSig = self.fitter.args.find('nSig').getVal()
-            self.treeContent.nBkgComb = self.fitter.args.find('nBkgComb').getVal()
-            self.treeContent.nBkgPeak = self.fitter.pdf.servers().findByName("nBkgPeak").getVal()
-            self.treeContent.nll = self.fitter._nll.getVal()
+            self.treeContent.status = self.fitter.migradResult if SimFit else self.fitter.fitResult['{}.migrad'.format(self.fitter.name)]['status']
+            self.treeContent.hesse = self.fitter.hesseResult if SimFit else self.fitter.fitResult['{}.hesse'.format(self.fitter.name)]['status']
+            self.treeContent.minos = self.fitter.minosResult.status() if SimFit else self.fitter.fitResult['{}.minos'.format(self.fitter.name)]['status']
+            if self.process.cfg['args'].SimFit:
+                self.treeContent.events16 = self.fitter.data[0].sumEntries()
+                self.treeContent.events17 = self.fitter.data[1].sumEntries()
+                self.treeContent.events18 = self.fitter.data[2].sumEntries()
+            else:
+                self.treeContent.entries = self.fitter.data.numEntries()
+                self.treeContent.nSig = self.fitter.args.find('nSig').getVal()
+                self.treeContent.nBkgComb = self.fitter.args.find('nBkgComb').getVal()
+                self.treeContent.nBkgPeak = self.fitter.pdf.servers().findByName("nBkgPeak").getVal()
+            self.treeContent.nll = self.fitter.minosResult.minNll() if SimFit else self.fitter._nll.getVal()
             self.otree.Fill()
-            if (unboundFl > 0.95 and abs(unboundAfb) < 0.05 and self.plotflag): self._postRunFitPlotter(setIdx)
+            #if (unboundFl > 0.95 and abs(unboundAfb) < 0.05 and self.plotflag): self._postRunFitPlotter(setIdx)
 
     def _postSetsLoop(self):
-        ofile = ROOT.TFile("setSummary_{}_{}.root".format(self.process.cfg['args'].Year, q2bins[self.process.cfg['binKey']]['label']), 'RECREATE')
+        SimFit = self.process.cfg['args'].SimFit
+        ofile = ROOT.TFile("setSummary_{}_{}.root".format("Simult" if SimFit else self.process.cfg['args'].Year, q2bins[self.process.cfg['binKey']]['label']), 'RECREATE')
         ofile.cd()
         self.otree.Write()
         ofile.Close()
@@ -140,17 +160,29 @@ class MixedToyStudier(AbsToyStudier.AbsToyStudier):
 # Define Process
 def GetMixedToyObject(self):
     Year = self.cfg['args'].Year
-    setupMixedToyStudier = deepcopy(AbsToyStudier.AbsToyStudier.templateConfig())
-    setupMixedToyStudier.update({
-        'name': "mixedToyStudier.{}".format(Year),
-        'data': ["sigMCReader.{}.Fit".format(Year), "f_bkgComb.{}".format(Year), "f_bkg_KStar.{}".format(Year)],
-        'Type': [(0, 'nSig', 'Sim'), (1, 'nBkgComb', 'Toy'), (2, 'nBkgPeak', 'Toy')],
-        'fitter': fitCollection.GetFitterObjects(self, 'finalFitter_WithKStar'),
-        'nSetOfToys': 1,
-    })
-    mixedToyStudier = MixedToyStudier(setupMixedToyStudier)
-    mixedToyStudier.cfg['fitter'].cfg['data'] = "sigMCReader.{}.Fit".format(Year)
-    mixedToyStudier.cfg['fitter'].cfg['FitMinos'] = [True, ('unboundAfb', 'unboundFl')]
+    if self.cfg['args'].SimFit:
+        from BsToPhiMuMuFitter.fitCollection import SimultaneousFitter_mixedToyValidation
+        setupMixedToyStudier = deepcopy(AbsToyStudier.AbsToyStudier.templateConfig())
+        setupMixedToyStudier.update({
+            'name': "mixedToyStudier",
+            'data': ["sigMCReader.{}.Fit".format(Year), "f_bkgComb.{}".format(Year), "f_bkg_KStar.{}".format(Year)],
+            'Type': [(0, 'nSig', 'Sim'), (1, 'nBkgComb', 'Toy'), (2, 'nBkgPeak', 'Toy')],
+            'fitter': SimultaneousFitter_mixedToyValidation,
+            'nSetOfToys': 1,
+        })
+        mixedToyStudier = MixedToyStudier(setupMixedToyStudier)
+    else:
+        setupMixedToyStudier = deepcopy(AbsToyStudier.AbsToyStudier.templateConfig())
+        setupMixedToyStudier.update({
+            'name': "mixedToyStudier.{}".format(Year),
+            'data': ["sigMCReader.{}.Fit".format(Year), "f_bkgComb.{}".format(Year), "f_bkg_KStar.{}".format(Year)],
+            'Type': [(0, 'nSig', 'Sim'), (1, 'nBkgComb', 'Toy'), (2, 'nBkgPeak', 'Toy')],
+            'fitter': fitCollection.GetFitterObjects(self, 'finalFitter_WithKStar'),
+            'nSetOfToys': 1,
+        })
+        mixedToyStudier = MixedToyStudier(setupMixedToyStudier)
+        mixedToyStudier.cfg['fitter'].cfg['data'] = "sigMCReader.{}.Fit".format(Year)
+        mixedToyStudier.cfg['fitter'].cfg['FitMinos'] = [True, ('unboundAfb', 'unboundFl')]
     return mixedToyStudier
 
 # Customize batch task
@@ -159,12 +191,13 @@ class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
         jdl = self.createJdlBase()
         jdl += """Transfer_Input_Files = {0}/seqCollection.py""".format(modulePath)
         jdl += """
-arguments = -b {binKey} -s {seqKey} -y {Year} -t {nSetOfToys} run $(Process)
+arguments = -b {binKey} -s {seqKey} -y {Year} -t {nSetOfToys}{SimFit} run $(Process)
 queue {nJobs}"""
         jdl = jdl.format(binKey = q2bins[parser_args.process.cfg['binKey']]['label'],
                         nSetOfToys=parser_args.nSetOfToys, nJobs=self.cfg['nJobs'],
                         seqKey  = parser_args.process.cfg['args'].seqKey,       
-                        Year    = parser_args.process.cfg['args'].Year,         
+                        Year    = parser_args.process.cfg['args'].Year, 
+                        SimFit  = " --SimFit" if parser_args.process.cfg['args'].SimFit else "",        
                         executable=os.path.join(modulePath,"seqCollection.py"),)
         return jdl
 
@@ -190,9 +223,9 @@ def func_postproc(args):
     os.chdir(args.wrapper.task_dir)
     args.process.addService("dbplayer", FitDBPlayer(absInputDir=os.path.join(modulePath, "plots_{}".format(args.Year))))                                           
     for binKey in args.process.cfg['bins']:
-        ifilename = "setSummary_{}_{}.root".format(args.Year, q2bins[binKey]['label'])
+        ifilename = "setSummary_{}_{}.root".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label'])
         if not os.path.exists(ifilename) or args.forceHadd:
-            call(["hadd", "-f", ifilename] + glob.glob('*/setSummary_{}_{}.root'.format(args.Year, q2bins[binKey]['label'])))
+            call(["hadd", "-f", ifilename] + glob.glob('*/setSummary_{}_{}.root'.format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label'])))
         ifile = ROOT.TFile(ifilename)
         tree = ifile.Get("tree")
 
@@ -212,7 +245,7 @@ def func_postproc(args):
         h_setSummary_fl.GetFunction("f_setSummary_fl").SetLineColor(4)
 
         # Draw
-        db = shelve.open(os.path.join(args.process.dbplayer.absInputDir, "fitResults_{0}.db".format(q2bins[binKey]['label'])))
+        db = shelve.open(os.path.join(args.process.dbplayer.absInputDir, "fitResults_{0}.db".format(q2bins[binKey]['label'])), 'r')
         fl_GEN = StdFitter.unboundFlToFl(db['unboundFl_GEN']['getVal'])
         afb_GEN = StdFitter.unboundAfbToAfb(db['unboundAfb_GEN']['getVal'], fl_GEN)
         line = ROOT.TLine()
@@ -230,7 +263,7 @@ def func_postproc(args):
         if args.drawGEN:
             line.DrawLine(afb_GEN, 0, afb_GEN, h_setSummary_afb.GetMaximum())
         plotCollection.Plotter.latexDataMarks(['mix'])
-        plotCollection.Plotter.canvas.Print("h_setSummary_mixedToyValidation_a6_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+        plotCollection.Plotter.canvas.Print("h_setSummary_mixedToyValidation_a6_{}_{}.pdf".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label']))
 
         h_setSummary_fl.SetXTitle("F_{L}")
         h_setSummary_fl.SetYTitle("Number of test samples")
@@ -241,63 +274,64 @@ def func_postproc(args):
         if args.drawGEN:
             line.DrawLine(fl_GEN, 0, fl_GEN, h_setSummary_fl.GetMaximum())
         plotCollection.Plotter.latexDataMarks(['mix'])
-        plotCollection.Plotter.canvas.Print("h_setSummary_mixedToyValidation_fl_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+        plotCollection.Plotter.canvas.Print("h_setSummary_mixedToyValidation_fl_{}_{}.pdf".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label']))
 
-        from copy import deepcopy
-        tree.Draw("nSig", "status==0")
-        nSigHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
-        tree.Draw("nBkgComb", "status==0")
-        nBkgCombHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
-        tree.Draw("nBkgPeak", "status==0")
-        nBkgPeakHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
-        tree.Draw("entries", "status==0")
-        nTotalHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
+        if not args.process.cfg['args'].SimFit:
+            from copy import deepcopy
+            tree.Draw("nSig", "status==0")
+            nSigHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
+            tree.Draw("nBkgComb", "status==0")
+            nBkgCombHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
+            tree.Draw("nBkgPeak", "status==0")
+            nBkgPeakHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
+            tree.Draw("entries", "status==0")
+            nTotalHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
 
-        # Signal Event Distributions
-        nSigHist.Draw()
-        nSigHist.SetFillColor(ROOT.kBlue-10)
-        #nSigHist.SetLineColor(ROOT.kBlue)
-        ROOT.TLatex().DrawLatexNDC(.73,.77,r"#scale[0.7]{{#color[4]{{Mean}}   : {param}}}".format(param=round(nSigHist.GetMean(), 5)) )
-        ROOT.TLatex().DrawLatexNDC(.73,.73,r"#scale[0.7]{{#color[1]{{Samples}} : {param}}}".format(param=round(nSigHist.GetEntries(), 0)) )
-        ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nSig}} : {param}}}".format(param=round(db['nSig']['getVal'], 0)) )
-        plotCollection.Plotter.canvas.Update(); line.DrawLine(db['nSig']['getVal'], 0, db['nSig']['getVal'], ROOT.gPad.GetUymax())
-        ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
-        plotCollection.Plotter.canvas.Print("h_nSig_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+            # Signal Event Distributions
+            nSigHist.Draw()
+            nSigHist.SetFillColor(ROOT.kBlue-10)
+            #nSigHist.SetLineColor(ROOT.kBlue)
+            ROOT.TLatex().DrawLatexNDC(.73,.77,r"#scale[0.7]{{#color[4]{{Mean}}   : {param}}}".format(param=round(nSigHist.GetMean(), 5)) )
+            ROOT.TLatex().DrawLatexNDC(.73,.73,r"#scale[0.7]{{#color[1]{{Samples}} : {param}}}".format(param=round(nSigHist.GetEntries(), 0)) )
+            ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nSig}} : {param}}}".format(param=round(db['nSig']['getVal'], 0)) )
+            plotCollection.Plotter.canvas.Update(); line.DrawLine(db['nSig']['getVal'], 0, db['nSig']['getVal'], ROOT.gPad.GetUymax())
+            ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
+            plotCollection.Plotter.canvas.Print("h_nSig_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
 
-        #Bkg yield distribution
-        nBkgCombHist.Draw()
-        nBkgCombHist.SetFillColor(ROOT.kRed-10)
-        #nBkgCombHist.SetLineColor(ROOT.kRed)
-        ROOT.TLatex().DrawLatexNDC(.73,.77,r"#scale[0.7]{{#color[2]{{Mean}}   : {param}}}".format(param=round(nBkgCombHist.GetMean(), 5)) )
-        ROOT.TLatex().DrawLatexNDC(.73,.73,r"#scale[0.7]{{#color[1]{{Samples}} : {param}}}".format(param=round(nBkgCombHist.GetEntries(), 0)) )
-        ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nBkg}} : {param}}}".format(param=round(db['nBkgComb']['getVal'], 0)) )
-        plotCollection.Plotter.canvas.Update(); line.DrawLine(db['nBkgComb']['getVal'], 0, db['nBkgComb']['getVal'], ROOT.gPad.GetUymax())
-        ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
-        plotCollection.Plotter.canvas.Print("h_nBkgComb_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
-    
-        #Peaking Bkg yield distribution
-        nBkgPeakHist.Draw()
-        nBkgPeakHist.SetFillColor(ROOT.kGreen-10)
-        #nBkgPeakHist.SetLineColor(ROOT.kGreen)
-        ROOT.TLatex().DrawLatexNDC(.73,.77,r"#scale[0.7]{{#color[3]{{Mean}}   : {param}}}".format(param=round(nBkgPeakHist.GetMean(), 5)) )
-        ROOT.TLatex().DrawLatexNDC(.73,.73,r"#scale[0.7]{{#color[1]{{Samples}} : {param}}}".format(param=round(nBkgPeakHist.GetEntries(), 0)) )
-        nPeak = db['PeakFrac']['getVal']*db['nSig']['getVal']
-        ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nPeak}} : {param}}}".format(param=round(nPeak, 0)) )
-        plotCollection.Plotter.canvas.Update(); line.DrawLine(nPeak, 0, nPeak, ROOT.gPad.GetUymax())
-        ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
-        plotCollection.Plotter.canvas.Print("h_nBkgPeak_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+            #Bkg yield distribution
+            nBkgCombHist.Draw()
+            nBkgCombHist.SetFillColor(ROOT.kRed-10)
+            #nBkgCombHist.SetLineColor(ROOT.kRed)
+            ROOT.TLatex().DrawLatexNDC(.73,.77,r"#scale[0.7]{{#color[2]{{Mean}}   : {param}}}".format(param=round(nBkgCombHist.GetMean(), 5)) )
+            ROOT.TLatex().DrawLatexNDC(.73,.73,r"#scale[0.7]{{#color[1]{{Samples}} : {param}}}".format(param=round(nBkgCombHist.GetEntries(), 0)) )
+            ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nBkg}} : {param}}}".format(param=round(db['nBkgComb']['getVal'], 0)) )
+            plotCollection.Plotter.canvas.Update(); line.DrawLine(db['nBkgComb']['getVal'], 0, db['nBkgComb']['getVal'], ROOT.gPad.GetUymax())
+            ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
+            plotCollection.Plotter.canvas.Print("h_nBkgComb_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
         
-        # Total yield distributions 
-        nTotalHist.Draw()
-        nTotalHist.SetFillColor(ROOT.kBlue-10)
-        #nTotalHist.SetLineColor(ROOT.kBlue)
-        ROOT.TLatex().DrawLatexNDC(.73,.77,r"#scale[0.7]{{#color[4]{{Mean}}   : {param}}}".format(param=round(nTotalHist.GetMean(), 5)) )
-        ROOT.TLatex().DrawLatexNDC(.73,.73,r"#scale[0.7]{{#color[1]{{Samples}} : {param}}}".format(param=round(nTotalHist.GetEntries(), 0)) )
-        nTotal = db['nBkgComb']['getVal']+db['nSig']['getVal']+nPeak
-        ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nTotal}} : {param}}}".format(param=round(nTotal, 0)) )
-        plotCollection.Plotter.canvas.Update(); line.DrawLine(nTotal, 0, nTotal, ROOT.gPad.GetUymax())
-        ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
-        plotCollection.Plotter.canvas.Print("h_nTotal_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+            #Peaking Bkg yield distribution
+            nBkgPeakHist.Draw()
+            nBkgPeakHist.SetFillColor(ROOT.kGreen-10)
+            #nBkgPeakHist.SetLineColor(ROOT.kGreen)
+            ROOT.TLatex().DrawLatexNDC(.73,.77,r"#scale[0.7]{{#color[3]{{Mean}}   : {param}}}".format(param=round(nBkgPeakHist.GetMean(), 5)) )
+            ROOT.TLatex().DrawLatexNDC(.73,.73,r"#scale[0.7]{{#color[1]{{Samples}} : {param}}}".format(param=round(nBkgPeakHist.GetEntries(), 0)) )
+            nPeak = db['PeakFrac']['getVal']*db['nSig']['getVal']
+            ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nPeak}} : {param}}}".format(param=round(nPeak, 0)) )
+            plotCollection.Plotter.canvas.Update(); line.DrawLine(nPeak, 0, nPeak, ROOT.gPad.GetUymax())
+            ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
+            plotCollection.Plotter.canvas.Print("h_nBkgPeak_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+            
+            # Total yield distributions 
+            nTotalHist.Draw()
+            nTotalHist.SetFillColor(ROOT.kBlue-10)
+            #nTotalHist.SetLineColor(ROOT.kBlue)
+            ROOT.TLatex().DrawLatexNDC(.73,.77,r"#scale[0.7]{{#color[4]{{Mean}}   : {param}}}".format(param=round(nTotalHist.GetMean(), 5)) )
+            ROOT.TLatex().DrawLatexNDC(.73,.73,r"#scale[0.7]{{#color[1]{{Samples}} : {param}}}".format(param=round(nTotalHist.GetEntries(), 0)) )
+            nTotal = db['nBkgComb']['getVal']+db['nSig']['getVal']+nPeak
+            ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nTotal}} : {param}}}".format(param=round(nTotal, 0)) )
+            plotCollection.Plotter.canvas.Update(); line.DrawLine(nTotal, 0, nTotal, ROOT.gPad.GetUymax())
+            ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
+            plotCollection.Plotter.canvas.Print("h_nTotal_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
 
         db.close()
 

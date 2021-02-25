@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import sys, os, pdb
+import sys, os, pdb, datetime
 import ROOT
 #ROOT.EnableImplicitMT()
 
@@ -62,7 +62,7 @@ predefined_sequence['loadAll'] = ['dataReader', 'sigMCReader', 'KsigMCReader', '
 predefined_sequence['fitAll']  = predefined_sequence['loadAll'] + ['effiFitter', 'sig2DFitter', 'sigAFitter']
 predefined_sequence['fitFinalAll'] = predefined_sequence['loadAll'] + ['fitSigMDCB', 'bkgCombAFitter', 'fitBkgM_KStar', 'fitBkgA_KStar', 'finalFitter_AltM_WithKStar']
 
-predefined_sequence['createplots']=[#'effiHistReader', 
+predefined_sequence['createplots']=['effiHistReader', 
                                     'dataReader', 
                                     'sigMCReader', 
                                     #'sigMCGENReader', 
@@ -70,8 +70,8 @@ predefined_sequence['createplots']=[#'effiHistReader',
                                     #'sigMCReader_JP', 
                                     'stdWspaceReader', 'plotter']
 #'effiHistReader', 'KsigMCReader', 'sigMCReader', 'sigMCGENReader', 
-predefined_sequence['sigMCValidation'] = ['stdWspaceReader', 'sigMCReader', 'sigMCStudier']
-predefined_sequence['mixedToyValidation'] = ['stdWspaceReader', 'sigMCReader', 'bkgCombToyGenerator', 'bkgPeakToyGenerator', 'mixedToyStudier'] if not args.Toy2 else ['stdWspaceReader', 'sigMCReader', 'mixedToyStudier']
+predefined_sequence['sigMCValidation'] = (['stdWspaceReader', 'sigMCReader'], ['sigMCStudier'])
+predefined_sequence['mixedToyValidation'] = (['stdWspaceReader', 'sigMCReader', 'bkgCombToyGenerator', 'bkgPeakToyGenerator'], ['mixedToyStudier']) if not args.Toy2 else (['stdWspaceReader', 'sigMCReader'], ['mixedToyStudier'])
 predefined_sequence['seqCollection']   = []
 predefined_sequence['FinalDataResult'] = ['FinalDataResult']
 predefined_sequence['EffiTable']       = ['EffiTable']
@@ -130,7 +130,7 @@ def Instantiate(self, seq):
         if s is 'sigMCStudier':
             sequence.append(batchTask_sigMCValidation.GetToyObject(self))
         if s is 'mixedToyStudier':
-            import BsToPhiMuMuFitter.script.batchTask_mixedToyValidation as batchTask_mixedToyValidation
+            #import BsToPhiMuMuFitter.script.batchTask_mixedToyValidation as batchTask_mixedToyValidation
             sequence.append(batchTask_mixedToyValidation.GetMixedToyObject(self))
         if s in ['bkgCombToyGenerator', 'bkgPeakToyGenerator']:
             import BsToPhiMuMuFitter.toyCollection as toyCollection
@@ -162,10 +162,10 @@ if __name__ == '__main__':
         p.name='sigMCValidationProcess'
 
     for b in p.cfg['bins']:
+        print("Time: ", datetime.datetime.now())
         p.cfg['binKey'] = b
         try:
-            if args.SimFit:
-                print ("INFO: Processing simultaneously over three year data")
+            def runSimSequences():
                 for Year in [2016, 2017, 2018]:
                     p.cfg['args'].Year=Year
                     GetInputFiles(p)
@@ -174,26 +174,29 @@ if __name__ == '__main__':
                     p.beginSeq()
                     p.runSeq()
                 p.cfg['args'].Year=args.Year
+            if args.SimFit and not (args.Function_name in ['submit', 'run', 'postproc']):
+                print ("INFO: Processing simultaneously over three year data")
+                runSimSequences()
                 sequence=Instantiate(p, predefined_sequence[args.seqKey][1])
                 p.setSequence(sequence)
                 p.beginSeq()
             elif args.Function_name in ['submit', 'run', 'postproc']:
                 print("INFO: Processing {0} year data".format(args.Year))
                 from BsToPhiMuMuFitter.anaSetup import modulePath
-                import BsToPhiMuMuFitter.script.batchTask_sigMCValidation as batchTask_sigMCValidation
-                import BsToPhiMuMuFitter.script.batchTask_mixedToyValidation as batchTask_mixedToyValidation
-                import BsToPhiMuMuFitter.script.batchTask_seqCollection as batchTask_seqCollection
                 if p.name=='sigMCValidationProcess':
+                    import BsToPhiMuMuFitter.script.batchTask_sigMCValidation as batchTask_sigMCValidation
                     wrappedTask = batchTask_sigMCValidation.BatchTaskWrapper(
                         "myBatchTask",
                         os.path.join(modulePath, "batchTask_sigMCValidation"),
                         cfg=batchTask_sigMCValidation.setupBatchTask)
                 elif args.seqKey=='mixedToyValidation':
-                     wrappedTask = batchTask_mixedToyValidation.BatchTaskWrapper(
+                    import BsToPhiMuMuFitter.script.batchTask_mixedToyValidation as batchTask_mixedToyValidation
+                    wrappedTask = batchTask_mixedToyValidation.BatchTaskWrapper(
                         "myBatchTask_MixedToy",
                         os.path.join(modulePath, "batchTask_mixedToyValidation"),
-                        cfg=batchTask_mixedToyValidation.setupBatchTask)               
+                        cfg=batchTask_mixedToyValidation.setupBatchTask)
                 else:
+                    import BsToPhiMuMuFitter.script.batchTask_seqCollection as batchTask_seqCollection
                     wrappedTask = batchTask_seqCollection.BatchTaskWrapper(
                         "BatchTaskseqCollection",
                         os.path.join(modulePath, "batchTask_seqCollection"),
@@ -211,7 +214,11 @@ if __name__ == '__main__':
 
                 if args.OneStep is False: args.TwoStep = True
                 p.cfg['args'] = deepcopy(args)
-                sequence=Instantiate(p, predefined_sequence[args.seqKey])
+                if p.cfg['args'].SimFit:
+                    runSimSequences()
+                    sequence=Instantiate(p, predefined_sequence[args.seqKey][1])
+                else:
+                    sequence=Instantiate(p, predefined_sequence[args.seqKey])
                 p.setSequence(sequence)
                 args.func(args) 
                 continue

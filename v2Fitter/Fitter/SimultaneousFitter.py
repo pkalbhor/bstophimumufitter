@@ -9,7 +9,7 @@ from v2Fitter.Fitter.FitterCore import FitterCore
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 from BsToPhiMuMuFitter.Plotter import Plotter
 from BsToPhiMuMuFitter.anaSetup import q2bins
-from BsToPhiMuMuFitter.varCollection import CosThetaK, CosThetaL, Bmass
+from BsToPhiMuMuFitter.varCollection import CosThetaK, CosThetaL, Bmass, Puw8
 
 class SimultaneousFitter(FitterCore):
     """A fitter object acts as a path, to be queued in a process.
@@ -26,10 +26,14 @@ Following functions to be overloaded to customize the full procedure...
         super(SimultaneousFitter, self).reset()
         self.category = None
         self.data = []
+        self.argset = None
         self.pdf = []
         self.Years = []
         self.dataWithCategories = None
         self.minimizer = None
+        self.migradResult = None
+        self.hesseResult = None
+        self.minosResult = None
 
     def _bookPdfData(self):
         """ """
@@ -50,7 +54,13 @@ Following functions to be overloaded to customize the full procedure...
                         else:
                             self.data.append(self.process.sourcemanager.get(data).Clone())
                 dataWithCategoriesCmdArgs += (ROOT.RooFit.Import(category, self.data[-1]),)
-            self.dataWithCategories = ROOT.RooDataSet("{0}.dataWithCategories".format(self.name), "", self.pdf[-1].getObservables(self.data[-1]), *dataWithCategoriesCmdArgs)
+            self.argset = self.pdf[-1].getObservables(self.data[-1])
+            if not self.process.cfg['args'].seqKey in ['fitSigMCGEN', 'fitFinal3D_WithKStar']:
+                self.argset.add(Puw8) # No all objects are using weights
+                self.dataWithCategories = ROOT.RooDataSet("{0}.dataWithCategories".format(self.name), "", self.argset, *dataWithCategoriesCmdArgs, ROOT.RooFit.WeightVar("Puw8"))
+            else:
+                self.dataWithCategories = ROOT.RooDataSet("{0}.dataWithCategories".format(self.name), "", self.argset, *dataWithCategoriesCmdArgs)
+        
         else:
             raise RuntimeError("Number of category/data/pdf doesn't match")
 
@@ -62,29 +72,33 @@ Following functions to be overloaded to customize the full procedure...
 
     def _preFitSteps(self):
         """Abstract: Do something before main fit loop"""
-        cwd=os.getcwd()
         for pdf, data, Year in zip(self.pdf, self.data, self.Years):
             args = pdf.getParameters(ROOT.RooArgSet(CosThetaK, CosThetaL, Bmass))
-            os.chdir(os.path.join(self.process.cwd, "plots_{0}".format(Year)))
-            if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, aliasDict=self.cfg['argAliasInDB'], exclude=self.cfg['argPattern'] if not self.process.cfg['args'].seqKey == 'fitBkgCombA' else None)
+            odbfile = os.path.join(self.process.cwd, "plots_{0}".format(Year), self.process.dbplayer.odbfile)
+            if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(odbfile, args, aliasDict=self.cfg['argAliasInDB'], exclude=self.cfg['argPattern'] if not self.process.cfg['args'].seqKey == 'fitBkgCombA' else None)
             self.ToggleConstVar(args, True)
             self.ToggleConstVar(args, False, self.cfg['argPattern'])
-            FitterCore.ArgLooper(args, lambda p: p.SetName(p.GetName()+"_{0}".format(Year)), targetArgs=self.cfg['argPattern'], inverseSel=True) # Rename parameter names
-        os.chdir(cwd)
+            # Rename parameter names
+            FitterCore.ArgLooper(args, lambda p: p.SetName(p.GetName()+"_{0}".format(Year)), targetArgs=self.cfg['argPattern'], inverseSel=True) 
+            if self.process.cfg['args'].seqKey in ['sigMCValidation', 'mixedToyValidation']: #Resetting parameters to initial values.
+                pdf.getParameters(data).find('unboundAfb').setVal(0.0)
+                pdf.getParameters(data).find('unboundFl').setVal(0.6978)
     def _runFitSteps(self):
         """Standard fitting procedure to be overwritten."""
         if len(self.cfg['fitToCmds']) == 0:
             self.minimizer.fitTo(self.dataWithCategories)
         else:
-            if True:
+            if False:
                 for cmd in self.cfg['fitToCmds']:
-                    self.minimizer.fitTo(self.dataWithCategories, *cmd)
+                    self.minimizer.fitTo(self.dataWithCategories, *cmd, ROOT.RooFit.SumW2Error(0))
             else:
                 self.fitter = ROOT.StdFitter()
                 self.fitter.Init(self.minimizer, self.dataWithCategories)
                 self._nll = self.fitter.GetNLL()
-                self.fitter.FitMigrad()
-                self.fitter.FitHesse()
+                mresult = self.fitter.FitMigrad()
+                hresult = self.fitter.FitHesse()
+                self.migradResult = mresult.status() 
+                self.hesseResult  = hresult.status() 
 
     def _postFitSteps(self):
         """ Abstract: Do something after main fit loop"""
@@ -94,9 +108,9 @@ Following functions to be overloaded to customize the full procedure...
 
         cwd=os.getcwd()
         if self.process.cfg['args'].seqKey == 'fitBkgCombA': os.chdir(os.path.join(self.process.cwd, "plots_{0}".format(self.process.cfg['args'].Year)))
-        if self.cfg['saveToDB']:
+        if self.cfg['saveToDB']: #Update parameters to db file
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.minimizer.getParameters(self.dataWithCategories), self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
-        for pdf, data in zip(self.pdf, self.data):
+        for pdf, data in zip(self.pdf, self.data): #Get parameter values from db file
             FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, pdf.getParameters(data), aliasDict=self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None, exclude=None)
         os.chdir(cwd)
      
@@ -115,8 +129,9 @@ Following functions to be overloaded to customize the full procedure...
         #Attach ProjWData Argument to plotter for getting combined fit
         #self.process._sequence[1].cfg['plots'][self.process._sequence[1].cfg['switchPlots'][0]]['kwargs']['pdfPlots'][0][1]=(ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
 
-        frameL = CosThetaL.frame(ROOT.RooFit.Bins(24)) 
-        frameK = CosThetaK.frame(ROOT.RooFit.Bins(24)) 
+        frameL = CosThetaL.frame(ROOT.RooFit.Bins(20)) 
+        frameK = CosThetaK.frame(ROOT.RooFit.Bins(20)) 
+        legendInstance = Plotter.legend
         c1=ROOT.TCanvas()
         binKey= q2bins[self.process.cfg['binKey']]['label']
         if self.process.cfg['args'].seqKey in ['fitBkgCombA', 'fitFinal3D_WithKStar']:
@@ -127,54 +142,27 @@ Following functions to be overloaded to customize the full procedure...
             CopyFrameL = frameL.Clone()
             self.category.setIndex(ID); sampleSet = ROOT.RooArgSet(self.category)
             self.dataWithCategories.plotOn(CopyFrameL, ROOT.RooFit.Cut("({0}==({0}::{1}))".format(self.category.GetName(), Category)))
-            self.minimizer.plotOn(CopyFrameL, ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components( self.pdf[ID].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed), ROOT.RooFit.LineColor(2 if self.process.cfg['args'].seqKey=='fitBkgCombA' else 3)) # ROOT.RooFit.Components( self.pdf[ID].GetName())
-            #CopyFrameL.Draw()
+            self.minimizer.plotOn(CopyFrameL, ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components( self.pdf[ID].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kSolid), ROOT.RooFit.LineColor(2 if self.process.cfg['args'].seqKey=='fitBkgCombA' else 4)) # ROOT.RooFit.Components( self.pdf[ID].GetName())
             CopyFrameL.SetMaximum(1.5 * CopyFrameL.GetMaximum())
             c1.Clear()
-            Plotter.DrawWithResidue(CopyFrameL)
+            CopyFrameL.Draw() if self.process.cfg['args'].NoPull else Plotter.DrawWithResidue(CopyFrameL)
             Plotter.latexQ2(self.process.cfg['binKey'])
             Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries("{0}=={0}::{1}".format(self.category.GetName(), Category))) )
             Plotter.latexDataMarks(marks=marks)
+            legendInstance.Clear(); legendInstance.AddEntry(CopyFrameL.getObject(0).GetName(), self.cfg['LegName'], "LPFE"); legendInstance.Draw()
             c1.SaveAs("Simultaneous_Cosl_{0}_{1}_{2}.pdf".format(Category, self.process.cfg['args'].seqKey, binKey))
 
             CopyFrameK = frameK.Clone()
             self.dataWithCategories.plotOn(CopyFrameK, ROOT.RooFit.Cut("{0}=={0}::{1}".format(self.category.GetName(), Category)))
-            self.minimizer.plotOn(CopyFrameK, ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components( self.pdf[ID].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed), ROOT.RooFit.LineColor(2 if self.process.cfg['args'].seqKey=='fitBkgCombA' else 3) ) #, ROOT.RooFit.Components(self.pdf[ID].GetName())
-            #CopyFrameK.Draw()
+            self.minimizer.plotOn(CopyFrameK, ROOT.RooFit.Slice(self.category, Category), ROOT.RooFit.Components( self.pdf[ID].GetName()), ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kSolid), ROOT.RooFit.LineColor(2 if self.process.cfg['args'].seqKey=='fitBkgCombA' else 4) ) #, ROOT.RooFit.Components(self.pdf[ID].GetName())
             CopyFrameK.SetMaximum(1.5 * CopyFrameK.GetMaximum())
             c1.Clear()
-            Plotter.DrawWithResidue(CopyFrameK)
+            CopyFrameK.Draw() if self.process.cfg['args'].NoPull else Plotter.DrawWithResidue(CopyFrameK)
             Plotter.latexQ2(self.process.cfg['binKey'])
             Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries("{0}=={0}::{1}".format(self.category.GetName(), Category))) )
             Plotter.latexDataMarks(marks=marks)
+            legendInstance.Clear(); legendInstance.AddEntry(CopyFrameK.getObject(0).GetName(), self.cfg['LegName'], "LPFE"); legendInstance.Draw()
             c1.SaveAs("Simultaneous_CosK_{0}_{1}_{2}.pdf".format(Category, self.process.cfg['args'].seqKey, binKey))
-
-        """
-        self.dataWithCategories.plotOn(frameL)
-        self.minimizer.plotOn(frameL, ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
-        frameL.SetMaximum(1.5 * frameL.GetMaximum())
-        c1.Clear()
-        #if self.process.cfg['args'].seqKey=='fitSigMCGEN' or self.process.cfg['args'].seqKey=='fitSig2D': 
-        #    PlotParams()
-        Plotter.DrawWithResidue(frameL)
-        Plotter.latexQ2(self.process.cfg['binKey'])
-        Plotter.latexCMSSim()
-        Plotter.latexCMSExtra()
-        Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries()) )
-        c1.SaveAs("Combined_{0}_cosl_{1}.pdf".format(self.process.cfg['args'].seqKey, binKey))
-
-        self.dataWithCategories.plotOn(frameK)
-        self.minimizer.plotOn(frameK, ROOT.RooFit.ProjWData(sampleSet, self.dataWithCategories), ROOT.RooFit.LineStyle(ROOT.kDashed))
-        frameK.SetMaximum(1.5 * frameK.GetMaximum())
-        c1.Clear()
-        #if self.process.cfg['args'].seqKey=='fitSigMCGEN' or self.process.cfg['args'].seqKey=='fitSig2D': 
-        #    PlotParams()
-        Plotter.DrawWithResidue(frameK)
-        Plotter.latexQ2(self.process.cfg['binKey'])
-        Plotter.latexCMSSim()
-        Plotter.latexCMSExtra()
-        Plotter.latex.DrawLatexNDC(.45, .84, r"#scale[0.8]{{Events = {0:.2f}}}".format(self.dataWithCategories.sumEntries()) )
-        c1.SaveAs("Combined_{0}_cosK_{1}.pdf".format(self.process.cfg['args'].seqKey, binKey))"""
 
     def _getFinalFitPlots(self):
         args = self.minimizer.getParameters(self.dataWithCategories)

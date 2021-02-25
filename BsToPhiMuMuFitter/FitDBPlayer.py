@@ -136,7 +136,7 @@ class FitDBPlayer(Service):
             aliasDict = {}
 
         try:
-            db = shelve.open(dbfile)
+            db = shelve.open(dbfile, "r")
             def initFromDBImp(iArg):
                 argName = iArg.GetName()
                 aliasName = aliasDict.get(argName, argName)
@@ -153,7 +153,7 @@ class FitDBPlayer(Service):
                 else:
                     print("WARNING\t: Unable to initialize {0}, record {1} not found in {2}.".format(argName, aliasName, dbfile))
             FitterCore.ArgLooper(args, initFromDBImp, exclude, inverseSel=True)
-            print ("Initialized parameters from `{0}/{1}`.".format(os.path.abspath(os.path.dirname(dbfile)), dbfile))
+            print ("Initialized parameters from `{0}`.".format(dbfile))
         finally:
             db.close()
 

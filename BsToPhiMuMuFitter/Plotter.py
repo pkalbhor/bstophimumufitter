@@ -102,21 +102,21 @@ class Plotter(Path):
     frameB_binning_array = array('d', [4.52, 4.60, 4.68] + [4.76 + 0.08*i for i in range(14)] + [5.88, 5.96])
     frameB_binning = ROOT.RooBinning(len(frameB_binning_array)-1, frameB_binning_array)
     frameB_binning_fine_array = array('d', [4.52 + 0.04*i for i in range(38)])
-    frameB_binning_fine = ROOT.RooBinning(20, Bmass.getMin(defaultPlotRegion), Bmass.getMax(defaultPlotRegion)) #(len(frameB_binning_fine_array)-1, frameB_binning_fine_array)
+    frameB_binning_fine = ROOT.RooBinning(100, Bmass.getMin(defaultPlotRegion), Bmass.getMax(defaultPlotRegion)) #(len(frameB_binning_fine_array)-1, frameB_binning_fine_array)
 
     frameK = CosThetaK.frame()
     frameK.SetMinimum(0)
     frameK.SetTitle("")
     frameK_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
     #frameK_binning = ROOT.RooBinning(len(frameK_binning_array)-1, frameK_binning_array)
-    frameK_binning = ROOT.RooBinning(20, -1, 1)
+    frameK_binning = ROOT.RooBinning(100, -1, 1)
 
     frameL = CosThetaL.frame()
     frameL.SetMinimum(0)
     frameL.SetTitle("")
     frameL_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
     #frameL_binning = ROOT.RooBinning(len(frameL_binning_array)-1, frameL_binning_array)
-    frameL_binning = ROOT.RooBinning(20, -1, 1)
+    frameL_binning = ROOT.RooBinning(100, -1, 1)
 
     legend = ROOT.TLegend(.72, .72, .92, .92)
     legend.SetFillColor(0)
@@ -129,6 +129,7 @@ class Plotter(Path):
         hresid = frame1.pullHist(frame1.getObject(0).GetName(), frame1.getObject(1).GetName()) #residHist() #Get Pull
         frame2.addPlotable(hresid, "P")
         res=ROOT.NewResPlot('RooPlot')(frame1, frame2); res.Draw();
+        res.frame2.GetYaxis().SetRangeUser(-5, 5)
         res.fUpperPad.cd()
         return res
 

@@ -103,18 +103,18 @@ def GetFitterObjects(self, seq):
         })
         return StdFitter(setupSig2DFitter)
     if seq is 'sig3DFitter':
-        setupSig2DFitter = deepcopy(setupTemplateFitter)
-        setupSig2DFitter.update({
+        setupSig3DFitter = deepcopy(setupTemplateFitter)
+        setupSig3DFitter.update({
             'name': "sig3DFitter.{0}".format(Year),
             'data': "sigMCReader.{0}.{1}".format(Year, "altFit" if AltRange else "Fit"),
             'pdf': "f_sig3D{}.{}".format('_ts' if TwoStep else '', Year),
             'FitHesse': True,
-            'FitMinos': [False if self.cfg['args'].seqKey=='sigMCValidation' else True, ()],
+            'FitMinos': [True if self.cfg['args'].seqKey=='sigMCValidation' else False, ()],
             'argPattern': ['unboundAfb', 'unboundFl'] if self.cfg['args'].seqKey=='sigMCValidation' else ['unboundAfb', 'unboundFl', '^sigM.*'],
             'createNLLOpt': [],
             'argAliasInDB': ArgAliasRECO_Alt if AltRange else ArgAliasRECO,
         })
-        return StdFitter(setupSig2DFitter)
+        return StdFitter(setupSig3DFitter)
     if seq is 'sigAFitter':
         setupSigAFitter = deepcopy(setupTemplateFitter)
         setupSigAFitter.update({
@@ -166,6 +166,7 @@ def GetFitterObjects(self, seq):
             'Years'     : [Year, Year],
             #'argPattern': [r'bkgComb[KL]_c[\d]+', ],
             'argAliasInDB': None,
+            'LegName'  : 'Simulation',
             'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(0)],],
         })
         return SimultaneousFitter(setupSimulFitter_bkgCombA)
@@ -461,6 +462,7 @@ setupSimultaneousFitter.update({
     'pdf'       : ["f_sig2D_ts.2016", "f_sig2D_ts.2017", "f_sig2D_ts.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
     'argAliasInDB': ArgAliasRECO,
+    'LegName'  : 'Simulation',
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
 })
 SimultaneousFitter_sig2D = SimultaneousFitter(setupSimultaneousFitter)
@@ -473,9 +475,24 @@ setupeSig3DFitter.update({
     'argPattern': ['unboundAfb', 'unboundFl'],
     'Years'     : [2016, 2017, 2018],
     'argAliasInDB': ArgAliasRECO,
+    'LegName'  : 'Simulation',
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
 })
 SimultaneousFitter_sig3D = SimultaneousFitter(setupeSig3DFitter)
+
+# sigMC Validation
+Simul_sigMCValidation_setup = deepcopy(setupTemplateSimFitter)
+Simul_sigMCValidation_setup.update({
+    'category'  : ['cat16', 'cat17', 'cat18'],
+    'data'      : ["sigMCReader.2016.Fit", "sigMCReader.2017.Fit", "sigMCReader.2018.Fit"],
+    'pdf'       : ["f_sig3D_ts.2016", "f_sig3D_ts.2017", "f_sig3D_ts.2018"],
+    'argPattern': ['unboundAfb', 'unboundFl'],
+    'Years'     : [2016, 2017, 2018],
+    'argAliasInDB': ArgAliasRECO,
+    'LegName'   : 'Simulation',
+    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
+})
+SimultaneousFitter_sigMCValidation = SimultaneousFitter(Simul_sigMCValidation_setup)
 
 setupSimulFitter_sigGEN = deepcopy(setupTemplateSimFitter)
 setupSimulFitter_sigGEN.update({
@@ -484,6 +501,7 @@ setupSimulFitter_sigGEN.update({
     'pdf'       : ["f_sigA.2016", "f_sigA.2017", "f_sigA.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
     'Years'     : [2016, 2017, 2018],
+    'LegName'  : 'Simulation',
     'argAliasInDB': ArgAliasGEN,
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)], ],
 })
@@ -520,11 +538,28 @@ setupSimFinalFitter_AltM_WithKStar.update({
     'data'      : ["dataReader.2016.Fit", "dataReader.2017.Fit", "dataReader.2018.Fit"],
     'pdf'       : ["f_final_AltM_WithKStar.2016", "f_final_AltM_WithKStar.2017", "f_final_AltM_WithKStar.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
+    'Years'     : [2016, 2017, 2018],
     'argAliasInDB': {**ArgAliasGEN},
+    'LegName'  : 'Data',
     'argAliasSaveToDB': False,
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
 })
 SimFitter_Final_AltM_WithKStar = SimultaneousFitter(setupSimFinalFitter_AltM_WithKStar)
+
+# mixToy Validation
+Simul_mixedToyValidation_setup = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgM*fBkgA)
+Simul_mixedToyValidation_setup.update({
+    'category'  : ['cat16', 'cat17', 'cat18'],
+    'data'      : ["dataReader.2016.Fit", "dataReader.2017.Fit", "dataReader.2018.Fit"],
+    'pdf'       : ["f_final_WithKStar_ts.2016", "f_final_WithKStar_ts.2017", "f_final_WithKStar_ts.2018"],
+    'argPattern': ['unboundAfb', 'unboundFl'],
+    'Years'     : [2016, 2017, 2018],
+    'argAliasInDB': {**ArgAliasGEN},
+    'LegName'  : 'Data',
+    'argAliasSaveToDB': False,
+    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
+})
+SimultaneousFitter_mixedToyValidation = SimultaneousFitter(Simul_mixedToyValidation_setup)
 
 if __name__ == '__main__':
     p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, effiFitter])

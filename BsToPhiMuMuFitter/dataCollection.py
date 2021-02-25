@@ -11,7 +11,7 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 import BsToPhiMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
-from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN, dataArgsKStar, dataArgsGENoff
+from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN, dataArgsKStar, dataArgsGENoff, MCArgSet
 from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, modulePath 
 from BsToPhiMuMuFitter.python.datainput import genSel, ExtraCuts, ExtraCutsKStar
 
@@ -23,6 +23,7 @@ CFG = DataReader.templateConfig()
 CFG.update({
     'argset': dataArgs,
     'lumi': -1,  # Keep a record, useful for mixing simulations samples
+    'weight': '1',
     #'ifriendIndex': ["Bmass", "Mumumass"],
 })
 
@@ -115,6 +116,8 @@ def GetDataReader(self, seq):
         sigMCReaderCfg.update({
             'name': "sigMCReader.{Year}".format(Year=self.cfg['args'].Year),
             'ifile': self.cfg['sigMC'],
+            'argset': MCArgSet,
+            'weight': 'Puw8',
             'lumi': 66362.21 if Year==2016 else 36139.99 if Year==2017 else 26998.25,
         })
         sigMCReader = DataReader(sigMCReaderCfg)
@@ -129,6 +132,7 @@ def GetDataReader(self, seq):
             'name': "KsigMCReader.{Year}".format(Year=self.cfg['args'].Year),
             'ifile': self.cfg['peaking']['KstarMuMu'],
             'argset': dataArgsKStar,
+            'weight': 'Puw8',
             'lumi': 5837.74 if Year==2016 else 8920.86 if Year==2017 else 8105.82,
         })
         KsigMCReader = DataReader(KsigMCReaderCfg)
@@ -160,6 +164,8 @@ def GetDataReader(self, seq):
         bkgJpsiMCReaderCfg.update({
             'name': "sigMCReader_JP.{}".format(self.cfg['args'].Year),
             'ifile': self.cfg['control']['JpsiPhi'], #[:len(self.cfg['control']['JpsiPhi'])-18],
+            'argset': MCArgSet,
+            'weight': 'Puw8',
             'lumi': 295.761,
         })
         bkgJpsiMCReader = DataReader(bkgJpsiMCReaderCfg)
@@ -171,6 +177,8 @@ def GetDataReader(self, seq):
         bkgPsi2sMCReaderCfg.update({
             'name': "sigMCReader_PP.{}".format(self.cfg['args'].Year),
             'ifile': self.cfg['control']['PsiPhi'],
+            'argset': MCArgSet,
+            'weight': 'Puw8',
             'lumi': 218.472,
         })
         bkgPsi2sMCReader = DataReader(bkgPsi2sMCReaderCfg)
@@ -182,6 +190,8 @@ def GetDataReader(self, seq):
         bkgJpsiKstMCReaderCfg.update({
             'name': "bkgMCReader_JK.{}".format(self.cfg['args'].Year),
             'ifile': self.cfg['peaking']['JpsiKstar'],
+            'argset': MCArgSet,
+            'weight': 'Puw8',
             'lumi': 218.472,
         })
         bkgJpsiKstMCReader = DataReader(bkgJpsiKstMCReaderCfg)
@@ -193,6 +203,8 @@ def GetDataReader(self, seq):
         bkgPsi2sKstMCReaderCfg.update({
             'name': "bkgMCReader_PK.{}".format(self.cfg['args'].Year),
             'ifile': self.cfg['peaking']['PsiKstar'],
+            'argset': MCArgSet,
+            'weight': 'Puw8',
             'lumi': 218.472,
         })
         bkgPsi2sKstMCReader = DataReader(bkgPsi2sKstMCReaderCfg)

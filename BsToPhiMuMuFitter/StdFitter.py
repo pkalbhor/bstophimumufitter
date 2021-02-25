@@ -143,6 +143,7 @@ class StdFitter(FitterCore):
     def FitMigrad(self):
         """Migrad"""
         migradResult = self.fitter.FitMigrad()
+        migradResult = self.fitter.FitMigrad()
         self.fitResult = {
             "{0}.{1}".format(self.name, self.cfg['argAliasInDB'].get('migrad', 'migrad')): {
                 'status': migradResult.status(),

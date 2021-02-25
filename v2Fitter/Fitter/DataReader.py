@@ -10,6 +10,7 @@
 from v2Fitter.FlowControl.Path import Path
 
 import os, pdb, tempfile
+from copy import deepcopy
 import ROOT
 from ROOT import TChain
 from ROOT import TIter
@@ -56,20 +57,31 @@ class DataReader(Path):
         """Return named dataset, create if not exist"""
         if dname in self.dataset.keys() and not self.process.cfg['args'].force:
             print("\033[0;34;47m Dataset: ", dname, " Already Exists! \033[0m", dcut, self.dataset[dname].sumEntries())
-            return self.dataset[dname]
+            self.dataset[dname].Print()
+            return 1
         tempfile_preload = ROOT.TFile(tempfile.gettempdir()+"/temp.root", 'RECREATE') #Pritam
         RooCut = ROOT.RooFit.Cut(dcut)
         Import = ROOT.RooFit.Import(self.ch)
         Range  = ROOT.RooFit.CutRange(dname.split(".")[2]) # Not taking effect, need review
+        Weight = ROOT.RooFit.WeightVar(self.cfg['weight'])
         if self.argset.find("Bmass"): self.argset.find("Bmass").removeRange() # Analysis specific line introduced
-        data = RooDataSet(dname, "", self.argset, Import, RooCut, Range)
-        if self.argset.find("Phimass"): self.argset.find("Phimass").setBins(20)
-        datahist = ROOT.RooDataHist(dname+".hist", "", ROOT.RooArgSet(self.argset.find("Phimass")), data)
-        data.Write(); tempfile_preload.Close() #Pritam
-        self.dataset[dname] = data
-        self.dataset[dname+".hist"] = datahist
+        if "dataReader" in dname or "sigMCGENReader" in dname:
+            data = RooDataSet(dname, "", self.argset, Import, RooCut, Range)
+        else:
+            #data = RooDataSet (dname, "Weighted dataset", datam, self.argset, "1", self.cfg['weight']) # PU Weighted dataset
+            data = RooDataSet(dname, "Weighted dataset", self.argset, Import, RooCut, Range, Weight)
+
+        if self.argset.find("Phimass"): 
+            self.argset.find("Phimass").setBins(20)
+            datahist = ROOT.RooDataHist(dname+".hist", "", ROOT.RooArgSet(self.argset.find("Phimass")), data)
+            self.dataset[dname+".hist"] = deepcopy(datahist)
+        data.Write()
+        self.dataset[dname] = deepcopy(data)
         print("\033[0;34;47m Creating Dataset: ", dname, ": \033[0m", dcut, data.sumEntries())
-        return data
+        data.Print()
+        self.dataset[dname].Print()
+        tempfile_preload.Close() #Pritam
+        return 1
 
     def createDataSets(self, dataset):
         """Get named dataset"""
@@ -79,8 +91,8 @@ class DataReader(Path):
                 data = file_preload.Get(name)
                 datahist = file_preload.Get(name+'.hist')
                 if not data == None:
-                    self.dataset[name] = data
-                    self.dataset[name+'.hist'] = datahist
+                    self.dataset[name] = deepcopy(data)
+                    if self.argset.find("Phimass"): self.dataset[name+'.hist'] = deepcopy(datahist)
                 file_preload.Close()
             self.createDataSet(name, cut)
         return self.dataset
@@ -103,21 +115,21 @@ class DataReader(Path):
     def _addSource(self):
         """Add dataset and arguments to source pool"""
         if self.cfg['preloadFile'] and not os.path.exists(self.cfg['preloadFile']):
-            file_preload = ROOT.TFile(self.cfg['preloadFile'], 'RECREATE')
+            file_out = ROOT.TFile.Open(self.cfg['preloadFile'], 'RECREATE')
             for dname, d in self.dataset.items():
                 d.Write()
-            file_preload.Close()
+            file_out.Close()
         elif os.path.exists(self.cfg['preloadFile']):
-            file_preload = ROOT.TFile(self.cfg['preloadFile'], 'UPDATE')
+            file_out = ROOT.TFile(self.cfg['preloadFile'], 'UPDATE')
             for dname, d in self.dataset.items():
-                if file_preload.Get(dname) and self.process.cfg['args'].force: 
-                    file_preload.Delete(dname+';*')     # Delete old objects if exists
-                    file_preload.Delete('ProcessID*;*') # Delete old Pids if exists
+                if file_out.Get(dname) and self.process.cfg['args'].force: 
+                    file_out.Delete(dname+';*')     # Delete old objects if exists
+                    file_out.Delete('ProcessID*;*') # Delete old Pids if exists
                     d.Write()
-                elif not file_preload.Get(dname):
+                elif not file_out.Get(dname):
                     print("Freshly booking an object")
                     d.Write()
-            file_preload.Close()
+            file_out.Close()
            
         if not 'source' in self.cfg.keys():
             self.cfg['source'] = {}

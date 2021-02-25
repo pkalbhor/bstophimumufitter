@@ -37,6 +37,7 @@ dr0         = RooRealVar("dr0", "#Delta_{0}(R)", 0, 10000)
 dr1         = RooRealVar("dr1", "#Delta_{1}(R)", 0, 10000)
 Kptrkdcasigbs = RooRealVar("Kptrkdcasigbs", "#K_{+}(dca)", 0, 500)
 Kmtrkdcasigbs = RooRealVar("Kmtrkdcasigbs", "#K_{-}(dca)", 0, 500)
+Puw8        = RooRealVar("Puw8", "Pile up weight", 0, 5)
 
 #Not used
 genMupEta      = RooRealVar("genMupEta", "#mu_{+}^{gen}(#eta)", -10, 10)
@@ -56,15 +57,21 @@ JpsiTriggersdr1 = RooRealVar("JpsiTriggersdr1", "JpsiTriggersdr1", 0, 1e8)
 PsiPTriggersdr0 = RooRealVar("PsiPTriggersdr0", "PsiPTriggersdr0", 0, 1e8)
 PsiPTriggersdr1 = RooRealVar("PsiPTriggersdr1", "PsiPTriggersdr1", 0, 1e8)
 
-genVars = RooArgSet(genMupEta,genMumEta, genMupPt, genMumPt, genKpEta, genKmEta, genKpPt, genKmPt)
+
+#ArgSet for Data
 BaseSet = RooArgSet(Mupeta, Mumeta, Muppt, Mumpt, Kppt, Kmpt, Kpeta, Kmeta)
 TriggerBase = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1)
 VarSet = RooArgSet(Bmass, CosThetaK, CosThetaL, Q2, Mumumass, Mumumasserr, Phimass, Bdt)
 BaseVars = RooArgSet(BaseSet, TriggerBase, "First Set of Vars")
 dataArgs = RooArgSet(VarSet, BaseVars, "RooArgSet for Data and MC")
 
+#ArgSet for MC
+MCTriggerBase = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1, Puw8)
+MCBaseVars = RooArgSet(BaseSet, MCTriggerBase, "First Set of Vars")
+MCArgSet = RooArgSet(VarSet, MCBaseVars, "RooArgSet for Data and MC")
+
 #For producing K*0mumu DataSet
-TriggerBaseKstar = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1)
+TriggerBaseKstar = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1, Puw8)
 DRVars           = RooArgSet(LMNTTriggersdr0, LMNTTriggersdr1, JpsiTriggersdr0, JpsiTriggersdr1, PsiPTriggersdr0, PsiPTriggersdr1)
 TrigBaseDR      = RooArgSet(TriggerBaseKstar, DRVars, "RooArgSet, trigger, dr, trackQual")
 BaseVars_Kstar  = RooArgSet(BaseSet, TrigBaseDR, "First Set of Vars for Kstar MC")
@@ -79,4 +86,6 @@ dataArgsGEN = RooArgSet(
     genCosThetaL,
     genKpPt, genKmPt)
 dataArgsGENonly = RooArgSet(genQ2,genCosThetaK,genCosThetaL)
+
+genVars = RooArgSet(genMupEta,genMumEta, genMupPt, genMumPt, genKpEta, genKmEta, genKpPt, genKmPt)
 dataArgsGENoff = RooArgSet(genVars, dataArgsGENonly, "For off Gen MC sample")
