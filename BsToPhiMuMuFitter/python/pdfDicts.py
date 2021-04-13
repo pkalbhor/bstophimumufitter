@@ -483,8 +483,8 @@ f_analyticBkgCombA_format['Gaus2Poly5_Poly4'] = [ #pdfL: Gaus+Gaus+Poly5, pdfK: 
         args="{CosThetaL, CosThetaK, bkgCombL_c0, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombL_c6, bkgCombL_c7, bkgCombL_c8, bkgCombL_c9, bkgCombL_c10, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4}")
 ]
 f_analyticBkgCombA_format['Gaus2Poly4_Poly6'] = [ #pdfL: Gaus+Gaus+Poly4, pdfK: Poly6
-    "bkgCombL_c0[.5,0,1]", "bkgCombL_c1[0.7,-1.,1.]", "bkgCombL_c2[0.05,0.001,2.]", "bkgCombL_c3[-0.7,-1.,1.]",
-    "bkgCombL_c4[0.05, 0.001, 5.0]", "bkgCombL_c6[-20., 20.]", "bkgCombL_c7[-20., 20.]", "bkgCombL_c8[-20., 20.]", "bkgCombL_c9[-20., 20.]", "bkgCombL_c10[-20., 20.]",
+    "bkgCombL_c0[.5,0,10]", "bkgCombL_c1[0.7,-1.,1.]", "bkgCombL_c2[0.05,0.001,2.]", "bkgCombL_c3[-0.7,-1.,1.]",
+    "bkgCombL_c4[0.05, 0.001, 5.0]", "bkgCombL_c6[-20., 20.]", "bkgCombL_c7[-20., 20.]", "bkgCombL_c8[-20., 20.]", "bkgCombL_c9[-20., 20.]", "bkgCombL_c10[-40., 40.]",
     "bkgCombK_c1[-20,20]", "bkgCombK_c2[-20,20]", "bkgCombK_c3[-20,20]", "bkgCombK_c4[-20,20]", "bkgCombK_c5[-20,20]", "bkgCombK_c6[-20,20]",
     "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
         pdfL="bkgCombL_c0*exp(-0.5*pow((CosThetaL-bkgCombL_c1)/bkgCombL_c2,2))+exp(-0.5*pow((CosThetaL-bkgCombL_c3)/bkgCombL_c4,2))+bkgCombL_c6+bkgCombL_c7*CosThetaL+bkgCombL_c8*pow(CosThetaL, 2)+bkgCombL_c9*pow(CosThetaL, 3)+bkgCombL_c10*pow(CosThetaL,4)",

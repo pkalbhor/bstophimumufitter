@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import os, pdb
+import os, math, pdb
 
 import abc
 import ROOT
@@ -79,75 +79,95 @@ Decide the number of entries of this subset.
         raise NotImplementedError
 
     def _runSetsLoop(self):
-        #for iSet in range(max(self.cfg['nSetOfToys'], self.process.cfg['args'].nSetOfToys)):
-        iSet=0; rSet=0
+        iSet=0 #Total subsamples
+        rSet=0 #Converged subsamples
         while rSet < max(self.cfg['nSetOfToys'], self.process.cfg['args'].nSetOfToys):
+            print(">>>> Running for sub-sample number:", rSet+1)
             self._preRunFitSteps(iSet)
             self.fitter.hookProcess(self.process)
             self.fitter.customize()
 
             for idx, YieldType, Type in self.cfg['Type']:
                 self.currentSubDataEntries = self.getSubDataEntries(iSet, YieldType)
+                if self.proceedFlag==False: break
                 if idx==0:
                     self.fitter.data = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType, self.process.cfg['args'].Year)
                 else:
                     TempData = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType, self.process.cfg['args'].Year)
                     self.fitter.data.append(TempData)
-
-
+            if self.proceedFlag==False: 
+                self.proceedFlag=True
+                print(">> Got negative expected entries. Subsample is Flagged Bad")
+                continue
             self.fitter.pdf = self.process.sourcemanager.get(self.fitter.cfg['pdf'])
             self.fitter._bookMinimizer()
             self.fitter._preFitSteps()
             self.fitter._runFitSteps()
             self._postRunFitSteps(iSet)
-            self.fitter.reset()
             iSet += 1
             if not self.fitter.fitResult['{}.migrad'.format(self.fitter.name)]['status']: rSet += 1
+            self.fitter.reset()
         print("Failed subsamples: ", iSet-rSet)
 
+    def BookSimData(self, iSet, func):
+        def inner():
+            self.fitter.Years = self.fitter.cfg['Years']
+            for Id, Year in enumerate(self.fitter.Years):
+                self.data = [self.process.sourcemanager.get(i.format(Year)) for i in self.cfg['data']] #Position of line is important
+                for idx, YieldType, Type in self.cfg['Type']:
+                    self.currentSubDataEntries = self.getSubDataEntries(iSet, YieldType, Year)
+                    if self.proceedFlag==False: break
+                    if idx==0:
+                        TempData = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType, Year)
+                        TempData2 = TempData
+                    else:
+                        TempData2 = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType, Year)
+                        TempData.append(TempData2)
+                    self.SaveSubsamples(iSet, TempData2, TempData2.GetName())
+                if self.proceedFlag==False: break
+                self.fitter.cfg['data'][Id] = TempData
+                self.SaveSubsamples(iSet, TempData, "FinalSubSample_{}".format(Year))
+            func()
+        return inner
+
     def _runSetsLoop_SimFit(self):
-        iSet=0; rSet=0
+        def Test_runSetsLoop_SimFit(self, fitter, data, pdf):
+            """Test whether everything going as expected"""
+            pass
+
+        iSet=0 #Total subsamples
+        rSet=0 #Converged subsamples
         cwd = self.process.work_dir #Avoid using os.getcwd() which gives problems in condor jobs
         while rSet < max(self.cfg['nSetOfToys'], self.process.cfg['args'].nSetOfToys):
+            print(">>>> Running for sub-sample number:", rSet+1)
             self._preRunFitSteps(iSet)
             self.fitter.hookProcess(self.process)
             self.fitter.customize()
-            self.fitter.Years = self.fitter.cfg['Years']
-            self.fitter.category = ROOT.RooCategory("{0}_category".format(self.fitter.name), "")
-            dataWithCategoriesCmdArgs = (ROOT.RooFit.Index(self.fitter.category),)
-            if len(self.fitter.cfg['category']) == len(self.fitter.cfg['data']) == len(self.fitter.cfg['pdf']):
-                for category, dataName, pdfName, Year in zip(self.fitter.cfg['category'], self.fitter.cfg['data'], self.fitter.cfg['pdf'], self.fitter.Years):
-                    self.process.sourcemanager.get(pdfName).SetName(pdfName)    # Rename pdf as per the year
-                    self.fitter.pdf.append(self.process.sourcemanager.get(pdfName))
-                    self.data = [self.process.sourcemanager.get(i.format(Year)) for i in self.cfg['data']]
-                    #os.chdir(os.path.join(self.process.cwd, "plots_{}".format(Year))) #Important to collect signal events
-                    if type(dataName) is str:
-                        for idx, YieldType, Type in self.cfg['Type']:
-                            self.currentSubDataEntries = self.getSubDataEntries(iSet, YieldType, Year)
-                            if idx==0:
-                                TempData = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType, Year)
-                            else:
-                                TempData.append(next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType, Year))
-                        self.fitter.data.append(TempData)
-                    dataWithCategoriesCmdArgs += (ROOT.RooFit.Import(category, self.fitter.data[-1]),)
-                argsets = self.fitter.pdf[-1].getObservables(self.fitter.data[-1])
-                argsets.add(Puw8)
-                self.fitter.dataWithCategories = ROOT.RooDataSet("{0}.dataWithCategories".format(self.fitter.name), "", argsets, *dataWithCategoriesCmdArgs, ROOT.RooFit.WeightVar("Puw8"))
-            else:
-                raise RuntimeError("Number of category/data/pdf doesn't match")
-            #os.chdir(cwd)
-            #self.fitter._bookPdfData()
-            self.fitter._bookMinimizer()
-            self.fitter._preFitSteps()
-            self.fitter._runFitSteps(); self.fitter.minosResult = self.fitter.fitter.FitMinos(self.fitter.data[-1].get())
-            #self.fitter._postFitSteps()
-            self._postRunFitSteps(iSet)
-            for pdf, data, Year in zip(self.fitter.pdf, self.fitter.data, self.fitter.Years):
+            self.BookSimData(iSet, self.fitter._bookPdfData)()
+            if self.proceedFlag==False: 
+                self.proceedFlag=True
+                print(">> Got negative expected entries. Subsample is Flagged Bad")
+                continue
+            if not self.process.cfg['args'].NoFit:
+                self.fitter._bookMinimizer()
+                self.fitter._preFitSteps()
+                self.fitter.ToggleConstVar(self.fitter.minimizer.getParameters(self.fitter.dataWithCategories), False, self.fitter.cfg['argPattern']) #To keep signal and background yields floating
+                self.fitter._runFitSteps(); #self.fitter.minosResult = self.fitter.fitter.FitMinos(self.fitter.data[-1].get())
+                self._postRunFitSteps(iSet)
+            for pdf, data, Year in zip(self.fitter.pdf, self.fitter.data, self.fitter.Years): #remove a year tag from parameters
                 FitterCore.ArgLooper(pdf.getParameters(data), lambda p: p.SetName(p.GetName().split("_{0}".format(Year))[0]), targetArgs=self.fitter.cfg['argPattern'], inverseSel=True)
-            self.fitter.reset()
             iSet += 1
             if not self.fitter.migradResult: rSet += 1
+            self.fitter.reset()
         print("Failed subsamples: ", iSet-rSet)
+
+    def SaveSubsamples(self, index, subdata, Name):
+        subdata.SetName(Name.replace(".", "_")+"_{}".format(index))
+        if False:
+            ofile = ROOT.TFile.Open("{}_subsamples_{}.root".format(self.process.name, index), "UPDATE")
+            subdata.Write()
+            ofile.Close()
+
 
     @abc.abstractmethod
     def _postSetsLoop(self):
@@ -159,7 +179,6 @@ Decide the number of entries of this subset.
         self.fitter = self.cfg['fitter']
         self.data = None if SimFit else [self.process.sourcemanager.get(i) for i in self.cfg['data']]
         self._preSetsLoop()
-        print("Teset one two !")
         self._runSetsLoop_SimFit() if SimFit else self._runSetsLoop()
         self._postSetsLoop()
 
@@ -169,7 +188,7 @@ def getSubData_random(self, idx, checkCollision=True):
     evtBits = ROOT.TBits(int(numEntries))
     while True:
         outputBits = ROOT.TBits(numEntries)
-        for entry in range(self.currentSubDataEntries):
+        for entry in range(math.ceil(self.currentSubDataEntries)):
             rnd_collisions = 0
             while True:
                 rnd = ROOT.gRandom.Integer(numEntries)
@@ -180,15 +199,20 @@ def getSubData_random(self, idx, checkCollision=True):
                     outputBits.SetBitNumber(rnd)
                     break
 
-            if checkCollision and rnd_collisions * 5 > self.currentSubDataEntries:
+            if checkCollision and rnd_collisions * 5 > math.ceil(self.currentSubDataEntries):
                 self.logger.logWARNING("Rate of random number collision may over 20%, please consider use larger input")
 
         # Sequential reading is highly recommanded by ROOT author
         output = self.data[idx].emptyClone("{0}Subset".format(self.data[idx].GetName()))
         startBit = outputBits.FirstSetBit(0)
         while startBit < numEntries:
-            output.add(self.data[idx].get(startBit), self.data[idx].weight(), self.data[idx].weightError())
+            if True: #Dataset with weights
+                output.add(self.data[idx].get(startBit), self.data[idx].weight(), self.data[idx].weightError())
+                if output.sumEntries() >= (self.currentSubDataEntries - 0.5): break
+            else:
+                output.add(self.data[idx].get(startBit))
             startBit = outputBits.FirstSetBit(startBit + 1)
+        self.sigEntries = self.currentSubDataEntries #output.sumEntries()
         yield output
 
 def getSubData_seqential(self):

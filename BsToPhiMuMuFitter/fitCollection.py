@@ -549,15 +549,16 @@ SimFitter_Final_AltM_WithKStar = SimultaneousFitter(setupSimFinalFitter_AltM_Wit
 # mixToy Validation
 Simul_mixedToyValidation_setup = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgM*fBkgA)
 Simul_mixedToyValidation_setup.update({
+    'name'      : 'SimultFitterMixedToy',
     'category'  : ['cat16', 'cat17', 'cat18'],
     'data'      : ["dataReader.2016.Fit", "dataReader.2017.Fit", "dataReader.2018.Fit"],
     'pdf'       : ["f_final_WithKStar_ts.2016", "f_final_WithKStar_ts.2017", "f_final_WithKStar_ts.2018"],
-    'argPattern': ['unboundAfb', 'unboundFl'],
+    'argPattern': ['unboundAfb', 'unboundFl', 'nBkgComb_2016', 'nBkgComb_2017', 'nBkgComb_2018', 'nSig_2016', 'nSig_2017', 'nSig_2018'], #r'nBkgComb*.', r'nSig*.'], # 'bkgCombM_c1_2016', 'bkgCombM_c1_2017', 'bkgCombM_c1_2018'],
     'Years'     : [2016, 2017, 2018],
     'argAliasInDB': {**ArgAliasGEN},
     'LegName'  : 'Data',
     'argAliasSaveToDB': False,
-    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
+    'fitToCmds' : [[ROOT.RooFit.Strategy(3), ROOT.RooFit.InitialHesse(0), ROOT.RooFit.Minimizer('Minuit2', 'migrad'), ROOT.RooFit.Minos(0)],],
 })
 SimultaneousFitter_mixedToyValidation = SimultaneousFitter(Simul_mixedToyValidation_setup)
 

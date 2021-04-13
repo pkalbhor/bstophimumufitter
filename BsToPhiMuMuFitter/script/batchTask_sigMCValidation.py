@@ -15,6 +15,7 @@ import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
 import BsToPhiMuMuFitter.plotCollection as plotCollection
+from BsToPhiMuMuFitter.plotCollection import Plotter
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
 import v2Fitter.Fitter.AbsToyStudier as AbsToyStudier
@@ -24,18 +25,23 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
         super(SigMCStudier, self).__init__(cfg)
         self.plotflag = True                    
         self.DBFlag = True  
+        self.proceedFlag = True
         ROOT.gROOT.ProcessLine(
         """struct MyTreeContent {
+           Int_t        index;
            Double_t     fl;
            Double_t     afb;
            Double_t     status;
            Double_t     hesse;
            Double_t     minos;
            Double_t     events;
+           Double_t     Wevents;
            Double_t     events16;
            Double_t     events17;
            Double_t     events18;
-           Double_t     nSig;
+           Double_t     Wevents16;
+           Double_t     Wevents17;
+           Double_t     Wevents18;
            Double_t     nll;
         };""")      
 
@@ -43,7 +49,7 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
         try:
             if self.process.cfg['args'].SimFit:
                 db = shelve.open(os.path.join(modulePath, "plots_{}".format(Year), self.process.dbplayer.odbfile), "r")
-            else:
+            else: #Don't use Year var below
                 db = shelve.open(self.process.dbplayer.odbfile, "r")
             expectedYield = db[Type]['getVal']
         finally:
@@ -55,19 +61,23 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
     def _preSetsLoop(self):
         self.otree = ROOT.TTree("tree", "")
         self.treeContent = ROOT.MyTreeContent()
+        self.otree.Branch("index", ROOT.addressof(self.treeContent, 'index'), 'index/I')
         self.otree.Branch("fl", ROOT.addressof(self.treeContent, 'fl'), 'fl/D')
         self.otree.Branch("afb", ROOT.addressof(self.treeContent, 'afb'), 'afb/D')
         self.otree.Branch("status", ROOT.addressof(self.treeContent, 'status'), 'status/D')
         self.otree.Branch("hesse", ROOT.addressof(self.treeContent, 'hesse'), 'hesse/D')
-        self.otree.Branch("minos", ROOT.addressof(self.treeContent, 'minos'), 'minos/D')
-        self.otree.Branch("nSig", ROOT.addressof(self.treeContent, 'nSig'), 'nSig/D')
+        #self.otree.Branch("minos", ROOT.addressof(self.treeContent, 'minos'), 'minos/D')
         self.otree.Branch("nll", ROOT.addressof(self.treeContent, 'nll'), 'nll/D')
         if self.process.cfg['args'].SimFit:
             self.otree.Branch("events16", ROOT.addressof(self.treeContent, 'events16'), 'events16/D')
             self.otree.Branch("events17", ROOT.addressof(self.treeContent, 'events17'), 'events17/D')
             self.otree.Branch("events18", ROOT.addressof(self.treeContent, 'events18'), 'events18/D')
+            self.otree.Branch("Wevents16", ROOT.addressof(self.treeContent, 'Wevents16'), 'Wevents16/D')
+            self.otree.Branch("Wevents17", ROOT.addressof(self.treeContent, 'Wevents17'), 'Wevents17/D')
+            self.otree.Branch("Wevents18", ROOT.addressof(self.treeContent, 'Wevents18'), 'Wevents18/D')
         else:
             self.otree.Branch("events", ROOT.addressof(self.treeContent, 'events'), 'events/D')
+            self.otree.Branch("Wevents", ROOT.addressof(self.treeContent, 'Wevents'), 'Wevents/D')
         pass
 
     def _preRunFitSteps(self, setIdx):
@@ -80,7 +90,9 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
             shutil.copy(os.path.join(workdir, self.process.dbplayer.odbfile), self.process.dbplayer.odbfile)
 
     def _postRunFitSteps(self, setIdx):
-        if math.fabs(self.fitter._nll.getVal()) < 1e20:
+        SimFit = self.process.cfg['args'].SimFit
+        if not SimFit: self.fitter._nll = self.fitter._nll.getVal()
+        if math.fabs(self.fitter._nll) < 1e20:
             SimFit = self.process.cfg['args'].SimFit
             unboundAfb = self.fitter.minimizer.getParameters(self.fitter.dataWithCategories).find('unboundAfb').getVal() if SimFit else self.fitter.args.find('unboundAfb').getVal()
             unboundFl  = self.fitter.minimizer.getParameters(self.fitter.dataWithCategories).find('unboundFl').getVal() if SimFit else self.fitter.args.find('unboundFl').getVal()
@@ -88,17 +100,23 @@ class SigMCStudier(AbsToyStudier.AbsToyStudier):
             self.treeContent.afb = StdFitter.unboundAfbToAfb(unboundAfb, self.treeContent.fl)
             #self.treeContent.fl = self.process.sourcemanager.get('fl.{}'.format(self.process.cfg['args'].Year)).getVal()
             #self.treeContent.afb = self.process.sourcemanager.get('afb.{}'.format(self.process.cfg['args'].Year)).getVal()
+    
+            self.treeContent.index = setIdx
             self.treeContent.status = self.fitter.migradResult if SimFit else self.fitter.fitResult['{}.migrad'.format(self.fitter.name)]['status']
             self.treeContent.hesse = self.fitter.hesseResult if SimFit else self.fitter.fitResult['{}.hesse'.format(self.fitter.name)]['status']                                      
-            self.treeContent.minos = self.fitter.minosResult.status() if SimFit else self.fitter.fitResult['{}.minos'.format(self.fitter.name)]['status']
+            #self.treeContent.minos = self.fitter.minosResult.status() if SimFit else self.fitter.fitResult['{}.minos'.format(self.fitter.name)]['status']
             if self.process.cfg['args'].SimFit:
-                self.treeContent.events16 = self.fitter.data[0].sumEntries()
-                self.treeContent.events17 = self.fitter.data[1].sumEntries()
-                self.treeContent.events18 = self.fitter.data[2].sumEntries()
+                simargs = self.fitter.minimizer.getParameters(self.fitter.dataWithCategories)
+                self.treeContent.events16 = self.fitter.data[0].numEntries()
+                self.treeContent.events17 = self.fitter.data[1].numEntries()
+                self.treeContent.events18 = self.fitter.data[2].numEntries()
+                self.treeContent.Wevents16 = self.fitter.data[0].sumEntries()
+                self.treeContent.Wevents17 = self.fitter.data[1].sumEntries()
+                self.treeContent.Wevents18 = self.fitter.data[2].sumEntries()
             else:
                 self.treeContent.events = self.fitter.data.numEntries()
-            self.treeContent.nSig = 0
-            self.treeContent.nll = self.fitter.minosResult.minNll() if SimFit else self.fitter._nll.getVal()
+                self.treeContent.Wevents = self.fitter.data.sumEntries()
+            self.treeContent.nll = self.fitter._nll
             self.otree.Fill()
 
     def _postSetsLoop(self):
@@ -179,9 +197,12 @@ def GetParams(f, h, binKey, GEN, name):
 # Postproc fit results.
 def func_postproc(args):
     """ Fit to fit result and make plots """
+    GenResult = []    
+    RecoResult = []
     os.chdir(args.wrapper.task_dir)
     args.process.addService("dbplayer", FitDBPlayer(absInputDir=os.path.join(modulePath, "plots_{}".format(args.Year))))
-    for binKey in args.process.cfg['bins']:
+    binKeys = args.process.cfg['allBins'] if args.process.cfg['args'].forall else args.process.cfg['bins'] #Run over all bins if no binkey arg is supplied
+    for binKey in binKeys:
         ifilename = "setSummary_{}_{}.root".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label'])
         if not os.path.exists(ifilename) or args.forceHadd:
             call(["hadd", "-f", ifilename] + glob.glob('*/setSummary_{}_{}.root'.format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label'])))
@@ -236,7 +257,17 @@ def func_postproc(args):
             line.DrawLine(fl_GEN, 0, fl_GEN, h_setSummary_fl.GetMaximum())
         plotCollection.Plotter.latexDataMarks(['sim'])
         plotCollection.Plotter.canvas.Print("h_setSummary_sigMCValidation_fl_{}_{}.pdf".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label']))
+
+        Fl_GENErr = abs(StdFitter.unboundFlToFl(db['unboundFl_GEN']['getVal'] + db['unboundFl_GEN']['getError']) - fl_GEN)
+        A6_GENErr = abs(StdFitter.unboundAfbToAfb(db['unboundAfb_GEN']['getVal'] + db['unboundAfb_GEN']['getError'], fl_GEN) - afb_GEN)
+        GenResult.append((fl_GEN, Fl_GENErr, afb_GEN, A6_GENErr))
+        RecoResult.append((f_setSummary_fl.GetParameter(1), f_setSummary_fl.GetParameter(2), f_setSummary_afb.GetParameter(1), f_setSummary_afb.GetParameter(2)))
         db.close()
+    if args.process.cfg['args'].forall: 
+        from BsToPhiMuMuFitter.script.batchTask_mixedToyValidation import GetSummaryGraph as SummaryGraph
+        SummaryGraph(binKeys, RecoResult, GenResult, args, pltName="sigMCSubsample")
+
+    
 
 if __name__ == '__main__': # Unsupported! This module should be accessible from seqCollection.py
     parser = AbsBatchTaskWrapper.BatchTaskParser

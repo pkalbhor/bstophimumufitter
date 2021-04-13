@@ -57,7 +57,12 @@ class ToyGenerator(Path):
             # Remark: 
             #   1. User is responsible for the positiveness of the PDF.
             #   2. Name of the generated dataset is pdf.GetName()+"Data"
-            self.data = self.pdf.generate(self.argset, ROOT.gRandom.Poisson(self.cfg['expectedYields'] * self.cfg['scale']), *self.cfg.get('generateOpt', []))
+            self.pdf.SetName(self.cfg['pdf'].replace(".","_"))
+            Spread =self.process._sequence[0].cfg["Spread"] if self.process.cfg['args'].SimFit else self.process._sequence[2].cfg["Spread"]
+            if Spread =="Gaus":
+                self.data = self.pdf.generate(self.argset, self.cfg['expectedYields'], *self.cfg.get('generateOpt', []))
+            else:
+                self.data = self.pdf.generate(self.argset, ROOT.gRandom.Poisson(self.cfg['expectedYields'] * self.cfg['scale']), *self.cfg.get('generateOpt', []))
         self.logger.logINFO("ToyGenerator {0} generates based on {1} with {2} events.".format(self.name, self.pdf.GetName(), self.data.sumEntries()))
 
     def _addSource(self):

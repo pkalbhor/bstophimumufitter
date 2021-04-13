@@ -54,7 +54,7 @@ class StdFitter(FitterCore):
             self.fitter.addNLLOpt(opt)
         minuit=self.fitter.Init(self.pdf, self.data)
         minuit.setStrategy(2)
-        if self.process.cfg['args'].Function_name in ['submit', 'run']: minuit.setPrintLevel(-1)
+        if self.process.cfg['args'].Function_name in ['submit', 'run']: minuit.setPrintLevel(0)
         self._nll = self.fitter.GetNLL()
 
     def _preFitSteps_initFromDB(self):
@@ -68,8 +68,8 @@ class StdFitter(FitterCore):
 
         if self.process.cfg['args'].seqKey in ['sigMCValidation', 'mixedToyValidation']: #Resetting parameters to initial values.
             wspace='wspace.{}.{}'.format(self.process.cfg['args'].Year, self.process.cfg['args'].binKey)
-            self.pdf.getParameters(self.data).find('unboundAfb').setVal(0.0)
-            self.pdf.getParameters(self.data).find('unboundFl').setVal(0.6978)
+            self.pdf.getParameters(self.data).find('unboundAfb').setVal(0.1)
+            self.pdf.getParameters(self.data).find('unboundFl').setVal(0.75)
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
 

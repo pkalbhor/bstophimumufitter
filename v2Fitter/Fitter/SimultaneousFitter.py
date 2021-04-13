@@ -48,11 +48,12 @@ Following functions to be overloaded to customize the full procedure...
                     self.data.append(self.process.sourcemanager.get(dataName))
                 else:
                     # Alternative way to merge list of input data/toy
-                    for dataIdx, dataNameInList in enumerate(dataName):
-                        if dataIdx != 0:
-                            self.data[-1].append(self.process.sourcemanager.get(data))
-                        else:
-                            self.data.append(self.process.sourcemanager.get(data).Clone())
+                    self.data.append(dataName)
+                    #for dataIdx, dataNameInList in enumerate(dataName):
+                    #    if dataIdx != 0:
+                    #        self.data[-1].append(self.process.sourcemanager.get(data))
+                    #    else:
+                    #        self.data.append(self.process.sourcemanager.get(data).Clone())
                 dataWithCategoriesCmdArgs += (ROOT.RooFit.Import(category, self.data[-1]),)
             self.argset = self.pdf[-1].getObservables(self.data[-1])
             if not self.process.cfg['args'].seqKey in ['fitSigMCGEN', 'fitFinal3D_WithKStar']:
@@ -71,7 +72,7 @@ Following functions to be overloaded to customize the full procedure...
             self.minimizer.addPdf(pdf, cat)
 
     def _preFitSteps(self):
-        """Abstract: Do something before main fit loop"""
+        """Rename parameter names and import values from database"""
         for pdf, data, Year in zip(self.pdf, self.data, self.Years):
             args = pdf.getParameters(ROOT.RooArgSet(CosThetaK, CosThetaL, Bmass))
             odbfile = os.path.join(self.process.cwd, "plots_{0}".format(Year), self.process.dbplayer.odbfile)
@@ -81,24 +82,31 @@ Following functions to be overloaded to customize the full procedure...
             # Rename parameter names
             FitterCore.ArgLooper(args, lambda p: p.SetName(p.GetName()+"_{0}".format(Year)), targetArgs=self.cfg['argPattern'], inverseSel=True) 
             if self.process.cfg['args'].seqKey in ['sigMCValidation', 'mixedToyValidation']: #Resetting parameters to initial values.
-                pdf.getParameters(data).find('unboundAfb').setVal(0.0)
-                pdf.getParameters(data).find('unboundFl').setVal(0.6978)
+                pdf.getParameters(data).find('unboundAfb').setVal(0.1)
+                pdf.getParameters(data).find('unboundFl').setVal(0.75)
+
     def _runFitSteps(self):
         """Standard fitting procedure to be overwritten."""
+        #FitterCore.ArgLooper(self.minimizer.getParameters(self.dataWithCategories), lambda p: p.Print()) #Print all parameters
         if len(self.cfg['fitToCmds']) == 0:
             self.minimizer.fitTo(self.dataWithCategories)
         else:
             if False:
                 for cmd in self.cfg['fitToCmds']:
-                    self.minimizer.fitTo(self.dataWithCategories, *cmd, ROOT.RooFit.SumW2Error(0))
+                    mresult = self.minimizer.fitTo(self.dataWithCategories, *cmd, ROOT.RooFit.SumW2Error(0), ROOT.RooFit.Save(1))
+                    self.migradResult = mresult.status()                                                                              
+                    self.hesseResult  = mresult.status()
+                    self._nll = mresult.minNll ()
             else:
+                print(">>  Standard Fitter Begin")
                 self.fitter = ROOT.StdFitter()
-                self.fitter.Init(self.minimizer, self.dataWithCategories)
-                self._nll = self.fitter.GetNLL()
+                minuit = self.fitter.Init(self.minimizer, self.dataWithCategories)
+                minuit.setStrategy(3)
                 mresult = self.fitter.FitMigrad()
                 hresult = self.fitter.FitHesse()
+                self._nll = self.fitter.GetNLL().getVal()
                 self.migradResult = mresult.status() 
-                self.hesseResult  = hresult.status() 
+                self.hesseResult  = hresult.status()
 
     def _postFitSteps(self):
         """ Abstract: Do something after main fit loop"""

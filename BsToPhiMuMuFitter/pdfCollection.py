@@ -344,7 +344,7 @@ def GetAnalyticBkgAList(self):
         return f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
     if Args.Year==2018:
         f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
-        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Gaus2Poly4_Poly6'] #['Gaus2Poly4_Poly3']
+        f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Gaus2Poly4_Poly6']#['Gaus2Poly4_Poly6'] #['Gaus2Poly4_Poly3']
         f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Gaus3Poly4_Poly6'] #['Gaus2Poly2_Poly6']
         f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Poly6_Poly5']
         f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Gaus2Poly4_Poly4' if AltRange else 'Gaus3Poly4_Exp']

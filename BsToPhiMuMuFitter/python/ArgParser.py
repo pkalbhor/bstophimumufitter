@@ -51,6 +51,12 @@ def GetBatchTaskParser():
         action='store_false',
         help="Draw a line for GEN level value"
     )
+    BatchTaskSubparserPostproc.add_argument(
+        '--forall',
+        dest='forall',
+        action='store_true',
+        help="Draw for all bins in one go"
+    )
     BatchTaskSubparserPostproc.set_defaults(func=None) 
     TableParser = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('MakeTables')
     add_help(parser)

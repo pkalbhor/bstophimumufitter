@@ -31,13 +31,13 @@ CFG.update({
 
 def decorator_initParameters(func):
     @functools.wraps(func)
-    def wrapped_f(self, Year):
+    def wrapped_f(self, expYield, Year):
         self.pdf = self.process.sourcemanager.get(self.cfg['pdf'])
         self.argset = self.cfg['argset']
         self.params = self.pdf.getParameters(self.argset)
         dbfile = os.path.join(self.process.cwd, "plots_{0}".format(Year), self.cfg['db'].format(binLabel=q2bins[self.process.cfg['binKey']]['label']))
         FitDBPlayer.initFromDB(dbfile, self.params, self.cfg.get('argAliasInDB', []))
-        func(self, Year)
+        func(self, expYield, Year)
     return wrapped_f
 
 def decorator_fluctuateParams(parList=None):
@@ -64,13 +64,13 @@ def decorator_setExpectedEvents(yieldVars=None):
         yieldVars = ["nSig", "nBkgComb", "nBkgPeak"]
     def wrapper(func):
         @functools.wraps(func)
-        def wrapped_f(self, Year):
-            func(self, Year)
+        def wrapped_f(self, expYield, Year):
+            func(self, expYield, Year)
 
             expectedYields = 0
             #YieldError = 0.
             try:        
-                db = shelve.open(self.cfg['db'].format(binLabel=q2bins[self.process.cfg['binKey']]['label']))
+                db = shelve.open(self.cfg['db'].format(binLabel=q2bins[self.process.cfg['binKey']]['label']), "r")
                 for yVar in yieldVars:
                     try:
                         expectedYields += self.params.find(yVar).getVal()
@@ -86,13 +86,13 @@ def decorator_setExpectedEvents(yieldVars=None):
                             expectedYields += db[self.cfg['argAliasInDB'].get(yVar, yVar)]['getVal']
                             #YieldError += db[self.cfg['argAliasInDB'].get(yVar, yVar)]['getError']
             finally:
-                self.cfg['expectedYields'] = expectedYields
+                self.cfg['expectedYields'] = expYield #expectedYields
                 #  self.logger.logINFO("Will generate {0} events from p.d.f {1}.".format(expectedYields, self.pdf.GetName()))
                 db.close()
         return wrapped_f
     return wrapper
 
-def GetToyObject(self, seq, Year):
+def GetToyObject(self, seq, expYield, Year):
     import BsToPhiMuMuFitter.dataCollection as dataCollection
 
     # sigToyGenerator - validation
@@ -124,7 +124,7 @@ def GetToyObject(self, seq, Year):
         bkgCombToyGenerator = ToyGenerator(setupBkgCombToyGenerator)
         @decorator_setExpectedEvents(["nBkgComb"])
         @decorator_initParameters
-        def bkgCombToyGenerator_customize(self, Year):
+        def bkgCombToyGenerator_customize(self, expYield, Year):
             pass
         bkgCombToyGenerator.customize = types.MethodType(bkgCombToyGenerator_customize, bkgCombToyGenerator)
         return bkgCombToyGenerator
@@ -143,7 +143,7 @@ def GetToyObject(self, seq, Year):
         bkgPeakToyGenerator = ToyGenerator(setupBkgPeakToyGenerator)
         @decorator_setExpectedEvents(["nBkgPeak"])
         @decorator_initParameters
-        def bkgPeakToyGenerator_customize(self, Year):
+        def bkgPeakToyGenerator_customize(self, expYield, Year):
             pass
         bkgPeakToyGenerator.customize = types.MethodType(bkgPeakToyGenerator_customize, bkgPeakToyGenerator)
         return bkgPeakToyGenerator
