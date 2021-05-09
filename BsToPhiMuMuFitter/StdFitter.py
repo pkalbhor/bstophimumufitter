@@ -54,7 +54,7 @@ class StdFitter(FitterCore):
             self.fitter.addNLLOpt(opt)
         minuit=self.fitter.Init(self.pdf, self.data)
         minuit.setStrategy(2)
-        if self.process.cfg['args'].Function_name in ['submit', 'run']: minuit.setPrintLevel(0)
+        if self.process.cfg['args'].Function_name in ['submit', 'run']: minuit.setPrintLevel(3)
         self._nll = self.fitter.GetNLL()
 
     def _preFitSteps_initFromDB(self):
@@ -108,16 +108,7 @@ class StdFitter(FitterCore):
 
     def _postFitSteps(self):
         """Post-processing"""
-        #  FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
-        '''pdb.set_trace()
-        c2=ROOT.TCanvas(); c2.cd()
-        Phimass=ROOT.RooRealVar("Phimass", "Phimass", 1.0, 1.04)
-        frame=Phimass.frame()
-        self.data.plotOn(frame)
-        self.pdf.plotOn(frame) #, ROOT.RooFit.Normalization(1136.0, ROOT.RooAbsReal.NumEvent))
-        frame.Draw()
-        c2.SaveAs("PlotInstant.pdf")'''
-        ####
+        #FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
         self.ToggleConstVar(self.args, True)
         if self.cfg['saveToDB']:
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
@@ -128,11 +119,8 @@ class StdFitter(FitterCore):
             RooList = [ROOT.RooFit.Minimizer("Minuit2"), ROOT.RooFit.Save(1)]
             for opt in self.cfg.get("createNLLOpt", []):
                 RooList.append(opt)
-            fitResult = self.pdf.fitTo(self.data,  *RooList)
-            self.fitResult = {
-                "{0}.{1}".format(self.name, self.cfg['argAliasInDB'].get('minuit2', 'minuit2')): {
-                'status': fitResult.status(),
-                'nll': fitResult.minNll(),}}
+            FitResult = self.pdf.fitTo(self.data,  *RooList)
+            self.fitResult = FitterCore.GetFitResult(self.name, "StdFitter", FitResult)
         else:
             self.FitMigrad()
             if self.cfg.get('FitHesse', False):
@@ -144,23 +132,13 @@ class StdFitter(FitterCore):
         """Migrad"""
         migradResult = self.fitter.FitMigrad()
         migradResult = self.fitter.FitMigrad()
-        self.fitResult = {
-            "{0}.{1}".format(self.name, self.cfg['argAliasInDB'].get('migrad', 'migrad')): {
-                'status': migradResult.status(),
-                'nll': migradResult.minNll(),
-            }
-        }
+        self.fitResult = FitterCore.GetFitResult(self.name, "StdFitter", migradResult)
         print("Migrad Result: ", self.fitResult)
 
     def FitHesse(self):
         """Hesse"""
         hesseResult = self.fitter.FitHesse()
-        self.fitResult.update({
-            "{0}.{1}".format(self.name, self.cfg['argAliasInDB'].get('hesse', 'hesse')): {
-                'status': hesseResult.status(),
-                'nll': hesseResult.minNll(),
-            }
-        })
+        self.fitResult = FitterCore.GetFitResult(self.name, "StdFitter", hesseResult)
 
     def FitMinos(self):
         """Minos"""
@@ -170,12 +148,7 @@ class StdFitter(FitterCore):
         else:
             par = self.args
         minosResult = self.fitter.FitMinos(par)
-        self.fitResult.update({
-            "{0}.{1}".format(self.name, self.cfg['argAliasInDB'].get('minos', 'minos')): {
-                'status': minosResult.status(),
-                'nll': minosResult.minNll(),
-            }
-        })
+        self.fitResult = FitterCore.GetFitResult(self.name, "StdFitter", minosResult)
 
         # Dont' draw profiled likelihood scanning with following link
         # https://root.cern.ch/root/html/tutorials/roofit/rf605_profilell.C.html
@@ -191,7 +164,7 @@ def unboundAfbToAfb(unboundAfb, fl):
     return 2. * (1 - fl) * ROOT.TMath.ATan(unboundAfb) / ROOT.TMath.Pi()
 
 def afbToUnboundAfb(afb, fl):
-    return ROOT.TMath.Tan(afb * ROOT.TMath.Pi() / 2. / (1. - fl))
+    return ROOT.TMath.Tan((afb * ROOT.TMath.Pi()) / (2.*(1. - fl)))
 
 def decorator_bookMinimizer_addGausConstraints(varNames, vals=None, valerrs=None):
     """ For quick adding gaussian constrint to createNLLOpt.

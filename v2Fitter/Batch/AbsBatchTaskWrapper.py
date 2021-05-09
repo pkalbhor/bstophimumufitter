@@ -85,7 +85,8 @@ when_to_transfer_output = ON_EXIT
             wrapper_kwargs = {}
         p = self.getWrappedProcess(process, jobId, **wrapper_kwargs)
         if self.cfg['work_dir'] is None:
-            p.work_dir = os.path.join(self.task_dir, "{0}_{1}_{jobId:04d}".format(p.cfg['args'].Year, p.cfg['args'].binKey, jobId=jobId))
+            label = "SimFit" if p.cfg['args'].SimFit else p.cfg['args'].Year
+            p.work_dir = os.path.join(self.task_dir, "{0}_{1}_{jobId:04d}".format(label, p.cfg['args'].binKey, jobId=jobId))
         elif isinstance(self.cfg['work_dir'], str):
             p.work_dir = os.path.join(self.task_dir, self.cfg['work_dir'])
         else:

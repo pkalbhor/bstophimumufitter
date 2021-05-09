@@ -212,6 +212,33 @@ def GetDataReader(self, seq):
         bkgPsi2sKstMCReader.customize = types.MethodType(customizeBkgPeakMC, bkgPsi2sKstMCReader)
         return bkgPsi2sKstMCReader
 
+    if seq is 'StatusTableMaker':
+        import BsToPhiMuMuFitter.fitCollection  as fitCollection
+        from BsToPhiMuMuFitter.script.latex.LatexTables import StdTableMaker
+        from BsToPhiMuMuFitter.seqCollection import Instantiate
+        try:
+            name = Instantiate(self, [self.cfg['args'].TSeq])[0].name
+        except:
+            print("IndexError: Sequence {} not found".format(self.cfg['args'].TSeq))
+
+        setupLatexTables = copy(StdTableMaker.templateConfig())
+        setupLatexTables.update({
+            "Titles" : ["Migrad", "Hesse", "Minos", "covQual", "FCN"],
+            "DbValue": ["MIGRAD", "HESSE", "MINOS", "covQual", "nll"]
+        })
+
+        if self.cfg['args'].TSeq in ['bkgCombAFitter', 'sigAFitter', 'sig3DFitter', 'bkgA_KStarFitter', 'bkgA_KStarFitter', 'bkgPeak3DFitter', 'finalFitter_WithKStar']:
+            setupLatexTables['DbNames'] = ["{}.StdFitter".format(name) for a in setupLatexTables['Titles']]
+        if self.cfg['args'].TSeq in ['effiFitter']:
+            setupLatexTables['DbNames'] = ["{}.CosThetaK".format(name) for a in setupLatexTables['Titles']] + \
+                                          ["{}.CosThetaL".format(name) for a in setupLatexTables['Titles']] + \
+                                          ["{}.XTerm".format(name) for a in setupLatexTables['Titles']]
+            setupLatexTables['Titles']  = setupLatexTables['Titles']*3
+            setupLatexTables['DbValue'] = ["MINIMIZE", "HESSE", "MINOS", "covQual", "nll"]*3
+           
+        LatexTableMaker = StdTableMaker(setupLatexTables)
+        return LatexTableMaker
+
 setupEfficiencyBuildProcedure = {}
 setupEfficiencyBuildProcedure['acc'] = {
     'ifiles': None,

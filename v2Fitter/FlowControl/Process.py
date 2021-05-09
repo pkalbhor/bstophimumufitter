@@ -18,7 +18,7 @@ class Process:
     def __init__(self, name="myProcess", work_dir="testProcess", cfg=None):
         self.name = name
         self.work_dir = work_dir
-        self.cwd = os.getcwd()
+        self.cwd = modulePath
         self.cfg = cfg if cfg is not None else Process.templateConfig()
 
         # Register services
@@ -47,9 +47,11 @@ class Process:
 
     def addService(self, name, obj):
         """Put object to the dictionary of services."""
-        if name in self._services.keys():
+        if name in self._services.keys() and name !="logger":
             print("WARNING\t: NOT Overwritting service with key={0}".format(name))
             return 0
+        elif name in self._services.keys() and name =="logger":
+            print("WARNING\t: Overwritting service with key={0}".format(name))
         setattr(self, name, obj)
         self._services[name] = obj
 

@@ -75,7 +75,7 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='PBLK'):
     cwd=os.getcwd()
     for frame in frames:
         NoFit= self.process.cfg['args'].NoFit
-        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks, legend=False if NoFit else True, Plotpdf=(not NoFit), NoPull=self.process.cfg['args'].NoPull)
+        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks, legend=False if NoFit else True, Plotpdf=(not NoFit), NoPull=self.process.cfg['args'].NoPull, self=self)
         Plotter.latexQ2(self.process.cfg['binKey'])
         #if not frame =='B': self.DrawParams(pdfPlots)
         #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
@@ -89,7 +89,7 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='PBLK'):
         if 'plot_sig' in pltName:
             path=os.path.join(modulePath, self.process.work_dir, "SignalFits")
             chdir(path)
-        if pltName.split('.')[0].strip('_Alt') in ["plot_bkgA_KStar", "plot_bkgM_KStar"]:
+        if pltName.split('.')[0].strip('_Alt') in ["plot_bkgA_KStar", "plot_bkgM_KStar", "plot_bkgPeak3D"]:
             path=os.path.join(modulePath, self.process.work_dir, "KStarPlots")
             chdir(path)       
         #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
@@ -845,6 +845,14 @@ def GetPlotterObject(self):
             'pdfPlots' : [["f_bkgA_KStar{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_bkgStyle_KStar, None, "Analytic KStar0MuMu Bkg."], ],
             'marks': {'marks': ['sim']}}
     } 
+    plotterCfg['plots']['plot_bkgPeak3D']= {
+        'func': [functools.partial(plotSimpleBLK, frames='BLK')],
+        'kwargs': {
+            'pltName': "plot_bkgPeak3D.{0}".format(Year),
+            'dataPlots': [["KsigMCReader.{}.Fit".format(Year), plotterCfg_styles['mcStyleBase'], "Simulation"], ],
+            'pdfPlots': [["f_bkg_KStar.{}".format(Year), plotterCfg_bkgStyle_KStar, fitCollection.ArgAliasRECO, None], ],
+            'marks': {'marks': ['sim']}}
+    }
     plotterCfg['plots']['plot_sigPhiM_JP'] = {
         'func': [functools.partial(plotSimpleBLK, frames='P')],
         'kwargs': {

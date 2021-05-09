@@ -109,14 +109,14 @@ class Plotter(Path):
     frameK.SetTitle("")
     frameK_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
     #frameK_binning = ROOT.RooBinning(len(frameK_binning_array)-1, frameK_binning_array)
-    frameK_binning = ROOT.RooBinning(100, -1, 1)
+    frameK_binning = ROOT.RooBinning(20, -1, 1)
 
     frameL = CosThetaL.frame()
     frameL.SetMinimum(0)
     frameL.SetTitle("")
     frameL_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
     #frameL_binning = ROOT.RooBinning(len(frameL_binning_array)-1, frameL_binning_array)
-    frameL_binning = ROOT.RooBinning(100, -1, 1)
+    frameL_binning = ROOT.RooBinning(20, -1, 1)
 
     legend = ROOT.TLegend(.72, .72, .92, .92)
     legend.SetFillColor(0)
@@ -171,7 +171,7 @@ class Plotter(Path):
         return p
 
     @staticmethod
-    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, legend=False, scaleYaxis=1.4, Plotpdf=True, NoPull=False):
+    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, legend=False, scaleYaxis=1.4, Plotpdf=True, NoPull=False, self=None):
         """
             Use initXXXPlotCfg to ensure elements in xxxPlots fit the format
         """

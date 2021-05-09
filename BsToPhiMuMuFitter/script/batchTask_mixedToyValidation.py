@@ -38,6 +38,7 @@ class MixedToyStudier(AbsToyStudier.AbsToyStudier):
            Double_t     afb;
            Double_t     status;
            Double_t     hesse;
+           Double_t     covQual;
            Double_t     minos;
            Double_t     entries;
            Double_t     sigEntries;
@@ -94,6 +95,7 @@ class MixedToyStudier(AbsToyStudier.AbsToyStudier):
         self.otree.Branch("afb", addressof(self.treeContent, 'afb'), 'afb/D')
         self.otree.Branch("status", addressof(self.treeContent, 'status'), 'status/D')
         self.otree.Branch("hesse", addressof(self.treeContent, 'hesse'), 'hesse/D')
+        self.otree.Branch("covQual", addressof(self.treeContent, 'covQual'), 'covQual/D')
         #self.otree.Branch("minos", addressof(self.treeContent, 'minos'), 'minos/D')
         if self.process.cfg['args'].SimFit: 
             self.otree.Branch("events16", ROOT.addressof(self.treeContent, 'events16'), 'events16/D')
@@ -176,9 +178,9 @@ class MixedToyStudier(AbsToyStudier.AbsToyStudier):
             self.treeContent.fl = StdFitter.unboundFlToFl(unboundFl)
             self.treeContent.afb = StdFitter.unboundAfbToAfb(unboundAfb, self.treeContent.fl)
             self.treeContent.index = setIdx
-            self.treeContent.status = self.fitter.migradResult if SimFit else self.fitter.fitResult['{}.migrad'.format(self.fitter.name)]['status']
-            self.treeContent.hesse = self.fitter.hesseResult if SimFit else self.fitter.fitResult['{}.hesse'.format(self.fitter.name)]['status']
-            #self.treeContent.minos = self.fitter.minosResult.status() if SimFit else self.fitter.fitResult['{}.minos'.format(self.fitter.name)]['status']
+            self.treeContent.status = self.fitter.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['MIGRAD'] if SimFit else self.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['MIGRAD']
+            self.treeContent.hesse = self.fitter.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['HESSE'] if SimFit else self.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['HESSE']
+            self.treeContent.covQual = self.fitter.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['covQual'] if SimFit else self.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['covQual']
             if SimFit:
                 simargs = self.fitter.minimizer.getParameters(self.fitter.dataWithCategories)
                 self.treeContent.events16 = self.fitter.data[0].numEntries()
@@ -206,7 +208,7 @@ class MixedToyStudier(AbsToyStudier.AbsToyStudier):
             self.otree.Fill()
             if not SimFit:
                 if (self.treeContent.fl > 0.97 and abs(self.treeContent.afb) < 0.05 and self.plotflag): self._postRunFitPlotter(setIdx)
-            print("Status: ", self.treeContent.status, self.treeContent.hesse)
+            print("Status: ", self.treeContent.status, self.treeContent.hesse, self.treeContent.covQual)
 
     def _postSetsLoop(self):
         SimFit = self.process.cfg['args'].SimFit
@@ -426,8 +428,6 @@ def GetSummaryGraph(binKeys, RecoResult, GenResult, args, pltName="mixedToy"):
     Plotter.canvas.Print(pltName+'_SummaryGraph_{}_fl.pdf'.format('Simult' if args.process.cfg['args'].SimFit else args.process.cfg['args'].Year))
 
 
-
-
 # Postproc fit results.
 def func_postproc(args):
     """ Fit to fit result and make plots """
@@ -442,20 +442,24 @@ def func_postproc(args):
             call(["hadd", "-f", ifilename] + glob.glob('*/setSummary_{}_{}.root'.format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label'])))
         ifile = ROOT.TFile(ifilename)
         tree = ifile.Get("tree")
+        Cuts = "covQual==3&&status==0&&hesse==0"
 
         binWidth = 0.01
         h_setSummary_afb = ROOT.TH1F("h_setSummary_afb", "", int(1.5 / binWidth), -0.75, 0.75)
         h_setSummary_fl = ROOT.TH1F("h_setSummary_fl", "", int(1. / binWidth), 0., 1.)
 
-        tree.Draw("afb>>h_setSummary_afb", "status==0")
-        tree.Draw("fl>>h_setSummary_fl", "status==0")
+        tree.Draw("afb>>h_setSummary_afb", Cuts)
+        tree.Draw("fl>>h_setSummary_fl", Cuts)
 
         f_setSummary_afb = ROOT.TF1("f_setSummary_afb", "gaus", -0.75 + binWidth, 0.75 - binWidth)
         h_setSummary_afb.Fit("f_setSummary_afb")
         h_setSummary_afb.GetFunction("f_setSummary_afb").SetLineColor(4)
 
         f_setSummary_fl = ROOT.TF1("f_setSummary_fl", "gaus", binWidth, 1 - binWidth)
-        h_setSummary_fl.Fit("f_setSummary_fl")
+        if binKey=="betweenPeaks":
+            r = h_setSummary_fl.Fit("f_setSummary_fl", "S", "", 0.39, .8)
+        else:
+            r = h_setSummary_fl.Fit("f_setSummary_fl", "S")
         h_setSummary_fl.GetFunction("f_setSummary_fl").SetLineColor(4)
 
         # Draw
@@ -497,13 +501,13 @@ def func_postproc(args):
 
         if not args.process.cfg['args'].SimFit:
             from copy import deepcopy
-            tree.Draw("nSig", "status==0")
+            tree.Draw("nSig", Cuts)
             nSigHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
-            tree.Draw("nBkgComb", "status==0")
+            tree.Draw("nBkgComb", Cuts)
             nBkgCombHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
-            tree.Draw("nBkgPeak", "status==0")
+            tree.Draw("nBkgPeak", Cuts)
             nBkgPeakHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
-            tree.Draw("entries", "status==0")
+            tree.Draw("entries", Cuts)
             nTotalHist = deepcopy(ROOT.gPad.GetPrimitive("htemp"))
 
             # Signal Event Distributions
@@ -551,6 +555,17 @@ def func_postproc(args):
             plotCollection.Plotter.canvas.Update(); line.DrawLine(nTotal, 0, nTotal, ROOT.gPad.GetUymax())
             ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
             plotCollection.Plotter.canvas.Print("h_nTotal_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+
+        Hist2D = ROOT.TH2F("Hist2D", "title", 100, -1, 1, 100, 0., 1.05)
+        tree.Draw("fl:afb>>Hist2D", Cuts) #+"&&(fl-abs(afb))<=0.95")
+        Hist2D.Draw("COLZ")
+        Hist2D.GetXaxis().SetTitle("A_{6}")
+        Hist2D.GetYaxis().SetTitle("F_{L}")
+        ROOT.gPad.SetRightMargin(0.115)
+        #ROOT.TColor.InvertPalette()
+        #ROOT.TLine().DrawLine(-1, 0, 0, 1);        ROOT.TLine().DrawLine(0, 1, 1, 0);        ROOT.TLine().DrawLine(-1, 0, 1, 0)
+        plotCollection.Plotter.canvas.Print("h2_{}_{}.pdf".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label']))
+
 
         db.close()
     if args.process.cfg['args'].forall: GetSummaryGraph(binKeys, RecoResult, GenResult, args, pltName="mixedToy")

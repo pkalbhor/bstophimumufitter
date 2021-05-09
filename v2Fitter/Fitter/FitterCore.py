@@ -89,6 +89,18 @@ Following functions to be overloaded to customize the full procedure...
         """Loop through RooDataSet and set variables to (non)const"""
         FitterCore.ArgLooper(iArgs, lambda arg: arg.setConstant(isConst), targetArgs, inverseSel)
 
+    @staticmethod
+    def GetFitResult(Name, SubName, Result):
+        """Return Fit Result in JSON format"""
+        Res = {"{0}.{1}".format(Name, SubName): {
+                'nll': Result.minNll(),
+                'covQual': Result.covQual(),
+            }
+        }
+        for i in range(Result.numStatusHistory()):
+            Res["{0}.{1}".format(Name, SubName)].update({"{}".format(Result.statusLabelHistory(i)): Result.statusCodeHistory(i)})
+        return Res
+
     @classmethod
     def templateConfig(cls):
         cfg = {

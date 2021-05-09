@@ -46,7 +46,7 @@ def GetFitterObjects(self, seq):
     AltRange = self.cfg['args'].AltRange
     binKey = self.cfg['binKey']
     TwoStep = self.cfg['args'].TwoStep
-    if seq is 'effiFitter':
+    if seq =='effiFitter':
         setupEffiFitter = deepcopy(EfficiencyFitter.templateConfig())
         setupEffiFitter.update({
             'name'  : "effiFitter.{0}".format(Year),
@@ -89,7 +89,7 @@ def GetFitterObjects(self, seq):
             'pdfY'  : "effi_cosK_rec.{0}".format(Year),
         })
         return EfficiencyFitter(setupEffiFitter)
-    if seq is 'sig2DFitter':
+    if seq == 'sig2DFitter':
         setupSig2DFitter = deepcopy(setupTemplateFitter)
         setupSig2DFitter.update({
             'name': "sig2DFitter.{0}".format(Year),
@@ -102,7 +102,7 @@ def GetFitterObjects(self, seq):
             'argAliasInDB': ArgAliasRECO_Alt if AltRange else ArgAliasRECO,
         })
         return StdFitter(setupSig2DFitter)
-    if seq is 'sig3DFitter':
+    if seq == 'sig3DFitter':
         setupSig3DFitter = deepcopy(setupTemplateFitter)
         setupSig3DFitter.update({
             'name': "sig3DFitter.{0}".format(Year),
@@ -115,7 +115,7 @@ def GetFitterObjects(self, seq):
             'argAliasInDB': ArgAliasRECO_Alt if AltRange else ArgAliasRECO,
         })
         return StdFitter(setupSig3DFitter)
-    if seq is 'sigAFitter':
+    if seq == 'sigAFitter':
         setupSigAFitter = deepcopy(setupTemplateFitter)
         setupSigAFitter.update({
             'name': "sigAFitter.{0}".format(Year),
@@ -130,7 +130,7 @@ def GetFitterObjects(self, seq):
         sigAFitter=StdFitter(setupSigAFitter)
         sigAFitter._bookPdfData = types.MethodType(sigAFitter_bookPdfData, sigAFitter)
         return sigAFitter
-    if seq is 'sigAFitterCorrected':
+    if seq == 'sigAFitterCorrected':
         setupSigAFitter = deepcopy(setupTemplateFitter)
         setupSigAFitter.update({
             'name': "sigAFitterCorrected.{0}".format(Year),
@@ -145,7 +145,7 @@ def GetFitterObjects(self, seq):
         sigAFitter=StdFitter(setupSigAFitter)
         sigAFitter._bookPdfData = types.MethodType(sigAFitter_bookPdfData, sigAFitter)
         return sigAFitter
-    if seq is 'bkgCombAFitter':
+    if seq == 'bkgCombAFitter':
         setupBkgCombAFitter = deepcopy(setupTemplateFitter)
         setupBkgCombAFitter.update({
             'name': "bkgCombAFitter{}.{}".format('_Alt' if AltRange else '', Year),
@@ -157,7 +157,7 @@ def GetFitterObjects(self, seq):
             'createNLLOpt': [],
         })
         return StdFitter(setupBkgCombAFitter)
-    if seq is 'SimulFitter_bkgCombA':
+    if seq == 'SimulFitter_bkgCombA':
         setupSimulFitter_bkgCombA = deepcopy(setupTemplateSimFitter)
         setupSimulFitter_bkgCombA.update({
             'category'  : ['LSB{}'.format(str(Year).strip('20')), 'USB{}'.format(str(Year).strip('20'))],
@@ -248,7 +248,18 @@ def GetFitterObjects(self, seq):
             'createNLLOpt': [],
         })
         return StdFitter(setupBkgA_KStarFitter)
-    if seq is 'finalFitter_WithKStar':
+    if seq == 'bkgPeak3DFitter':
+        setupBkgPeak3DFitter = deepcopy(setupTemplateFitter)
+        setupBkgPeak3DFitter.update({
+            'name': "bkgPeak3DFitter{}.{}".format('_Alt' if AltRange else '', Year),
+            'data': "KsigMCReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''),
+            'pdf': "f_bkg_KStar{}.{}".format('_Alt' if AltRange else '', Year),
+            'FitHesse': True,
+            'FitMinos': [False, ()],
+            'createNLLOpt': [],
+        })
+        return StdFitter(setupBkgPeak3DFitter)
+    if seq == 'finalFitter_WithKStar':
         setupFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                         # 3D = nSig(Sig2D*SigM) + nBkg(fBkgM*fBkgA)
         setupFinalFitter_WithKStar.update({
             'name': "finalFitter_WithKStar{}.{}".format('_Alt' if AltRange else '_ts' if TwoStep else '', Year),
@@ -257,7 +268,7 @@ def GetFitterObjects(self, seq):
             'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombM_c[\d]+', r'bkgCombM_c[\d]_Alt+'],
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
             'FitHesse': True,
-            'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
+            'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
             'argAliasInDB': {**ArgAliasGEN},
             'argAliasSaveToDB': False,
         })

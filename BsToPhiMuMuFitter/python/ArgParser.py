@@ -59,6 +59,13 @@ def GetBatchTaskParser():
     )
     BatchTaskSubparserPostproc.set_defaults(func=None) 
     TableParser = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('MakeTables')
+    TableParser.add_argument(
+        '-tseq', '--TSeq',
+        dest='TSeq',
+        type=str,
+        default='sigAFitter',
+        help='Sub sequences for making tables'
+    )
     add_help(parser)
     return parser
  

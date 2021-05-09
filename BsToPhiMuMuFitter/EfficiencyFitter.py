@@ -64,7 +64,8 @@ class EfficiencyFitter(FitterCore):
             Res=pdf.chi2FitTo(hdata, theList)
             Res=pdf.chi2FitTo(hdata, theList)
             Res.Print("v")
-
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, FitterCore.GetFitResult(self.name, var.GetName(), Res))
+    
             ################## AlTernatively #######################     
             #chi2 = pdf.createChi2(hdata, ROOT.RooFit.Save(1))
             #m=ROOT.RooMinuit(chi2)
@@ -120,20 +121,21 @@ class EfficiencyFitter(FitterCore):
             return f2_effi_sigA
 
         if True:  #Using RooMinuit
-            if False: #Using NLL optimization
-                self.fitter = ROOT.StdFitter()
-                minuit=self.fitter.Init(self.pdf, self.data)
+            if False: #Using {} optimization
+                fitter = ROOT.StdFitter()
+                minuit=fitter.Init(self.pdf, self.data)
                 minuit.setStrategy(2)
                 minuit.optimizeConst(1)
                 minuit.setPrintLevel(0)
-                self._nll = self.fitter.GetNLL()
-                migrad=self.fitter.FitMigrad()
-                self.fitter.FitHesse()
-                self.fitter.FitMinos(self.pdf.getParameters(self.data).selectByAttrib("Constant",0))
+                self._nll = fitter.GetNLL()
+                self.fitter=fitter.FitMigrad()
+                self.fitter=fitter.FitHesse()
+                self.fitter=fitter.FitMinos(self.pdf.getParameters(self.data).selectByAttrib("Constant",0))
             else: #Using chi2 optimization
                 self.fitter = self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(1), ROOT.RooFit.Strategy(2), ROOT.RooFit.Save(1), ROOT.RooFit.PrintLevel(-1))
                 self.fitter = self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(1), ROOT.RooFit.Strategy(2), ROOT.RooFit.Save(1), ROOT.RooFit.PrintLevel(-1))
             self.fitter.Print("v")
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, FitterCore.GetFitResult(self.name, "XTerm", self.fitter))
 
             setStyle()
             canvas = ROOT.TCanvas()
@@ -255,7 +257,6 @@ class EfficiencyFitter(FitterCore):
             FitterCore.ArgLooper(args, lambda p: p.Print())
         
         ####################################
-        cwd=os.getcwd()
         path=os.path.join(modulePath, self.process.work_dir, "Efficiency")
         if not os.path.exists(path):
             os.mkdir(path)
@@ -263,7 +264,7 @@ class EfficiencyFitter(FitterCore):
         ####################################
         canvas.Print("effi_2D_comp{}_{}.pdf".format(self.cfg['label'], q2bins[self.process.cfg['binKey']]['label']))
         canvas2.cd(); canvas2.Print("effi_2D_TEXT{}_{}.pdf".format(self.cfg['label'], q2bins[self.process.cfg['binKey']]['label']))
-        os.chdir(cwd) 
+        os.chdir(os.path.join(modulePath, self.process.work_dir)) 
 
     @staticmethod
     def isPosiDef(formula2D):

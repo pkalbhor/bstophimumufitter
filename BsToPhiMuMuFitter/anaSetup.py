@@ -115,8 +115,8 @@ bMassRegions['Fit']  = createBmassTemplate("Fit",  5.25, 5.65)
 bMassRegions['SR']   = createBmassTemplate("SR",   5.25, 5.45) #Signal Region
 bMassRegions['LSB']  = createBmassTemplate("LSB",  4.9, 5.25) #("LSB", 5.143, 5.223)
 bMassRegions['USB']  = createBmassTemplate("USB",  5.65, 6.0) #("USB", 5.511, 5.591)
-bMassRegions['SB']   = createBmassTemplate("SB",   4.9, 6.0)
-bMassRegions['NSB']   = createBmassTemplate("NSB", 5.25, 5.65)
+bMassRegions['SB']   = createBmassTemplate("SB",   4.9, 5.95)
+bMassRegions['NSB']   = createBmassTemplate("NSB", 5.20, 5.65)
 bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['cutString'], bMassRegions['NSB']['cutString'])
 
 # systematics

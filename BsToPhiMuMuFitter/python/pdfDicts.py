@@ -394,7 +394,7 @@ f_analyticBkgCombA_format['Gaus3Poly4_Poly6'] = [ #pdfL: Gaus+Gaus+Gaus+Poly4, p
     "bkgCombL_c0[1, 0,10]", "bkgCombL_c1[0.65, -1., 1.]", "bkgCombL_c2[0.1, 0.001, 1.0]", "bkgCombL_c3[-0.62,-1., 1.]",
     "bkgCombL_c4[0.1, 0.001, 1.0]", "bkgCombL_c5[1, 0,10]", "bkgCombL_c6[0.0,-1., 1.]", "bkgCombL_c7[0.4, 0.001, 1.0]",
     "bkgCombL_c8[-10,10]", "bkgCombL_c9[-10,10]", "bkgCombL_c10[-10,10]", "bkgCombL_c11[-10,10]",
-    "bkgCombK_c1[-10,10]", "bkgCombK_c2[-10,10]",  "bkgCombK_c3[-10,10]", "bkgCombK_c4[-20,20]", "bkgCombK_c5[-10,10]", "bkgCombK_c6[-10,10]",
+    "bkgCombK_c1[-10,10]", "bkgCombK_c2[-10,10]",  "bkgCombK_c3[-10,10]", "bkgCombK_c4[-20,20]", "bkgCombK_c5[-10,10]", "bkgCombK_c6[-20,20]",
     "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
         pdfL="bkgCombL_c0*exp(-0.5*pow((CosThetaL-bkgCombL_c1)/bkgCombL_c2,2))+bkgCombL_c5*exp(-0.5*pow((CosThetaL-bkgCombL_c3)/bkgCombL_c4,2))+exp(-0.5*pow((CosThetaL-bkgCombL_c6)/bkgCombL_c7,2))+1.+bkgCombL_c8*CosThetaL+bkgCombL_c9*pow(CosThetaL, 2)+bkgCombL_c10*pow(CosThetaL,3)+bkgCombL_c11*pow(CosThetaL,4)",
         pdfK="1.+bkgCombK_c1*CosThetaK+bkgCombK_c2*pow(CosThetaK,2)+bkgCombK_c3*pow(CosThetaK, 3)+bkgCombK_c4*pow(CosThetaK,4)+bkgCombK_c5*pow(CosThetaK,5)+bkgCombK_c6*pow(CosThetaK,6)",
@@ -566,10 +566,99 @@ f_analyticBkgCombA_format['New'] = [ # pdfL: Gauss, pdfK: exp()+exp()
         pdfK="exp(bkgCombK_c1*CosThetaK)+bkgCombK_c2*exp(bkgCombK_c3*CosThetaK)",
         args="{CosThetaL,CosThetaK,bkgCombL_c2,bkgCombL_c3,bkgCombL_c4,bkgCombK_c1,bkgCombK_c2,bkgCombK_c3}")
 ]
-f_analyticBkgCombA_format['Chebyshev3'] = [ # 
-    "bkgCombL_c1[-10,10]", "bkgCombL_c2[-10,10]", "bkgCombL_c3[-10,10]",
-    "bkgCombK_c1[-10,10]",  "bkgCombK_c2[-10,10]",   "bkgCombK_c3[-10,10]",
-    "RooChebychev::fL(CosThetaL, {bkgCombL_c1, bkgCombL_c2, bkgCombL_c3} )",
-    "RooChebychev::fK(CosThetaK, {bkgCombK_c1, bkgCombK_c2, bkgCombK_c3} )",
+
+for i, j in ((a, b) for a in range(1, 10) for b in range(1, 10)):
+    f_analyticBkgCombA_format['Cbv{}_Cbv{}'.format(i, j)] = [ # 
+        "RooChebychev::fL(CosThetaL, {} )".format("{"+", ".join(['bkgCombL_c{}[-10,10]'.format(i) for i in range(1,i+1)])+"}"),
+        "RooChebychev::fK(CosThetaK, {} )".format("{"+", ".join(['bkgCombK_c{}[-10,10]'.format(i) for i in range(1,j+1)])+"}"),
+        "PROD::f_bkgCombA(fL, fK)"
+    ]
+f_analyticBkgCombA_format['RooCbv62_Cbv5'] = [ # 
+    "bkgCombL_c1[-10,10]", "bkgCombL_c2[-10,10]", "bkgCombL_c3[-10,10]", "bkgCombL_c4[-10,10]", "bkgCombL_c5[-10,10]", "bkgCombL_c6[-10,10]", 
+    "bkgCombL_c7[-10,10]", "bkgCombL_c8[-10,10]", "bkgCombL_c9[-10,10]",
+    "bkgCombL_c10[-10,10]", "bkgCombL_c11[-10,10]", "bkgCombL_c12[-10,10]", "bkgCombL_c13[-10,10]", "bkgCombL_c14[-10,10]", "bkgCombL_c15[-10,10]", 
+    "bkgCombK_c1[-10,10]",  "bkgCombK_c2[-10,10]", "bkgCombK_c3[-10,10]", "bkgCombK_c4[-10,10]", "bkgCombK_c5[-10,10]",
+    "RooChebychev::fL1(CosThetaL, {bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombL_c6} )",
+    "RooChebychev::fL2(CosThetaL, {bkgCombL_c7, bkgCombL_c8} )",
+    "RooChebychev::fL3(CosThetaL, {bkgCombL_c10, bkgCombL_c11, bkgCombL_c12, bkgCombL_c13, bkgCombL_c14, bkgCombL_c15} )",
+    "SUM::fL(bkgCombL_c9*fL1, fL2)",
+    "RooChebychev::fK(CosThetaK, {bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4, bkgCombK_c5} )",
+    "PROD::f_bkgCombA(fL1, fL3, fK)"
+]
+f_analyticBkgCombA_format['RooLeg23_Cbv5'] = [ #
+    "bkgCombL_c1[-10,10]", "bkgCombL_c2[-10,10]",
+    "bkgCombK_c1[-10,10]",  "bkgCombK_c2[-10,10]", "bkgCombK_c3[-10,10]", "bkgCombK_c4[-10,10]", "bkgCombK_c5[-10,10]",
+    "RooLegendre::fL1(CosThetaL, 2, 0)",
+    "RooLegendre::fL2(CosThetaL, 3, 0)",
+    "RooRealSumPdf::fL({0.5, fL1, fL2}, {1, bkgCombL_c1, bkgCombL_c2}, 1)",
+    "RooChebychev::fK(CosThetaK, {bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4, bkgCombK_c5} )",
     "PROD::f_bkgCombA(fL, fK)"
+]
+f_analyticBkgCombA_format['Leg67G2_Cbv5'] = [ #
+    "bkgCombL_c1[-10,10]", "bkgCombL_c2[-10,10]", "bkgCombL_c3[-10,10]", "bkgCombL_c4[-10,10]",
+    "bkgCombK_c1[-10,10]",  "bkgCombK_c2[-10,10]", "bkgCombK_c3[-10,10]", "bkgCombK_c4[-10,10]", "bkgCombK_c5[-10,10]",
+    "RooLegendre::fL1(CosThetaL, 6, 1)",
+    "RooLegendre::fL2(CosThetaL, 0, 0)",
+    "RooGaussian::fL3(CosThetaL, bkgCombL_c5[0.7, 0.6, 0.9], bkgCombL_c6[0.08, 0, 5])",
+    "RooGaussian::fL4(CosThetaL, bkgCombL_c7[-0.75, -0.9, -0.6], bkgCombL_c8[0.1, 0, 5])",
+    "RooRealSumPdf::fL5({0.5, fL1, fL2}, {1, bkgCombL_c1, bkgCombL_c2}, 1)",
+    "SUM::fL(bkgCombL_c3*fL3, bkgCombL_c4*fL4, fL5)",
+    "RooChebychev::fK(CosThetaK, {bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4, bkgCombK_c5} )",
+    "PROD::f_bkgCombA(fL, fK)"
+]
+
+for i, j, k, l, m in ((a,b,c,d,e) for a in range(10) for b in range(10) for c in range(a+1) for d in range(b+1) for e in range(8)):
+    f_analyticBkgCombA_format['Leg{}{}G2_Cbv{}_v{}{}'.format(i,j,m,k,l)] = [ #
+        "RooLegendre::fL1(CosThetaL, {}, {})".format(i, k),
+        "RooLegendre::fL2(CosThetaL, {}, {})".format(j, l),
+        "RooRealSumPdf::fL3({0.5, fL1, fL2}, {1, bkgCombL_c1[-10,10], bkgCombL_c2[-10,10]}, 1)",
+        "RooGaussian::fL4(CosThetaL, bkgCombL_c3[0.78, 0.5, 0.9], bkgCombL_c5[0.08, 0, 5])",
+        "RooGaussian::fL5(CosThetaL, bkgCombL_c4[-0.75, -0.9, -0.6], bkgCombL_c6[0.1, 0, 5])",
+        "SUM::fL(bkgCombL_c7[0.2,0,1]*fL3, bkgCombL_c8[0.5,0,1]*fL4, fL5)",
+        "RooChebychev::fK(CosThetaK, {} )".format("{"+", ".join(['bkgCombK_c{}[-10,10]'.format(i) for i in range(1,m+1)])+"}"),
+        "PROD::f_bkgCombA(fL, fK)"
+    ]
+for i in range(10):
+    for j in range(10):
+        for k in range(i+1):
+            for l in range(j+1):
+                f_analyticBkgCombA_format['Leg{}{}_Cbv5_v{}{}'.format(i,j,k,l)] = [ #
+                    "bkgCombL_c1[-10,10]", "bkgCombL_c2[-10,10]",
+                    "bkgCombK_c1[-10,10]",  "bkgCombK_c2[-10,10]", "bkgCombK_c3[-10,10]", "bkgCombK_c4[-10,10]", "bkgCombK_c5[-10,10]",
+                    "RooLegendre::fL1(CosThetaL, {}, {})".format(i, k),
+                    "RooLegendre::fL2(CosThetaL, {}, {})".format(j, l),
+                    "RooRealSumPdf::fL({0.5, fL1, fL2}, {1, bkgCombL_c1, bkgCombL_c2}, 1)",
+                    "RooChebychev::fK(CosThetaK, {bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4, bkgCombK_c5} )",
+                    "PROD::f_bkgCombA(fL, fK)"
+                ]
+
+for i, j, k in ((a, b, c) for a in range(10) for b in range(a+1) for c in range(1,8)):
+        f_analyticBkgCombA_format['Leg{}G2_Cbv{}_v{}'.format(i, k, j)] = [ #
+            "RooLegendre::fL1(CosThetaL, {}, {})".format(i, j),
+            "RooGaussian::fL2(CosThetaL, bkgCombL_c4[0.7, 0.6, 0.9], bkgCombL_c6[0.08, 0, 5])",
+            "RooGaussian::fL3(CosThetaL, bkgCombL_c5[-0.75, -0.9, -0.6], bkgCombL_c7[0.1, 0, 5])",
+            "RooRealSumPdf::fL4({0.5, fL1}, {1, bkgCombL_c1[-10,10]}, 1)",
+            "SUM::fL(bkgCombL_c2[-10,10]*fL2, bkgCombL_c3[-10,10]*fL3, fL4)",
+            "RooChebychev::fK(CosThetaK, {} )".format("{"+", ".join(['bkgCombK_c{}[-10,10]'.format(i) for i in range(1,k+1)])+"}"),
+            "PROD::f_bkgCombA(fL, fK)"
+        ]
+
+f_analyticBkgCombA_format['G3Cbv4_Cbv5'] = [ #
+    "RooGaussian::fL1(CosThetaL, bkgCombL_c1[0.7, 0.6, 0.9], bkgCombL_c4[0.1, 0, 5])",
+    "RooGaussian::fL2(CosThetaL, bkgCombL_c2[-0.7, -0.9, -0.6], bkgCombL_c5[0.1, 0, 5])",
+    "RooGaussian::fL3(CosThetaL, bkgCombL_c3[0., -0.3, 0.3], bkgCombL_c6[0.1, 0, 5])",
+    "RooChebychev::fL4(CosThetaL, {} )".format("{"+", ".join(['bkgCombL_c{}[-10,10]'.format(i) for i in range(7,11)])+"}"),
+    "SUM::fL(bkgCombK_c16[-10,10]*fL1, bkgCombK_c17[-10,10]*fL2, bkgCombK_c18[-10,10]*fL3, fL4)",
+    "RooChebychev::fK(CosThetaK, {} )".format("{"+", ".join(['bkgCombK_c{}[-10,10]'.format(i) for i in range(11,16)])+"}"),
+    "PROD::f_bkgCombA(fL, fK)"
+]
+f_analyticBkgCombA_format['Cbv5G2_Cbv5'] = [ #
+    "bkgCombL_c1[-10,10]", "bkgCombL_c2[-10,10]", "bkgCombL_c3[-10,10]", "bkgCombL_c4[-10,10]", "bkgCombL_c5[-10,10]",
+    "bkgCombK_c1[-10,10]",  "bkgCombK_c2[-10,10]", "bkgCombK_c3[-10,10]", "bkgCombK_c4[-10,10]", "bkgCombK_c5[-10,10]",
+    "RooChebychev::fL1(CosThetaL, {bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5} )",
+    "RooGaussian::fL2(CosThetaL, bkgCombL_c6[0.7, 0.6, 0.9], bkgCombL_c7[0.12, 0, 5])",
+    "RooGaussian::fL3(CosThetaL, bkgCombL_c8[-0.75, -0.9, -0.6], bkgCombL_c9[0.1, 0, 5])",
+    "SUM::fL(bkgCombL_c10[-10,10]*fL2, bkgCombL_c11[-10,10]*fL3, fL1)",
+    "RooChebychev::fK(CosThetaK, {bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4, bkgCombK_c5} )",
+    "PROD::f_bkgCombA(fL, RooChebychev::fL4(CosThetaL, {bkgCombL_c12[-10,10], bkgCombL_c13[-10,10]}), fK)"
 ]

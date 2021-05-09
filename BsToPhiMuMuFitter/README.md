@@ -20,31 +20,31 @@ python seqCollection.py --binKey bin# --seqKey sequence_to_execute
 ```
 Create RooWorkspace objects:
 ```bash
-python seqCollection.py -b all -s buildPdfs
+python seqCollection.py -b all -s buildPdfs -y 2016
 ```
 Load data
 ```
-python seqCollection.py -b all -s loadMC {Also: -s loadMCGEN, -s loadMCk}
+python seqCollection.py -b all -s loadMC -y 2016 {Also: -s loadMCGEN, -s loadMCk}
 ```
 Fit efficiency plots:
 ```bash
-python seqCollection.py -b all -s fitEff
+python seqCollection.py -b all -s fitEff -y 2016
 ```
 Fit reco level plots:
 ```
-python seqCollection.py -b all -s fitSig2D
+python seqCollection.py -b all -s fitSig3D -y 2016
 ```
 Fit GEN level Plots:
 ```bash
-python seqCollection.py -b all -s fitSigMCGEN
+python seqCollection.py -b all -s fitSigMCGEN -y 2016
 ```
 Create the plots:
 ```bash
-python seqCollection.py -b all -s createplots --list effi
+python seqCollection.py -b all -s createplots -y 2016 --list effi
 ```
 Create GEN-RECO comparison plots for signal MCs:
 ```bash
-python seqCollection.py -s createplots --list angular2D_summary_RECO2GEN
+python seqCollection.py -s createplots --list summary_RECO2GEN -y 2016
 ```
 
 ## Fitter Validation
@@ -52,15 +52,14 @@ python seqCollection.py -s createplots --list angular2D_summary_RECO2GEN
 * [`script/batchTask_simpleToyValidation.py`](https://github.com/pkalbhor/BsToPhiMuMuFitter/blob/master/BsToPhiMuMuFitter/script/batchTask_sigMCValidation.py)
 Run validation script for low statistics sub-samples:
 ```bash
-python script/batchTask_sigMCValidation.py -b all -t 10 run 0
-python script/batchTask_sigMCValidation.py -b all postproc
+./seqCollection.py -b bin1A -s sigMCValidation -y 2016 -t 100 run 0
+./seqCollection.py -s sigMCValidation -y 2016 postproc --forall
 ```
 Submit HTCondor job for large set of sub-samples:
 ```bash
-python script/batchTask_sigMCValidation.py -b all -t 2000 submit -q workday -n 1 -s
+./seqCollection.py -b bin1A -s sigMCValidation -t 1000 --SimFit submit -n 3 -s
 ```
-
-* [`script/batchTask_simpleToyValidation.py`](https://github.com/pkalbhor/BsToPhiMuMuFitter/blob/master/BsToPhiMuMuFitter/script/batchTask_simpleToyValidation.py)
+`--SimFit` for simultaneous fit
 
 ## Statistical error
 
@@ -71,4 +70,21 @@ Two scripts are prepared for this procedure.
 * Step2 - harvest fit results and calculate error with [`script/postporcess_profiledFeldmanCousins.py`](https://github.com/pkalbhor/BsToPhiMuMuFitter/blob/master/BsToPhiMuMuFitter/script/postporcess_profiledFeldmanCousins.py)
 
 ## Systematics error
+
+## Collecting Results
+* Table of status of fits
+```bash
+./seqCollection.py -s StatusTable -y 2018 MakeTables --TSeq sigAFitter
+```
+`--TSeq` option is used to fetch results of different fit sequences. Example options are `sig3DFitter`, `bkgCombAFitter`, `finalFitter_WithKStar`, ...
+
+* Table of Efficiency values
+```bash
+./seqCollection.py -s EffiTable -y 2016
+```
+
+* Table of Peaking Background Fractions
+```bash
+./seqCollection.py -s PeakFracTable -y 2016
+```
 

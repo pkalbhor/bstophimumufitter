@@ -82,7 +82,7 @@ Decide the number of entries of this subset.
         iSet=0 #Total subsamples
         rSet=0 #Converged subsamples
         while rSet < max(self.cfg['nSetOfToys'], self.process.cfg['args'].nSetOfToys):
-            print(">>>> Running for sub-sample number:", rSet+1)
+            print(">>>> Running for sub-sample number:", iSet+1)
             self._preRunFitSteps(iSet)
             self.fitter.hookProcess(self.process)
             self.fitter.customize()
@@ -105,7 +105,8 @@ Decide the number of entries of this subset.
             self.fitter._runFitSteps()
             self._postRunFitSteps(iSet)
             iSet += 1
-            if not self.fitter.fitResult['{}.migrad'.format(self.fitter.name)]['status']: rSet += 1
+            if (self.treeContent.status==0 and self.treeContent.hesse==0 and self.treeContent.covQual==3):
+                rSet += 1
             self.fitter.reset()
         print("Failed subsamples: ", iSet-rSet)
 
@@ -131,15 +132,11 @@ Decide the number of entries of this subset.
         return inner
 
     def _runSetsLoop_SimFit(self):
-        def Test_runSetsLoop_SimFit(self, fitter, data, pdf):
-            """Test whether everything going as expected"""
-            pass
-
         iSet=0 #Total subsamples
         rSet=0 #Converged subsamples
         cwd = self.process.work_dir #Avoid using os.getcwd() which gives problems in condor jobs
         while rSet < max(self.cfg['nSetOfToys'], self.process.cfg['args'].nSetOfToys):
-            print(">>>> Running for sub-sample number:", rSet+1)
+            print(">>>> Running for sub-sample number:", iSet+1)
             self._preRunFitSteps(iSet)
             self.fitter.hookProcess(self.process)
             self.fitter.customize()
@@ -151,14 +148,21 @@ Decide the number of entries of this subset.
             if not self.process.cfg['args'].NoFit:
                 self.fitter._bookMinimizer()
                 self.fitter._preFitSteps()
-                self.fitter.ToggleConstVar(self.fitter.minimizer.getParameters(self.fitter.dataWithCategories), False, self.fitter.cfg['argPattern']) #To keep signal and background yields floating
+
+                #To keep signal and background yields floating
+                self.fitter.ToggleConstVar(self.fitter.minimizer.getParameters(self.fitter.dataWithCategories), False, self.fitter.cfg['argPattern']) 
+
                 self.fitter._runFitSteps(); #self.fitter.minosResult = self.fitter.fitter.FitMinos(self.fitter.data[-1].get())
                 self._postRunFitSteps(iSet)
-            for pdf, data, Year in zip(self.fitter.pdf, self.fitter.data, self.fitter.Years): #remove a year tag from parameters
+
+            #Remove a year tag from parameters
+            for pdf, data, Year in zip(self.fitter.pdf, self.fitter.data, self.fitter.Years): 
                 FitterCore.ArgLooper(pdf.getParameters(data), lambda p: p.SetName(p.GetName().split("_{0}".format(Year))[0]), targetArgs=self.fitter.cfg['argPattern'], inverseSel=True)
             iSet += 1
-            if not self.fitter.migradResult: rSet += 1
+            if (self.treeContent.status==0 and self.treeContent.hesse==0 and self.treeContent.covQual==3):
+                rSet += 1
             self.fitter.reset()
+            print(">>>> Successful sub-samples:", rSet, "Failed sub-samples:", iSet-rSet)
         print("Failed subsamples: ", iSet-rSet)
 
     def SaveSubsamples(self, index, subdata, Name):
@@ -213,6 +217,7 @@ def getSubData_random(self, idx, checkCollision=True):
                 output.add(self.data[idx].get(startBit))
             startBit = outputBits.FirstSetBit(startBit + 1)
         self.sigEntries = self.currentSubDataEntries #output.sumEntries()
+        self.logger.logINFO("SubDataSet has actual yield {0} created from sample {1}".format(output.sumEntries(), output.GetName()))
         yield output
 
 def getSubData_seqential(self):

@@ -84,6 +84,7 @@ Following functions to be overloaded to customize the full procedure...
             if self.process.cfg['args'].seqKey in ['sigMCValidation', 'mixedToyValidation']: #Resetting parameters to initial values.
                 pdf.getParameters(data).find('unboundAfb').setVal(0.1)
                 pdf.getParameters(data).find('unboundFl').setVal(0.75)
+                #pdf.getParameters(data).find('nBkgComb_{}'.format(Year)).setVal(odbfile:)
 
     def _runFitSteps(self):
         """Standard fitting procedure to be overwritten."""
@@ -105,8 +106,7 @@ Following functions to be overloaded to customize the full procedure...
                 mresult = self.fitter.FitMigrad()
                 hresult = self.fitter.FitHesse()
                 self._nll = self.fitter.GetNLL().getVal()
-                self.migradResult = mresult.status() 
-                self.hesseResult  = hresult.status()
+                self.fitter.fitResult = FitterCore.GetFitResult(self.name, "StdFitter", hresult)
 
     def _postFitSteps(self):
         """ Abstract: Do something after main fit loop"""

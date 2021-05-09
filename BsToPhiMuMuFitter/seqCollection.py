@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3 -u
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
@@ -52,6 +52,7 @@ predefined_sequence['fitSigMDCB']    = ['sigMCReader', 'stdWspaceReader', 'sigMD
 predefined_sequence['fitSigM']       = ['sigMCReader', 'stdWspaceReader', 'sigMFitter']
 predefined_sequence['fitBkgM_KStar'] = ['KsigMCReader', 'stdWspaceReader', 'bkgM_KStarFitter']
 predefined_sequence['fitBkgA_KStar'] = ['KsigMCReader', 'stdWspaceReader', 'bkgA_KStarFitter']
+predefined_sequence['fitBkgPeak3D'] = ['KsigMCReader', 'stdWspaceReader', 'bkgPeak3DFitter']
 
 predefined_sequence['fitFinal3D_AltM']          = (['dataReader', 'stdWspaceReader'], ['SimulFitter_Final_AltM'] if args.SimFit else ['finalFitter_AltM'])
 predefined_sequence['fitFinal3D_WithKStar']     = (['dataReader', 'stdWspaceReader'], ['SimFitter_Final_WithKStar'] if args.SimFit else ['finalFitter_WithKStar'])
@@ -77,6 +78,7 @@ predefined_sequence['FinalDataResult'] = ['FinalDataResult']
 predefined_sequence['EffiTable']       = ['EffiTable']
 predefined_sequence['PeakFracTable']   = ['PeakFracTable']
 predefined_sequence['CompPlots']       = ['stdWspaceReader', 'GetCompPlots']
+predefined_sequence['StatusTable']  = ['StatusTableMaker']
 
 #For Validation Study
 predefined_sequence['fitSigM_JP'] = ['sigMCReader_JP', 'stdWspaceReader', 'sigMFitter_JP']
@@ -96,12 +98,12 @@ def Instantiate(self, seq):
     import BsToPhiMuMuFitter.fitCollection  as fitCollection
     from BsToPhiMuMuFitter.plotCollection import GetPlotterObject
     sequence=[]
-    dataSequence=['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader', 'sigMCReader_JP', 'sigMCReader_PP', 'bkgMCReader_JK', 'bkgMCReader_PK', 'sigMCGENcReader']
+    dataSequence=['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader', 'sigMCReader_JP', 'sigMCReader_PP', 'bkgMCReader_JK', 'bkgMCReader_PK', 'sigMCGENcReader', 'StatusTableMaker']
     fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'accEffiFitter', 'recEffiFitter', 'sigMFitter', 'sigMDCBFitter',
                 'finalFitter_AltM', 'sigAFitterCorrected', 'sig3DFitter',
                 'bkgM_KStarFitter', 'bkgA_KStarFitter', 'finalFitter_WithKStar', 'finalFitter_AltM_WithKStar', 'finalMFitter', 'sigMFitter_JP',
                 'bkgMFitter_JK', 'sigMFitter_PP', 'bkgMFitter_PK', 'finalMFitter_JP', 'finalMFitter_PP', 'sigPhiMFitter_JP', 'finalPhiMFitter_JP',
-                'SimulFitter_bkgCombA']
+                'SimulFitter_bkgCombA', 'bkgPeak3DFitter']
     for s in seq:
         if s in dataSequence:
             sequence.append(dataCollection.GetDataReader(self, s))
