@@ -22,29 +22,17 @@ def SetParser(add_help=True):
     Group.add_argument('--Toy2', help='Use 2nd option for doing toy study (Default: True)', action='store_false')
     return parser
 
-def add_help(parser):
-    parser.add_argument('-h', '--help', action='help', default='==SUPPRESS==', help=('show this help message and exit'))
-
 def GetBatchTaskParser():
     import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
-    #import BsToPhiMuMuFitter.script.batchTask_sigMCValidation as batchTask_sigMCValidation
     parentParser=SetParser(False)
     parser = AbsBatchTaskWrapper.BatchTaskParser
     parser._add_container_actions(parentParser) # Connect with main parser
-    parser.add_argument(
-        '-t', '--nToy',
-        dest="nSetOfToys",
-        type=int,
-        default=5,
-        help="Number of subsamples to produce"    )
+    parser.add_argument('-t', '--nToy', dest="nSetOfToys", type=int, default=5, help="Number of subsamples to produce"    )
  
     BatchTaskSubparserPostproc = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('postproc')
-    BatchTaskSubparserPostproc.add_argument(
-        '--forceHadd',
-        dest='forceHadd',
-        action='store_true',
-        help="Force recreate summary root file."
-    )
+    BatchTaskSubparserPostproc.add_argument('--forceHadd', dest='forceHadd', action='store_true', 
+                                            help="Force recreate summary root file."
+                                            )
     BatchTaskSubparserPostproc.add_argument(
         '--drawGEN',
         dest='drawGEN',
@@ -62,12 +50,12 @@ def GetBatchTaskParser():
     TableParser.add_argument(
         '-tseq', '--TSeq',
         dest='TSeq',
-        type=str,
-        default='sigAFitter',
+        nargs="+", default=["effiFitter"],
         help='Sub sequences for making tables'
     )
-    add_help(parser)
-    return parser
+    debugParser = ArgumentParser(parents=[parser])
+    debugParser.add_argument('--debug', action='store_true', help="Print logs to standard output (Default: False)")
+    return debugParser
  
 modulePath=os.path.abspath(os.path.dirname('seqCollection.py'))
 

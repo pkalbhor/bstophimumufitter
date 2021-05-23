@@ -2,34 +2,27 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import sys, os, pdb, datetime
+import v2Fitter.FlowControl.Logger as Logger
+log = Logger.Logger("runtime_temp.log", 999) #Logger.VerbosityLevels.DEBUG)
+
+import sys, os, pdb, datetime, importlib
 import ROOT
 #ROOT.EnableImplicitMT()
+
+#Verify if PYTHONPATH is set
+if importlib.util.find_spec("BsToPhiMuMuFitter") is None:
+    raise ModuleNotFoundError("Please source setup_ROOTEnv.sh script and come back again!")
 
 #Supress RooFit related info messages
 ROOT.gEnv.SetValue("RooFit.Banner", 0)
 ROOT.RooMsgService.instance().setGlobalKillBelow(3)
 
-# Standard fitting procedures
-predefined_sequence = {}
-def SetSequences():
-
-    # For fitter validation and syst
-    predefined_sequence['fitBkgCombM']      = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombMFitter]
-
-    predefined_sequence['fitFinalMDCB']     = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalMDCBFitter]
-    predefined_sequence['fitFinalM_AltMM']  = [dataCollection.dataReader, pdfCollection.stdWspaceReader, 
-                                              fitCollection.finalMDCB_AltBkgCombM_Fitter]
-    predefined_sequence['fitFinal_altMMA']  = [dataCollection.dataReader,
-                                               pdfCollection.stdWspaceReader,
-                                               fitCollection.final_AltM_AltBkgCombM_AltA_Fitter]
-    predefined_sequence['fitFinal3D'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter]
-
-
-
 from BsToPhiMuMuFitter.python.ArgParser import SetParser, GetBatchTaskParser
 parser=GetBatchTaskParser()
 args = parser.parse_known_args()[0]
+
+# Standard sequences; To be pre-defined
+predefined_sequence = {}
 predefined_sequence['loadData']  = ['dataReader']
 predefined_sequence['loadMC']    = ['sigMCReader']
 predefined_sequence['loadMCGEN'] = ['sigMCGENReader']
@@ -91,19 +84,20 @@ predefined_sequence['fitSigPhiM_JP'] = ['sigMCReader_JP', 'stdWspaceReader', 'si
 predefined_sequence['fitFinalPhiM_JP'] = ['dataReader', 'stdWspaceReader', 'finalPhiMFitter_JP']
 
 def Instantiate(self, seq):
-    """All objects are initalized here. This is needed when you want to run over all the bins in one go. Or if you want to run over different year dataset"""
+    """All objects from 'predefined_sequence' are initalized here"""
     # Classes in use are: DataReader, WSpaceReader, StdFitter, ObjectProvider, EfficiencyFitter, Plotter
     import BsToPhiMuMuFitter.dataCollection as dataCollection
     import BsToPhiMuMuFitter.pdfCollection  as pdfCollection
     import BsToPhiMuMuFitter.fitCollection  as fitCollection
     from BsToPhiMuMuFitter.plotCollection import GetPlotterObject
     sequence=[]
-    dataSequence=['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader', 'sigMCReader_JP', 'sigMCReader_PP', 'bkgMCReader_JK', 'bkgMCReader_PK', 'sigMCGENcReader', 'StatusTableMaker']
-    fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'accEffiFitter', 'recEffiFitter', 'sigMFitter', 'sigMDCBFitter',
-                'finalFitter_AltM', 'sigAFitterCorrected', 'sig3DFitter',
-                'bkgM_KStarFitter', 'bkgA_KStarFitter', 'finalFitter_WithKStar', 'finalFitter_AltM_WithKStar', 'finalMFitter', 'sigMFitter_JP',
-                'bkgMFitter_JK', 'sigMFitter_PP', 'bkgMFitter_PK', 'finalMFitter_JP', 'finalMFitter_PP', 'sigPhiMFitter_JP', 'finalPhiMFitter_JP',
-                'SimulFitter_bkgCombA', 'bkgPeak3DFitter']
+    dataSequence=['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader', 'sigMCReader_JP', 
+                'sigMCReader_PP', 'bkgMCReader_JK', 'bkgMCReader_PK', 'sigMCGENcReader', 'StatusTableMaker']
+    fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'accEffiFitter', 'recEffiFitter', 'sigMFitter', 
+                'sigMDCBFitter', 'finalFitter_AltM', 'sigAFitterCorrected', 'sig3DFitter', 'bkgM_KStarFitter', 
+                'bkgA_KStarFitter', 'finalFitter_WithKStar', 'finalFitter_AltM_WithKStar', 'finalMFitter', 'sigMFitter_JP',
+                'bkgMFitter_JK', 'sigMFitter_PP', 'bkgMFitter_PK', 'finalMFitter_JP', 'finalMFitter_PP', 'sigPhiMFitter_JP', 
+                'finalPhiMFitter_JP', 'SimulFitter_bkgCombA', 'bkgPeak3DFitter']
     for s in seq:
         if s in dataSequence:
             sequence.append(dataCollection.GetDataReader(self, s))
@@ -132,7 +126,6 @@ def Instantiate(self, seq):
         if s is 'sigMCStudier':
             sequence.append(batchTask_sigMCValidation.GetToyObject(self))
         if s is 'mixedToyStudier':
-            #import BsToPhiMuMuFitter.script.batchTask_mixedToyValidation as batchTask_mixedToyValidation
             sequence.append(batchTask_mixedToyValidation.GetMixedToyObject(self))
         if s in ['bkgCombToyGenerator', 'bkgPeakToyGenerator']:
             import BsToPhiMuMuFitter.toyCollection as toyCollection
@@ -150,7 +143,7 @@ if __name__ == '__main__':
     from copy import deepcopy
    
     if args.OneStep is False: args.TwoStep = True
-    p.work_dir="plots_"+str(args.Year)
+    p.work_dir="plots_{}".format(args.Year)
     p.cfg['args'] = deepcopy(args)
     p.cfg['sysargs'] = sys.argv
     GetInputFiles(p)
@@ -158,13 +151,13 @@ if __name__ == '__main__':
 
     if (not args.SimFit) and (type(predefined_sequence[args.seqKey]) is tuple):
         predefined_sequence[args.seqKey]=predefined_sequence[args.seqKey][0]+predefined_sequence[args.seqKey][1]
-    if args.SimFit or args.SimFitPlots:
-        p.name="SimultaneousFitProcess"; p.work_dir="plots_simultaneous"
-    if args.seqKey=='sigMCValidation':
-        p.name='sigMCValidationProcess'
+    if args.SimFit or args.SimFitPlots: 
+        p.name="SimultaneousFitProcess"
+        p.work_dir="plots_simultaneous"
+    if args.seqKey=='sigMCValidation': p.name='sigMCValidationProcess'
 
     for b in p.cfg['bins']:
-        print("Time: ", datetime.datetime.now())
+        Stime = datetime.datetime.now()
         p.cfg['binKey'] = b
         try:
             def runSimSequences():
@@ -185,7 +178,7 @@ if __name__ == '__main__':
             elif args.Function_name in ['submit', 'run', 'postproc']:
                 print("INFO: Processing {0} year data".format(args.Year))
                 from BsToPhiMuMuFitter.anaSetup import modulePath
-                if p.name=='sigMCValidationProcess':
+                if args.seqKey=='sigMCValidation':
                     import BsToPhiMuMuFitter.script.batchTask_sigMCValidation as batchTask_sigMCValidation
                     wrappedTask = batchTask_sigMCValidation.BatchTaskWrapper(
                         "myBatchTask",
@@ -233,3 +226,5 @@ if __name__ == '__main__':
         finally:
             p.endSeq()
             for obj in p._sequence: obj.reset()
+        Etime = datetime.datetime.now()
+        print("Time taken to execute", args.seqKey, "in", b, "bin:", (Etime-Stime).seconds/60, "minutes!")

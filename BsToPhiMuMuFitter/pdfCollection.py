@@ -198,8 +198,8 @@ setupBuildSigM = {
         "RooGaussian::f_sigMGauss2(Bmass, sigMGauss_mean, sigMGauss2_sigma[0.0667, 0.0005, 0.40])",
         #"SUM::f_sigM(sigM_frac[0.7, 0.,1.]*f_sigMGauss1, f_sigMGauss2)",
         #"RooJohnson::f_sigM(Bmass, sigM_mu[5.36, 5.25, 5.45], sigM_lambda[0.0181, 0, 1], sigM_gamma[0.0236, -1, 1], sigM_delta[1.36, 0, 10])",
-        "RooJohnson::f_sigM1(Bmass, sigM_mu[5.36, 5.25, 5.45], sigM_lambda1[0.0181, 0, 1], sigM_gamma1[0.0236, -10, 10], sigM_delta1[1.36, 0, 10])",
-        "RooJohnson::f_sigM2(Bmass, sigM_mu, sigM_lambda2[0.011, 0, 1], sigM_gamma2[0.02, -10, 10], sigM_delta2[2.36, 0, 10])",
+        "RooJohnson::f_sigM1(Bmass, sigM_mu[5.36, 5.25, 5.45], sigM_lambda1[0.0181, 1e-6, 1], sigM_gamma1[0.0236, -10, 10], sigM_delta1[1.36, 1e-6, 10])",
+        "RooJohnson::f_sigM2(Bmass, sigM_mu, sigM_lambda2[0.011, 1e-6, 1], sigM_gamma2[0.02, -10, 10], sigM_delta2[2.36, 1e-6, 10])",
         "SUM::f_sigM(sigM_frac[0.7, 0.,1.]*f_sigM1, f_sigM2)",
         "cbs_mean[5.369, 5.28, 5.4]",
         "RooCBShape::cbs_1(Bmass, cbs_mean, cbs1_sigma[0.0268, 0.0001, 0.60], cbs1_alpha[0.89, -6.0, 6.0], cbs1_n[4, 0, 1000])",
@@ -349,7 +349,7 @@ def GetAnalyticBkgAList(self):
         f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Cbv4_Cbv5']#['Gaus2Poly4_Poly6'] #['Gaus2Poly4_Poly3']
         f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Leg36G2_Cbv4_v24'] #['Gaus2Poly2_Poly6']
         f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Cbv4_Cbv3']
-        f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Cbv3_Cbv3']
+        f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Cbv5_Cbv5']
         f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Leg6G2_Cbv3_v6']
         return f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
 setupBuildAnalyticBkgCombA = {
@@ -586,7 +586,7 @@ f_BkgM_KStar_format['DCB_Gaus'] = [ # pdfB: Double Crystal Ball + Gauss
         "SUM::f_bkgM_KStar({bkgM_frac_KStar}*cbs_KStar_1, bkgM_frac1_KStar[.1,0.,1.]*gauss1, cbs_KStar_2)",
 ]
 f_BkgM_KStar_format['RJ_PeakM'] = [ # pdfB: Double Crystal Ball + Gauss
-        "RooJohnson::f_bkgM_KStar(Bmass, Kstar_mass_mu[5.36, 5.25, 5.45], Kstar_mass_lambda[0.0181, 0, 1], Kstar_mass_gamma[0.0236, -1, 1], Kstar_mass_delta[1.36, 0, 10])",
+        "RooJohnson::f_bkgM_KStar(Bmass, Kstar_mass_mu[5.36, 5.25, 5.45], Kstar_mass_lambda[0.0181, 1e-6, 1], Kstar_mass_gamma[0.0236, -1, 1], Kstar_mass_delta[1.36, 1e-6, 10])",
 ]
 
 def InitParams_KStar(self):

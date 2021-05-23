@@ -34,10 +34,13 @@ class DataReader(Path):
     def __str__(self):
         list_of_files = self.ch.GetListOfFiles()
         next_file = TIter(list_of_files)
-        print("Input file list is given below.")
+        self.logger.logDEBUG("Input file list is given below.")
+        self.logger.logDEBUG("Absolute path: ", os.path.dirname(next_file.GetTitle()))
+        ifile = next_file.Begin()
         for f in range(list_of_files.GetEntries()):
-            print("\t{0}".format(next_file().GetTitle()))
-        print("End of the input file list.")
+            self.logger.logDEBUG("\t{0}".format(os.path.basename(ifile.GetTitle())), Stamp=False)
+            ifile = next_file.Next()
+        self.logger.logDEBUG("End of the input file list.")
         return 1
 
     @classmethod
@@ -56,8 +59,8 @@ class DataReader(Path):
     def createDataSet(self, dname, dcut):
         """Return named dataset, create if not exist"""
         if dname in self.dataset.keys() and not self.process.cfg['args'].force:
-            print("\033[0;34;47m Dataset: ", dname, " Already Exists! \033[0m", dcut, self.dataset[dname].sumEntries())
-            self.dataset[dname].Print()
+            self.logger.logINFO("\033[0;34;47m Dataset: ", dname, " Already Exists! \033[0m. Total Entries:",  self.dataset[dname].sumEntries())
+            self.logger.logDEBUG(dcut, Stamp=False)
             return 1
         tempfile_preload = ROOT.TFile(tempfile.gettempdir()+"/temp.root", 'RECREATE') #Pritam
         RooCut = ROOT.RooFit.Cut(dcut)
@@ -68,7 +71,6 @@ class DataReader(Path):
         if "dataReader" in dname or "sigMCGENReader" in dname:
             data = RooDataSet(dname, "", self.argset, Import, RooCut, Range)
         else:
-            #data = RooDataSet (dname, "Weighted dataset", datam, self.argset, "1", self.cfg['weight']) # PU Weighted dataset
             data = RooDataSet(dname, "Weighted dataset", self.argset, Import, RooCut, Range, Weight)
 
         if self.argset.find("Phimass"): 
@@ -77,9 +79,8 @@ class DataReader(Path):
             self.dataset[dname+".hist"] = deepcopy(datahist)
         data.Write()
         self.dataset[dname] = deepcopy(data)
-        print("\033[0;34;47m Creating Dataset: ", dname, ": \033[0m", dcut, data.sumEntries())
-        data.Print()
-        self.dataset[dname].Print()
+        self.logger.logINFO("\033[0;34;47m Creating Dataset: ", dname, ": \033[0m. Total Entries:", data.sumEntries())
+        self.logger.logDEBUG(dcut, Stamp=False)
         tempfile_preload.Close() #Pritam
         return 1
 

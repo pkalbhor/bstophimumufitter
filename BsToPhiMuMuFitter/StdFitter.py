@@ -13,7 +13,7 @@ from v2Fitter.Fitter.FitterCore import FitterCore
 from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
 
 class StdFitter(FitterCore):
-    """Implementation to standard fitting procdeure to BuToKstarMuMu angular analysis"""
+    """Implementation to standard fitting procdeure for BsToPhimumu angular analysis"""
 
     @classmethod
     def templateConfig(cls):
@@ -53,23 +53,15 @@ class StdFitter(FitterCore):
         for opt in self.cfg.get("createNLLOpt", []):
             self.fitter.addNLLOpt(opt)
         minuit=self.fitter.Init(self.pdf, self.data)
+        #minuit.setLogFile(self.name+'_minimizer.log')
         minuit.setStrategy(2)
-        if self.process.cfg['args'].Function_name in ['submit', 'run']: minuit.setPrintLevel(3)
         self._nll = self.fitter.GetNLL()
 
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
-        if self.cfg['AliasTag'] is not None: #Adding tag to parameters to rename it. #Adding tag to parameters to rename it.
-            self.cfg['argAliasInDB'] = {}; arglist=[]
-            FitterCore.ArgLooper(self.pdf.getParameters(self.data), lambda p: arglist.append(p.GetName()))
-            for var in arglist: self.cfg['argAliasInDB'].update({var: var+self.cfg['AliasTag']})
-
-        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgComb', 'nSig', 'nBkgPeak', 'PeakFrac', 'unboundFl', 'unboundAfb'])
-
-        if self.process.cfg['args'].seqKey in ['sigMCValidation', 'mixedToyValidation']: #Resetting parameters to initial values.
-            wspace='wspace.{}.{}'.format(self.process.cfg['args'].Year, self.process.cfg['args'].binKey)
-            self.pdf.getParameters(self.data).find('unboundAfb').setVal(0.1)
-            self.pdf.getParameters(self.data).find('unboundFl').setVal(0.75)
+        if not self.process.cfg['args'].NoImport: 
+            #FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgComb', 'nSig', 'nBkgPeak', 'PeakFrac', 'unboundFl', 'unboundAfb'])
+            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
 
@@ -82,7 +74,7 @@ class StdFitter(FitterCore):
         def isPhysical(uA, uF):
             f = unboundFlToFl(uF)
             a = unboundAfbToAfb(uA, f)
-            return abs(a) < (1 - f) * 0.75
+            return abs(a) < (1 - f)*2.
         while not isPhysical(unboundAfb.getVal(), unboundFl.getVal()):
             fl = unboundFlToFl(unboundFl.getVal())
             afb = unboundAfbToAfb(unboundAfb.getVal(), fl)
@@ -111,7 +103,8 @@ class StdFitter(FitterCore):
         #FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
         self.ToggleConstVar(self.args, True)
         if self.cfg['saveToDB']:
-            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, 
+                                   self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
 
     def _runFitSteps(self):

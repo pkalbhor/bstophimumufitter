@@ -95,19 +95,21 @@ Decide the number of entries of this subset.
                 else:
                     TempData = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType, self.process.cfg['args'].Year)
                     self.fitter.data.append(TempData)
+            self.SaveSubsamples(iSet, self.fitter.data, "FinalSubSample_{}".format(self.process.cfg['args'].Year))
             if self.proceedFlag==False: 
                 self.proceedFlag=True
                 print(">> Got negative expected entries. Subsample is Flagged Bad")
                 continue
-            self.fitter.pdf = self.process.sourcemanager.get(self.fitter.cfg['pdf'])
-            self.fitter._bookMinimizer()
-            self.fitter._preFitSteps()
-            self.fitter._runFitSteps()
-            self._postRunFitSteps(iSet)
+            if not self.process.cfg['args'].NoFit:
+                self.fitter.pdf = self.process.sourcemanager.get(self.fitter.cfg['pdf'])
+                self.fitter._bookMinimizer()
+                self.fitter._preFitSteps()
+                self.fitter._runFitSteps()
+                self._postRunFitSteps(iSet)
             iSet += 1
-            if (self.treeContent.status==0 and self.treeContent.hesse==0 and self.treeContent.covQual==3):
-                rSet += 1
+            if (self.treeContent.status==0 and self.treeContent.hesse==0 and self.treeContent.covQual==3) or (self.process.cfg['args'].NoFit): rSet += 1
             self.fitter.reset()
+            print(">>>> Successful sub-samples:", rSet, "Failed sub-samples:", iSet-rSet)
         print("Failed subsamples: ", iSet-rSet)
 
     def BookSimData(self, iSet, func):
@@ -159,15 +161,14 @@ Decide the number of entries of this subset.
             for pdf, data, Year in zip(self.fitter.pdf, self.fitter.data, self.fitter.Years): 
                 FitterCore.ArgLooper(pdf.getParameters(data), lambda p: p.SetName(p.GetName().split("_{0}".format(Year))[0]), targetArgs=self.fitter.cfg['argPattern'], inverseSel=True)
             iSet += 1
-            if (self.treeContent.status==0 and self.treeContent.hesse==0 and self.treeContent.covQual==3):
-                rSet += 1
+            if (self.treeContent.status==0 and self.treeContent.hesse==0 and self.treeContent.covQual==3) or (self.process.cfg['args'].NoFit): rSet += 1
             self.fitter.reset()
             print(">>>> Successful sub-samples:", rSet, "Failed sub-samples:", iSet-rSet)
         print("Failed subsamples: ", iSet-rSet)
 
     def SaveSubsamples(self, index, subdata, Name):
         subdata.SetName(Name.replace(".", "_")+"_{}".format(index))
-        if False:
+        if self.process.cfg['args'].NoFit:
             ofile = ROOT.TFile.Open("{}_subsamples_{}.root".format(self.process.name, index), "UPDATE")
             subdata.Write()
             ofile.Close()
@@ -192,7 +193,7 @@ def getSubData_random(self, idx, checkCollision=True):
     evtBits = ROOT.TBits(int(numEntries))
     while True:
         outputBits = ROOT.TBits(numEntries)
-        for entry in range(math.ceil(self.currentSubDataEntries)):
+        for entry in range(math.ceil(self.currentSubDataEntries)*2): #Factor 2 to take care of weighted yield
             rnd_collisions = 0
             while True:
                 rnd = ROOT.gRandom.Integer(numEntries)
@@ -213,8 +214,9 @@ def getSubData_random(self, idx, checkCollision=True):
             if True: #Dataset with weights
                 output.add(self.data[idx].get(startBit), self.data[idx].weight(), self.data[idx].weightError())
                 if output.sumEntries() >= (self.currentSubDataEntries - 0.5): break
-            else:
+            else: # Dataset without weights
                 output.add(self.data[idx].get(startBit))
+                if output.sumEntries() == self.currentSubDataEntries: break
             startBit = outputBits.FirstSetBit(startBit + 1)
         self.sigEntries = self.currentSubDataEntries #output.sumEntries()
         self.logger.logINFO("SubDataSet has actual yield {0} created from sample {1}".format(output.sumEntries(), output.GetName()))

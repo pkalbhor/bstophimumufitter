@@ -180,7 +180,7 @@ def GetFitterObjects(self, seq):
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
             'FitHesse': True,
             'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
-            'argAliasInDB': {**ArgAliasSigM, **ArgAliasGEN},
+            'argAliasInDB': {**ArgAliasGEN},
             'argAliasSaveToDB': False,
         })
         return StdFitter(setupFinalFitter)
@@ -260,7 +260,7 @@ def GetFitterObjects(self, seq):
         })
         return StdFitter(setupBkgPeak3DFitter)
     if seq == 'finalFitter_WithKStar':
-        setupFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                         # 3D = nSig(Sig2D*SigM) + nBkg(fBkgM*fBkgA)
+        setupFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                         # 3D = nSig(Sig3D) + nBkg(fBkgM*fBkgA) + nBkgPeak(fBkgPeak)
         setupFinalFitter_WithKStar.update({
             'name': "finalFitter_WithKStar{}.{}".format('_Alt' if AltRange else '_ts' if TwoStep else '', Year),
             'data': "dataReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''),
@@ -530,7 +530,7 @@ setupSimFitterFinal_AltM.update({
 })
 SimultaneousFitter_Final_AltM = SimultaneousFitter(setupSimFitterFinal_AltM)
 
-setupSimFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgM*fBkgA)
+setupSimFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig3D) + nBkg(fBkgM*fBkgA)
 setupSimFinalFitter_WithKStar.update({
     'category'  : ['cat16', 'cat17', 'cat18'],
     'data'      : ["dataReader.2016.Fit", "dataReader.2017.Fit", "dataReader.2018.Fit"],

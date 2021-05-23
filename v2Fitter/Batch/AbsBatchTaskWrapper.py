@@ -109,7 +109,7 @@ when_to_transfer_output = ON_EXIT
 BatchTaskParser = ArgumentParser(add_help=False, conflict_handler='resolve',
     description="""
 Routine to run a batch task on HTCondor.""", epilog="""
-Users must complete following step(s):
+When running batch tasks, users must complete following step(s):
     * Set the task wrapper with
         BatchTaskParser.set_defaults(
             wrapper=YOUR_WRAPPER_INSTANCE,

@@ -76,15 +76,11 @@ Following functions to be overloaded to customize the full procedure...
         for pdf, data, Year in zip(self.pdf, self.data, self.Years):
             args = pdf.getParameters(ROOT.RooArgSet(CosThetaK, CosThetaL, Bmass))
             odbfile = os.path.join(self.process.cwd, "plots_{0}".format(Year), self.process.dbplayer.odbfile)
-            if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(odbfile, args, aliasDict=self.cfg['argAliasInDB'], exclude=self.cfg['argPattern'] if not self.process.cfg['args'].seqKey == 'fitBkgCombA' else None)
+            if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(odbfile, args, aliasDict=self.cfg['argAliasInDB'])
             self.ToggleConstVar(args, True)
             self.ToggleConstVar(args, False, self.cfg['argPattern'])
             # Rename parameter names
             FitterCore.ArgLooper(args, lambda p: p.SetName(p.GetName()+"_{0}".format(Year)), targetArgs=self.cfg['argPattern'], inverseSel=True) 
-            if self.process.cfg['args'].seqKey in ['sigMCValidation', 'mixedToyValidation']: #Resetting parameters to initial values.
-                pdf.getParameters(data).find('unboundAfb').setVal(0.1)
-                pdf.getParameters(data).find('unboundFl').setVal(0.75)
-                #pdf.getParameters(data).find('nBkgComb_{}'.format(Year)).setVal(odbfile:)
 
     def _runFitSteps(self):
         """Standard fitting procedure to be overwritten."""
