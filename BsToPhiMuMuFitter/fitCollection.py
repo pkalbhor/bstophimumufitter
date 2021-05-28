@@ -89,6 +89,18 @@ def GetFitterObjects(self, seq):
             'pdfY'  : "effi_cosK_rec.{0}".format(Year),
         })
         return EfficiencyFitter(setupEffiFitter)
+    if seq == 'effiFitter2':
+        setupBkgCombAFitter = deepcopy(setupTemplateFitter)
+        setupBkgCombAFitter.update({
+            'name': "effiFitter2.{}".format(Year),
+            'data': "effiHistReader.accXrec.{0}".format(Year),
+            'pdf': "effi_sigA{}.{}".format('_ts' if TwoStep else '', Year),
+            #'argPattern': [r'[kl][\d]_ts+'],
+            'FitHesse': True,
+            'FitMinos': [False, ()],
+            'createNLLOpt': [],
+        })
+        return StdFitter(setupBkgCombAFitter)
     if seq == 'sig2DFitter':
         setupSig2DFitter = deepcopy(setupTemplateFitter)
         setupSig2DFitter.update({
@@ -199,7 +211,7 @@ def GetFitterObjects(self, seq):
         })
         return StdFitter(setupSigMDCBFitter)
     #'_DCBG_Alt' if AltRange and binKey not in ['summary', 'summaryLowQ2'] and Year==2017 else ('_Alt' if AltRange else '')
-    if seq is 'sigMFitter':
+    if seq == 'sigMFitter':
         setupSigMDCBFitter = deepcopy(setupTemplateFitter)
         setupSigMDCBFitter.update({
             'name': "sigMFitter{}.{}".format('_Alt' if AltRange else '', Year),
@@ -224,7 +236,7 @@ def GetFitterObjects(self, seq):
             'argAliasSaveToDB': False,
         })
         return StdFitter(setupFinalFitter_AltM)
-    if seq is 'bkgM_KStarFitter':
+    if seq == 'bkgM_KStarFitter':
         setupBkgMFitter_KStar = deepcopy(setupTemplateFitter)
         setupBkgMFitter_KStar.update({
             'name': "bkgM_KStarFitter{}.{}".format('_Alt' if AltRange else '', Year),
@@ -236,7 +248,7 @@ def GetFitterObjects(self, seq):
             'createNLLOpt': [],
         })
         return StdFitter(setupBkgMFitter_KStar)
-    if seq is 'bkgA_KStarFitter':
+    if seq == 'bkgA_KStarFitter':
         setupBkgA_KStarFitter = deepcopy(setupTemplateFitter)
         setupBkgA_KStarFitter.update({
             'name': "bkgA_KStarFitter{}.{}".format('_Alt' if AltRange else '', Year),
@@ -422,46 +434,6 @@ setupBkgCombMFitter.update({
 })
 bkgCombMFitter = StdFitter(setupBkgCombMFitter)
 
-
-setupFinal_AltM_AltBkgCombM_AltA_Fitter = deepcopy(setupTemplateFitter)  #Alternate 3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgAltM*fBkgAltA)
-setupFinal_AltM_AltBkgCombM_AltA_Fitter.update({
-    'name': "final_AltM_AltBkgCombM_AltA_Fitter",
-    'data': "dataReader.Fit",
-    'pdf': "f_finalAltM_AltBkgCombM_AltBkgCombA",
-    'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombMAltM_c[\d]+'],
-    'createNLLOpt': [ROOT.RooFit.Extended(True),],
-    'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
-    'argAliasInDB': {**ArgAliasDCB, **ArgAliasGEN},
-    'argAliasSaveToDB': False,
-})
-final_AltM_AltBkgCombM_AltA_Fitter = StdFitter(setupFinal_AltM_AltBkgCombM_AltA_Fitter)
-
-setupFinalMDCBFitter = deepcopy(setupTemplateFitter)                     # Final Mass PDF: nSig(f_sigMDCB)+nBkg(fBkgM)
-setupFinalMDCBFitter.update({
-    'name': "finalMDCBFitter",
-    'data': "dataReader.Fit",
-    'pdf': "f_finalMDCB",
-    'argPattern': ['nSig', 'nBkgComb', r'bkgCombM_c[\d]+'],
-    'createNLLOpt': [ROOT.RooFit.Extended(True), ],
-    'FitMinos': [True, ('nSig', 'nBkgComb')],
-    'argAliasInDB': ArgAliasDCB,
-    'argAliasSaveToDB': False,
-})
-finalMDCBFitter = StdFitter(setupFinalMDCBFitter)
-
-setupFinalMDCB_AltBkgCombM_Fitter = deepcopy(setupTemplateFitter) # Final Mass Alternate Fitter: nSig(f_sigMDCB)+nBkg(fBkgAltM)
-setupFinalMDCB_AltBkgCombM_Fitter.update({
-    'name': "finalMDCB_AltBkgCombM_Fitter",
-    'data': "dataReader.Fit",
-    'pdf': "f_finalMDCB_AltBkgCombM",
-    'argPattern': ['nSig', 'nBkgComb', r'bkgCombMAltM_c[\d]+'],
-    'createNLLOpt': [ROOT.RooFit.Extended(True), ],
-    'FitMinos': [True, ('nSig', 'nBkgComb')],
-    'argAliasInDB': ArgAliasDCB,
-    'argAliasSaveToDB': False,
-})
-finalMDCB_AltBkgCombM_Fitter = StdFitter(setupFinalMDCB_AltBkgCombM_Fitter)
-
 ## Fitter Objects for SimultaneousFitter
 from v2Fitter.Fitter.SimultaneousFitter import SimultaneousFitter
 setupTemplateSimFitter = SimultaneousFitter.templateConfig()
@@ -478,6 +450,7 @@ setupSimultaneousFitter.update({
 })
 SimultaneousFitter_sig2D = SimultaneousFitter(setupSimultaneousFitter)
 
+# 3D Signal fit
 setupeSig3DFitter = deepcopy(setupTemplateSimFitter)
 setupeSig3DFitter.update({
     'category'  : ['cat16', 'cat17', 'cat18'],
@@ -505,6 +478,7 @@ Simul_sigMCValidation_setup.update({
 })
 SimultaneousFitter_sigMCValidation = SimultaneousFitter(Simul_sigMCValidation_setup)
 
+# Privat MC fit
 setupSimulFitter_sigGEN = deepcopy(setupTemplateSimFitter)
 setupSimulFitter_sigGEN.update({
     'category'  : ['cat16', 'cat17', 'cat18'],
@@ -518,44 +492,22 @@ setupSimulFitter_sigGEN.update({
 })
 SimulFitter_sigGEN = SimultaneousFitter(setupSimulFitter_sigGEN)
 
-setupSimFitterFinal_AltM = deepcopy(setupTemplateSimFitter)
-setupSimFitterFinal_AltM.update({
-    'category'  : ['cat16', 'cat17', 'cat18'],
-    'data'      : ["dataReader.2016.Fit", "dataReader.2017.Fit", "dataReader.2018.Fit"],
-    'pdf'       : ["f_final_AltM.2016", "f_final_AltM.2017", "f_final_AltM.2018"],
-    'argPattern': ['unboundAfb', 'unboundFl'],
-    'argAliasInDB': {**ArgAliasDCB, **ArgAliasGEN},
-    'argAliasSaveToDB': False,
-    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
-})
-SimultaneousFitter_Final_AltM = SimultaneousFitter(setupSimFitterFinal_AltM)
-
+#Final Fit
 setupSimFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig3D) + nBkg(fBkgM*fBkgA)
 setupSimFinalFitter_WithKStar.update({
+    'name'      : 'SimultFitterFinal',
     'category'  : ['cat16', 'cat17', 'cat18'],
     'data'      : ["dataReader.2016.Fit", "dataReader.2017.Fit", "dataReader.2018.Fit"],
     'pdf'       : ["f_final_WithKStar_ts.2016", "f_final_WithKStar_ts.2017", "f_final_WithKStar_ts.2018"],
-    'argPattern': ['unboundAfb', 'unboundFl'],
+    'argPattern': ['unboundAfb', 'unboundFl', 'nBkgComb_2016', 'nBkgComb_2017', 'nBkgComb_2018', 
+                    'nSig_2016', 'nSig_2017', 'nSig_2018', 'bkgCombM_c1_2016', 'bkgCombM_c1_2017', 'bkgCombM_c1_2018'],
     'Years'     : [2016, 2017, 2018],
     'argAliasInDB': {**ArgAliasGEN},
+    'LegName'   : 'Data',
     'argAliasSaveToDB': False,
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(0)],],
 })
 SimFitter_Final_WithKStar = SimultaneousFitter(setupSimFinalFitter_WithKStar)
-
-setupSimFinalFitter_AltM_WithKStar = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgM*fBkgA)
-setupSimFinalFitter_AltM_WithKStar.update({
-    'category'  : ['cat16', 'cat17', 'cat18'],
-    'data'      : ["dataReader.2016.Fit", "dataReader.2017.Fit", "dataReader.2018.Fit"],
-    'pdf'       : ["f_final_AltM_WithKStar.2016", "f_final_AltM_WithKStar.2017", "f_final_AltM_WithKStar.2018"],
-    'argPattern': ['unboundAfb', 'unboundFl'],
-    'Years'     : [2016, 2017, 2018],
-    'argAliasInDB': {**ArgAliasGEN},
-    'LegName'  : 'Data',
-    'argAliasSaveToDB': False,
-    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
-})
-SimFitter_Final_AltM_WithKStar = SimultaneousFitter(setupSimFinalFitter_AltM_WithKStar)
 
 # mixToy Validation
 Simul_mixedToyValidation_setup = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgM*fBkgA)
@@ -567,7 +519,7 @@ Simul_mixedToyValidation_setup.update({
     'argPattern': ['unboundAfb', 'unboundFl', 'nBkgComb_2016', 'nBkgComb_2017', 'nBkgComb_2018', 'nSig_2016', 'nSig_2017', 'nSig_2018'], #r'nBkgComb*.', r'nSig*.'], # 'bkgCombM_c1_2016', 'bkgCombM_c1_2017', 'bkgCombM_c1_2018'],
     'Years'     : [2016, 2017, 2018],
     'argAliasInDB': {**ArgAliasGEN},
-    'LegName'  : 'Data',
+    'LegName'   : 'Data',
     'argAliasSaveToDB': False,
     'fitToCmds' : [[ROOT.RooFit.Strategy(3), ROOT.RooFit.InitialHesse(0), ROOT.RooFit.Minimizer('Minuit2', 'migrad'), ROOT.RooFit.Minos(0)],],
 })

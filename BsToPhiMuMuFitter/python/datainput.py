@@ -130,14 +130,34 @@ def GetPeakingFraction(self):
     import ROOT
     import json
     from math import sqrt
-    
+    from filelock import Timeout, FileLock
+
+    def ReadJson(ifile):
+        if os.path.exists(ifile):
+            rfile = open(ifile, 'r')
+            try:
+                return json.load(rfile)
+            except:
+                return {} #Exception probably due to non-JSON file
+            rfile.close()
+        else:
+            return {}
+
+    def LockRefreshAndWrite(ifile, data):
+        lock_path = ifile+".lock"
+        lock = FileLock(lock_path, timeout=50)
+        lock.acquire()
+        try:
+            olddata = ReadJson(ifile)
+            rfile = open(ifile, 'w')
+            json.dump({**olddata, **data}, rfile, indent=2)
+        finally:
+            rfile.close()
+            lock.release()
+            os.remove(lock_path)
+
     ifile = "TotalEffValues.json"
-    if os.path.exists(ifile):
-        rfile = open(ifile, 'r')
-        data = json.load(rfile)
-        rfile.close()
-    else:
-        data = {}
+    data = ReadJson(ifile)
 
     binkey = self.process.cfg['binKey']
     if binkey in data.keys():
@@ -151,7 +171,6 @@ def GetPeakingFraction(self):
         PeakDen = self.process.cfg['genOff']['KstarMuMu']
         sigNum = self.process.cfg['sigMC']
         sigDen = self.process.cfg['genOff']['PhiMuMu']
-        #self.cfg['genonly']['PhiMuMu']
         def GetTree(File):
             ch = ROOT.TChain()
             for f in File: ch.Add(f)
@@ -171,10 +190,5 @@ def GetPeakingFraction(self):
         for key in ['PeakNum', 'PeakDen', 'sigNum', 'sigDen']:
             data[binkey][key]['getError'] = 1/sqrt(data[binkey][key]['getVal'])
         data[binkey]['ratio']['getVal'] = (a/b)/(c/d)
-        rfile = open(ifile, 'w')
-        json.dump(data, rfile, indent=2)
-        return (a/b)/(c/d)
-    #a = GetTree(PeakNum)
-    #b = GetTree(PeakDen)
-    #return a.GetEntries(finalcut)/b.GetEntries(gensel)
-
+        LockRefreshAndWrite(ifile, data)
+        return (a/b)/(c/d) 

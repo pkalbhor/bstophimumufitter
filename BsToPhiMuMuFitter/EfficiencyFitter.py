@@ -63,6 +63,7 @@ class EfficiencyFitter(FitterCore):
             theList.Add(theSave);  theList.Add(Verbose); theList.Add(PrintLevel); theList.Add(Err); theList.Add(Strategy)
             Res=pdf.chi2FitTo(hdata, theList)
             Res=pdf.chi2FitTo(hdata, theList)
+            Res=pdf.chi2FitTo(hdata, theList)
             Res.Print("v")
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, FitterCore.GetFitResult(self.name, var.GetName(), Res))
     
@@ -132,6 +133,7 @@ class EfficiencyFitter(FitterCore):
                 self.fitter=fitter.FitHesse()
                 self.fitter=fitter.FitMinos(self.pdf.getParameters(self.data).selectByAttrib("Constant",0))
             else: #Using chi2 optimization
+                self.fitter = self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(1), ROOT.RooFit.Strategy(2), ROOT.RooFit.Save(1), ROOT.RooFit.PrintLevel(-1))
                 self.fitter = self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(1), ROOT.RooFit.Strategy(2), ROOT.RooFit.Save(1), ROOT.RooFit.PrintLevel(-1))
                 self.fitter = self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(1), ROOT.RooFit.Strategy(2), ROOT.RooFit.Save(1), ROOT.RooFit.PrintLevel(-1))
             self.fitter.Print("v")

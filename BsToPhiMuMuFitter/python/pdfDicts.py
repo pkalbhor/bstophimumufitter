@@ -82,7 +82,7 @@ for ver, numb, term in [('', n, xTerm), ('2', n1A, xTerm2), ('3', Nx3, xTerm3), 
             xTerm=term,
             args="{CosThetaL,CosThetaK,hasXTerm,effi_norm[.5,0,1]," + ','.join(["l{0}".format(i) for i in range(1, nLB+1)] + ["k{0}".format(i) for i in range(1, 8)] + ["x{0}".format(i) for i in range(numb)]) + "}")]
 
-    f_effiSigA_format['Gaus3_Poly6_XTerm{}'.format(ver)] = ["l1[.1,0,10]", "l2[0,-0.02,0.02]", "l3[0.2,.01,5.]", "l4[.2,0, .9.]", "l5[.2,0.001,5.0]", "l6[-.2,-1.,0.]", "l7[.2,.001,5.]"] + ["k{0}[-10,10]".format(i) for i in range(1, nK)] \
+    f_effiSigA_format['Gaus3_Poly6_XTerm{}'.format(ver)] = ["l1[.1,0,10]", "l2[0,-0.02,0.02]", "l3[0.9,.0001,5.]", "l4[.2,0, .9.]", "l5[.2,0.0001,5.0]", "l6[-.2,-1.,0.]", "l7[.2,.001,5.]"] + ["k{0}[-10,10]".format(i) for i in range(1, nK)] \
         + ["EXPR::effi_cosl('{pdf}',{args})".format(pdf=pdfL1B, args="{CosThetaL,"+', '.join(["l{0}".format(i) for i in range(1, nLB+1)]) + "}")] \
         + ["EXPR::effi_cosK('{pdf}',{args})".format(pdf=pdfK, args="{CosThetaK," + ', '.join(["k{0}".format(i) for i in range(1, nK)]) + "}")] \
         + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=term, args="{CosThetaL,CosThetaK,hasXTerm[0]," + ','.join(["x{0}[-30,30]".format(i) for i in range(numb)]) + "}")] \
@@ -241,6 +241,14 @@ for ver, numb, term in [('', n, xTerm), ('2', n1A, xTerm2), ('3', Nx3, xTerm3), 
                     + ["RooPolynomial::effi_cosK(CosThetaK, {k1, k2, k3, k4})"] + ["hasXTerm[0]"] \
     + ["expr::effi_xTerm('1+hasXTerm*({xTerm})',{args})".format(xTerm=term, args="{CosThetaL,CosThetaK,hasXTerm," + ','.join(["x{0}[-30,30]".format(i) for i in range(numb)]) + "}")] \
                     + ["prod::effi_sigA(effi_norm[0.5,0,1], effi_cosl, effi_cosK, effi_xTerm)"]
+
+# Conditional PDFs
+for m, n in ((a, b) for a in range(1, 10) for b in range(1, 10)):
+        f_effiSigA_format['GausXY{}_Cbv{}'.format(m, n)] = \
+            ["RooPolyVar::FofK(CosThetaK, {} )".format("{"+", ".join(['k{}[-10,10]'.format(i) for i in range(1,m+1)])+"}")] \
+            + ["RooGaussian::effi_cosl(CosThetaL, FofK, l1[0.3, 0.001, 5] )"] \
+            + ["RooChebychev::effi_cosK(CosThetaK, {} )".format("{"+", ".join(['k{}[-10,10]'.format(i) for i in range(m+1,m+n+1)])+"}")] \
+            + ["PROD::effi_sigA(effi_cosl|CosThetaK, effi_cosK)"]
 
 ######################################################################################################
 # Analytical Functions for Combinatorial Background Shapes of Angular Variables

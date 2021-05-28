@@ -1,0 +1,153 @@
+#!/usr/bin/bash --verbose
+GITDIR=$(git rev-parse --show-toplevel)  
+cd $GITDIR/BsToPhiMuMuFitter/
+
+schedd="\-\- Schedd: bigbird"
+
+./seqCollection.py -b all -s buildTotEff -y 2016 submit -s
+./seqCollection.py -b all -s buildTotEff -y 2017 submit -s
+./seqCollection.py -b all -s buildTotEff -y 2018 submit -s
+./seqCollection.py -b all -s buildEff -y 2016 submit -s
+./seqCollection.py -b all -s buildEff -y 2017 submit -s
+./seqCollection.py -b all -s buildEff -y 2018 submit -s
+./seqCollection.py -b all -s loadMC -y 2016 submit -s
+./seqCollection.py -b all -s loadMC -y 2017 submit -s
+./seqCollection.py -b all -s loadMC -y 2018 submit -s
+./seqCollection.py -b all -s loadMCGEN -y 2016 submit -s
+./seqCollection.py -b all -s loadMCGEN -y 2017 submit -s
+./seqCollection.py -b all -s loadMCGEN -y 2018 submit -s
+./seqCollection.py -b all -s loadMCk -y 2016 submit -s
+./seqCollection.py -b all -s loadMCk -y 2017 submit -s
+./seqCollection.py -b all -s loadMCk -y 2018 submit -s
+./seqCollection.py -b all -s loadData -y 2016 submit -s
+./seqCollection.py -b all -s loadData -y 2017 submit -s
+./seqCollection.py -b all -s loadData -y 2018 submit -s
+
+status=5
+while [[ $status -ne 1 ]]; do
+	echo -e "\nChecking status of buildTotEff seqeunce"
+	status=$(condor_q -nobatch | grep "buildTotEff\|loadData\|$schedd" | wc -l)
+	echo "status: " $status
+	sleep 60
+done
+
+./seqCollection.py -b all -s buildPdfs -y 2016
+./seqCollection.py -b all -s buildPdfs -y 2017
+./seqCollection.py -b all -s buildPdfs -y 2018
+
+status=5
+while [[ $status -ne 1 ]]; do
+	echo -e "\nChecking status of Efficiency seqeunce"
+	status=$(condor_q -nobatch | grep "buildEff\|$schedd" | wc -l)
+	echo "status: " $status
+	sleep 30
+done
+
+./seqCollection.py -b all -s fitEff -y 2016 submit -s
+./seqCollection.py -b all -s fitEff -y 2017 submit -s
+./seqCollection.py -b all -s fitEff -y 2018 submit -s
+
+status=5
+while [[ $status -ne 1 ]]; do
+	echo -e "\nChecking status of MC loading seqeunces"
+	status=$(condor_q -nobatch | grep "loadMCGEN\|loadMC\|loadMCk\|$schedd" | wc -l)
+	echo "status: " $status
+	sleep 30
+done
+
+./seqCollection.py -b all -s fitSigM -y 2016 submit -s
+./seqCollection.py -b all -s fitSigM -y 2017 submit -s
+./seqCollection.py -b all -s fitSigM -y 2018 submit -s
+
+./seqCollection.py -s fitBkgA_KStar -y 2016 -b all submit -s
+./seqCollection.py -s fitBkgA_KStar -y 2017 -b all submit -s
+./seqCollection.py -s fitBkgA_KStar -y 2018 -b all submit -s
+./seqCollection.py -s fitBkgM_KStar -y 2016 -b all submit -s
+./seqCollection.py -s fitBkgM_KStar -y 2017 -b all submit -s
+./seqCollection.py -s fitBkgM_KStar -y 2018 -b all submit -s
+
+./seqCollection.py -b all -s fitBkgCombA -y 2016 submit -s
+./seqCollection.py -b all -s fitBkgCombA -y 2017 submit -s
+./seqCollection.py -b all -s fitBkgCombA -y 2018 submit -s
+./seqCollection.py -b all -s fitSigMCGEN -y 2016 submit -s
+./seqCollection.py -b all -s fitSigMCGEN -y 2017 submit -s
+./seqCollection.py -b all -s fitSigMCGEN -y 2018 submit -s
+
+./seqCollection.py -b all -s fitSigMCGEN --SimFit submit -s
+
+status=5
+while [[ $status -ne 1 ]]; do
+	echo -e "\nChecking status of fitBkgM_KStar/fitBkgA_KStar seqeunce"
+	status=$(condor_q -nobatch | grep "fitBkgM_KStar\|fitBkgA_KStar\|$schedd" | wc -l)
+	echo "status: " $status
+	sleep 30
+done
+
+./seqCollection.py -s fitBkgPeak3D -y 2016 -b all submit -s
+./seqCollection.py -s fitBkgPeak3D -y 2017 -b all submit -s
+./seqCollection.py -s fitBkgPeak3D -y 2018 -b all submit -s
+
+status=5
+while [[ $status -ne 1 ]]; do
+	echo -e "\nChecking status of fitEff and fitSigM seqeunce"
+	status=$(condor_q -nobatch | grep "fitEff\|fitSigM\|$schedd" | wc -l)
+	echo "status: " $status
+	sleep 30
+done
+
+./seqCollection.py -b all -s fitSig3D -y 2016 submit -s
+./seqCollection.py -b all -s fitSig3D -y 2017 submit -s
+./seqCollection.py -b all -s fitSig3D -y 2018 submit -s
+
+status=5
+while [[ $status -ne 1 ]]; do
+	echo -e "\nChecking status of all seqeunce"
+	status=$(condor_q -nobatch | grep "seqCollection.py\|$schedd" | wc -l)
+	echo "status: " $status
+	sleep 60
+done
+
+./seqCollection.py -b all -s fitFinal3D_WithKStar -y 2016 submit -s
+./seqCollection.py -b all -s fitFinal3D_WithKStar -y 2017 submit -s
+./seqCollection.py -b all -s fitFinal3D_WithKStar -y 2018 submit -s
+./seqCollection.py -b all -s fitFinal3D_WithKStar --SimFit submit -s
+
+status=5
+while [[ $status -ne 1 ]]; do
+	echo -e "\nChecking status of fitFinal3D_WithKStar seqeunce"
+	status=$(condor_q -nobatch | grep "fitFinal3D_WithKStar\|$schedd" | wc -l)
+	echo "status: " $status
+	sleep 60
+done
+
+./seqCollection.py -b all -s fitSig3D --SimFit submit -s
+
+./seqCollection.py -b all -s mixedToyValidation -y 2016 -t 200 submit -n 15 -s
+./seqCollection.py -b all -s mixedToyValidation -y 2017 -t 200 submit -n 15 -s
+./seqCollection.py -b all -s mixedToyValidation -y 2018 -t 200 submit -n 15 -s
+
+./seqCollection.py -b all -s mixedToyValidation -t 200 --SimFit submit -n 15 -s
+
+status=5
+while [[ $status -ne 1 ]]; do
+	echo -e "\nChecking status of all seqeunce"
+	status=$(condor_q -nobatch | grep "seqCollection.py\|$schedd" | wc -l)
+	echo "status: " $status
+	sleep 30
+done
+
+./seqCollection.py -s createplots --list summary_RECO2GEN -y 2016
+./seqCollection.py -s createplots --list summary_RECO2GEN -y 2017
+./seqCollection.py -s createplots --list summary_RECO2GEN -y 2018
+./seqCollection.py -s createplots --list summary_RECO2GEN --SimFitPlots
+
+./seqCollection.py -s mixedToyValidation -y 2016 postproc --forall
+./seqCollection.py -s mixedToyValidation -y 2017 postproc --forall
+./seqCollection.py -s mixedToyValidation -y 2018 postproc --forall
+./seqCollection.py -s mixedToyValidation --SimFit postproc --forall
+
+./seqCollection.py -s createplots -b all -y 2016 --list effi plot_sig3D plot_bkgCombA plot_bkgPeak3D plot_final_WithKStar
+./seqCollection.py -s createplots -b all -y 2017 --list effi plot_sig3D plot_bkgCombA plot_bkgPeak3D plot_final_WithKStar
+./seqCollection.py -s createplots -b all -y 2018 --list effi plot_sig3D plot_bkgCombA plot_bkgPeak3D plot_final_WithKStar	
+./seqCollection.py -s StatusTable MakeTables -tseq effiFitter sig3DFitter sigAFitter bkgCombAFitter bkgPeak3DFitter finalFitter_WithKStar
+

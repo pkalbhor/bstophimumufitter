@@ -74,7 +74,7 @@ Two scripts are prepared for this procedure.
 ## Collecting Results
 * Table of status of fits
 ```bash
-./seqCollection.py -s StatusTable -y 2018 MakeTables --TSeq sigAFitter
+./seqCollection.py -s StatusTable -y 2018 MakeTables --TSeq sigAFitter sig3DFitter
 ```
 `--TSeq` option is used to fetch results of different fit sequences. Example options are `sig3DFitter`, `bkgCombAFitter`, `finalFitter_WithKStar`, ...
 

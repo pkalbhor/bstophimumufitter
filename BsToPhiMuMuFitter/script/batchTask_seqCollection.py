@@ -9,12 +9,13 @@ class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
         jdl = self.createJdlBase()
         jdl += """Transfer_Input_Files = {0}/seqCollection.py""".format(modulePath)
         jdl += """ 
-arguments = -b {binKey} -s {seqKey} --Year {Year} {TwoStep}
+arguments = -b {binKey} -s {seqKey} --Year {Year} {SimFit} {TwoStep} 
 queue {nJobs}""" 
         jdl = jdl.format(binKey=q2bins[parser_args.process.cfg['binKey']]['label'], 
                     seqKey=parser_args.process.cfg['args'].seqKey, nJobs=self.cfg['nJobs'], 
                     executable=os.path.join(modulePath,"seqCollection.py"), Year=parser_args.Year, 
-                    TwoStep='--TwoStep' if '--TwoStep' in parser_args.process.cfg['sysargs'] else '')
+                    TwoStep='--TwoStep' if '--TwoStep' in parser_args.process.cfg['sysargs'] else '',
+                    SimFit='--SimFit' if '--SimFit' in parser_args.process.cfg['sysargs'] else '')
         return jdl    
 
 setupBatchTask = deepcopy(BatchTaskWrapper.templateCfg())

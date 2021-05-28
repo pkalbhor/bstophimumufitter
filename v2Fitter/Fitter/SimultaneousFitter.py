@@ -78,9 +78,10 @@ Following functions to be overloaded to customize the full procedure...
             odbfile = os.path.join(self.process.cwd, "plots_{0}".format(Year), self.process.dbplayer.odbfile)
             if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(odbfile, args, aliasDict=self.cfg['argAliasInDB'])
             self.ToggleConstVar(args, True)
-            self.ToggleConstVar(args, False, self.cfg['argPattern'])
+            # self.ToggleConstVar(args, False, self.cfg['argPattern'])
             # Rename parameter names
             FitterCore.ArgLooper(args, lambda p: p.SetName(p.GetName()+"_{0}".format(Year)), targetArgs=self.cfg['argPattern'], inverseSel=True) 
+        self.ToggleConstVar(self.minimizer.getParameters(self.dataWithCategories), False, self.cfg['argPattern'])
 
     def _runFitSteps(self):
         """Standard fitting procedure to be overwritten."""
@@ -110,13 +111,11 @@ Following functions to be overloaded to customize the full procedure...
         for pdf, data in zip(self.pdf, self.data):
             self.ToggleConstVar(pdf.getParameters(data), True)
 
-        cwd=os.getcwd()
         if self.process.cfg['args'].seqKey == 'fitBkgCombA': os.chdir(os.path.join(self.process.cwd, "plots_{0}".format(self.process.cfg['args'].Year)))
         if self.cfg['saveToDB']: #Update parameters to db file
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.minimizer.getParameters(self.dataWithCategories), self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
         for pdf, data in zip(self.pdf, self.data): #Get parameter values from db file
             FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, pdf.getParameters(data), aliasDict=self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None, exclude=None)
-        os.chdir(cwd)
      
         """ofile = ROOT.TFile("../input/Simultaneous_{0}.root".format(q2bins[self.process.cfg['binKey']]['label']), "RECREATE")
         self.minimizer.Write()

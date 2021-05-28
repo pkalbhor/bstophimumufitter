@@ -150,16 +150,12 @@ Decide the number of entries of this subset.
             if not self.process.cfg['args'].NoFit:
                 self.fitter._bookMinimizer()
                 self.fitter._preFitSteps()
-
-                #To keep signal and background yields floating
-                self.fitter.ToggleConstVar(self.fitter.minimizer.getParameters(self.fitter.dataWithCategories), False, self.fitter.cfg['argPattern']) 
-
-                self.fitter._runFitSteps(); #self.fitter.minosResult = self.fitter.fitter.FitMinos(self.fitter.data[-1].get())
+                self.fitter._runFitSteps()
                 self._postRunFitSteps(iSet)
 
             #Remove a year tag from parameters
             for pdf, data, Year in zip(self.fitter.pdf, self.fitter.data, self.fitter.Years): 
-                FitterCore.ArgLooper(pdf.getParameters(data), lambda p: p.SetName(p.GetName().split("_{0}".format(Year))[0]), targetArgs=self.fitter.cfg['argPattern'], inverseSel=True)
+                FitterCore.ArgLooper(pdf.getParameters(data), lambda p: p.SetName(p.GetName().split("_{0}".format(Year))[0]))
             iSet += 1
             if (self.treeContent.status==0 and self.treeContent.hesse==0 and self.treeContent.covQual==3) or (self.process.cfg['args'].NoFit): rSet += 1
             self.fitter.reset()

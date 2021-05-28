@@ -16,13 +16,14 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 export PYTHONPATH=${PYTHONPATH}:${DIR}
 
-#argcomplete=$(pip3 list | grep argcomplete | wc -l)
-#if [ $argcomplete -eq 0 ]
-#then
+argcomplete=$(pip3 list --format=columns | grep filelock | wc -l)
+if [ $argcomplete -eq 0 ]
+then
 # pip3 install argcomplete --user
-#else
-# echo "Already installed argcomplete"
-#fi
+pip3 install filelock --user
+else
+echo " "
+fi
 
 alias python='python3'
 alias runallsteps="${DIR}/BsToPhiMuMuFitter/bash/RunAllSteps"

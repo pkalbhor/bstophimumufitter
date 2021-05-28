@@ -283,7 +283,7 @@ def GetParams(f, h, binKey, GEN, name):
     ROOT.TLatex().DrawLatexNDC(.73,.77,r"#scale[0.7]{{#color[3]{{Mean}}   : {param}}}".format(param=round(h.GetMean(), 5)) )
     ROOT.TLatex().DrawLatexNDC(.73,.73,r"#scale[0.7]{{#color[1]{{Samples}} : {param}}}".format(param=round(h.GetEntries(), 0)) )
 
-def GetSummaryGraph(binKeys, RecoResult, GenResult, args, pltName="mixedToy"):
+def GetSummaryGraph(binKeys, RecoResult, GenResult, args, savepath, pltName="mixedToy"):
     """Plotting a graph summarizing result for all bins"""
     binKeys.append('abovePsi2s'); RecoResult.append((2, 0, 2, 0)); GenResult.append((2, 0, 2, 0)) # added empty bin at end
     from array import array
@@ -399,7 +399,9 @@ def GetSummaryGraph(binKeys, RecoResult, GenResult, args, pltName="mixedToy"):
     legend.Draw()
     Plotter.legend.Draw()
     #Plotter.latexDataMarks(marks)
-    Plotter.canvas.Print(pltName+'_SummaryGraph_{}_a6.pdf'.format('Simult' if args.process.cfg['args'].SimFit else args.process.cfg['args'].Year))
+    filename = pltName+'_SummaryGraph_{}_a6.pdf'.format('Simult' if args.process.cfg['args'].SimFit else args.process.cfg['args'].Year)
+    filename = os.path.join(savepath, filename)            
+    Plotter.canvas.Print(filename)            
 
     for grIdx, gr in enumerate(grFls):
         gr.SetTitle("")
@@ -425,15 +427,21 @@ def GetSummaryGraph(binKeys, RecoResult, GenResult, args, pltName="mixedToy"):
     legend.Draw()
     Plotter.legend.Draw()
     #Plotter.latexDataMarks(marks)
-    Plotter.canvas.Print(pltName+'_SummaryGraph_{}_fl.pdf'.format('Simult' if args.process.cfg['args'].SimFit else args.process.cfg['args'].Year))
-
+    filename = pltName+'_SummaryGraph_{}_fl.pdf'.format('Simult' if args.process.cfg['args'].SimFit else args.process.cfg['args'].Year)
+    filename = os.path.join(savepath, filename)            
+    Plotter.canvas.Print(filename)            
 
 # Postproc fit results.
 def func_postproc(args):
     """ Fit to fit result and make plots """
     GenResult = []    
     RecoResult = []
+    # Plots saved here
+    savepath = os.path.join(modulePath, args.process.work_dir, "MixedToy")
+    os.makedirs(savepath, exist_ok=True)
     os.chdir(args.wrapper.task_dir)
+
+    # dbplayer is added only for individual years
     args.process.addService("dbplayer", FitDBPlayer(absInputDir=os.path.join(modulePath, "plots_{}".format(args.Year))))
     binKeys = args.process.cfg['allBins'] if args.process.cfg['args'].forall else args.process.cfg['bins'] #Run over all bins if no binkey arg is supplied
     for binKey in binKeys:
@@ -481,7 +489,9 @@ def func_postproc(args):
         if args.drawGEN:
             line.DrawLine(afb_GEN, 0, afb_GEN, h_setSummary_afb.GetMaximum())
         plotCollection.Plotter.latexDataMarks(['mix'])
-        plotCollection.Plotter.canvas.Print("h_setSummary_mixedToyValidation_a6_{}_{}.pdf".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label']))
+        filename = "h_setSummary_mixedToyValidation_a6_{}_{}.pdf".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label'])
+        filename = os.path.join(savepath, filename)
+        plotCollection.Plotter.canvas.Print(filename)
 
         h_setSummary_fl.SetXTitle("F_{L}")
         h_setSummary_fl.SetYTitle("Number of test samples")
@@ -492,7 +502,9 @@ def func_postproc(args):
         if args.drawGEN:
             line.DrawLine(fl_GEN, 0, fl_GEN, h_setSummary_fl.GetMaximum())
         plotCollection.Plotter.latexDataMarks(['mix'])
-        plotCollection.Plotter.canvas.Print("h_setSummary_mixedToyValidation_fl_{}_{}.pdf".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label']))
+        filename = "h_setSummary_mixedToyValidation_fl_{}_{}.pdf".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label'])
+        filename = os.path.join(savepath, filename)
+        plotCollection.Plotter.canvas.Print(filename)
         Fl_GENErr = abs(StdFitter.unboundFlToFl(db['unboundFl_GEN']['getVal'] + db['unboundFl_GEN']['getError']) - fl_GEN)
         A6_GENErr = abs(StdFitter.unboundAfbToAfb(db['unboundAfb_GEN']['getVal'] + db['unboundAfb_GEN']['getError'], fl_GEN) - afb_GEN)
         GenResult.append((fl_GEN, Fl_GENErr, afb_GEN, A6_GENErr)) 
@@ -519,7 +531,9 @@ def func_postproc(args):
             ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nSig}} : {param}}}".format(param=round(db['nSig']['getVal'], 0)) )
             plotCollection.Plotter.canvas.Update(); line.DrawLine(db['nSig']['getVal'], 0, db['nSig']['getVal'], ROOT.gPad.GetUymax())
             ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
-            plotCollection.Plotter.canvas.Print("h_nSig_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+            filename = "h_nSig_{}_{}.pdf".format(args.Year, q2bins[binKey]['label'])
+            filename = os.path.join(savepath, filename)
+            plotCollection.Plotter.canvas.Print(filename)
 
             #Bkg yield distribution
             nBkgCombHist.Draw()
@@ -530,7 +544,9 @@ def func_postproc(args):
             ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nBkg}} : {param}}}".format(param=round(db['nBkgComb']['getVal'], 0)) )
             plotCollection.Plotter.canvas.Update(); line.DrawLine(db['nBkgComb']['getVal'], 0, db['nBkgComb']['getVal'], ROOT.gPad.GetUymax())
             ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
-            plotCollection.Plotter.canvas.Print("h_nBkgComb_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+            filename = "h_nBkgComb_{}_{}.pdf".format(args.Year, q2bins[binKey]['label'])
+            filename = os.path.join(savepath, filename)            
+            plotCollection.Plotter.canvas.Print(filename)
         
             #Peaking Bkg yield distribution
             nBkgPeakHist.Draw()
@@ -542,7 +558,9 @@ def func_postproc(args):
             ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nPeak}} : {param}}}".format(param=round(nPeak, 0)) )
             plotCollection.Plotter.canvas.Update(); line.DrawLine(nPeak, 0, nPeak, ROOT.gPad.GetUymax())
             ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
-            plotCollection.Plotter.canvas.Print("h_nBkgPeak_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+            filename = "h_nBkgPeak_{}_{}.pdf".format(args.Year, q2bins[binKey]['label'])
+            filename = os.path.join(savepath, filename)            
+            plotCollection.Plotter.canvas.Print(filename)
             
             # Total yield distributions 
             nTotalHist.Draw()
@@ -554,7 +572,9 @@ def func_postproc(args):
             ROOT.TLatex().DrawLatexNDC(.73,.82,r"#scale[0.7]{{#color[2]{{nTotal}} : {param}}}".format(param=round(nTotal, 0)) )
             plotCollection.Plotter.canvas.Update(); line.DrawLine(nTotal, 0, nTotal, ROOT.gPad.GetUymax())
             ROOT.TLatex().DrawLatexNDC(.45, .89, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
-            plotCollection.Plotter.canvas.Print("h_nTotal_{}_{}.pdf".format(args.Year, q2bins[binKey]['label']))
+            filename = "h_nTotal_{}_{}.pdf".format(args.Year, q2bins[binKey]['label'])
+            filename = os.path.join(savepath, filename)            
+            plotCollection.Plotter.canvas.Print(filename)
 
         Hist2D = ROOT.TH2F("Hist2D", "title", 100, -1, 1, 100, 0., 1.05)
         tree.Draw("fl:afb>>Hist2D", Cuts) #+"&&(fl-abs(afb))<=0.95")
@@ -564,11 +584,12 @@ def func_postproc(args):
         ROOT.gPad.SetRightMargin(0.115)
         #ROOT.TColor.InvertPalette()
         #ROOT.TLine().DrawLine(-1, 0, 0, 1);        ROOT.TLine().DrawLine(0, 1, 1, 0);        ROOT.TLine().DrawLine(-1, 0, 1, 0)
-        plotCollection.Plotter.canvas.Print("h2_{}_{}.pdf".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label']))
-
+        filename = "h2_{}_{}.pdf".format("Simult" if args.SimFit else args.Year, q2bins[binKey]['label'])
+        filename = os.path.join(savepath, filename)            
+        plotCollection.Plotter.canvas.Print(filename)        
 
         db.close()
-    if args.process.cfg['args'].forall: GetSummaryGraph(binKeys, RecoResult, GenResult, args, pltName="mixedToy")
+    if args.process.cfg['args'].forall: GetSummaryGraph(binKeys, RecoResult, GenResult, args, savepath, pltName="mixedToy")
 
 if __name__ == '__main__': # Not supported anymore
     wrappedTask = BatchTaskWrapper(

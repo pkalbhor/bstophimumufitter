@@ -82,7 +82,7 @@ class Process:
     def beginSeq(self):
         """Initialize all services. Start logging."""
         if not os.path.exists(os.path.join(self.cwd, self.work_dir)):
-            os.makedirs(self.work_dir)
+            os.makedirs(os.path.join(self.cwd, self.work_dir))
         os.chdir(os.path.join(self.cwd, self.work_dir))
         self.beginSeq_registerServices()
         ROOT.gRandom.SetSeed(0)

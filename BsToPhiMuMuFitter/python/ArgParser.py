@@ -20,6 +20,7 @@ def SetParser(add_help=True):
     Group.add_argument('--SimFit', help='Fitting over 3 year data (Default: False)', action='store_true')
     Group.add_argument('--SimFitPlots', help='Plotting over 3 year data (Default: False)', action='store_true')
     Group.add_argument('--Toy2', help='Use 2nd option for doing toy study (Default: True)', action='store_false')
+    parser.add_argument('--debug', action='store_true', help="Print logs to standard output (Default: False)")
     return parser
 
 def GetBatchTaskParser():
@@ -48,14 +49,12 @@ def GetBatchTaskParser():
     BatchTaskSubparserPostproc.set_defaults(func=None) 
     TableParser = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('MakeTables')
     TableParser.add_argument(
-        '-tseq', '--TSeq',
-        dest='TSeq',
+        "-tseq", "--TSeq",
         nargs="+", default=["effiFitter"],
-        help='Sub sequences for making tables'
+        help="Sub sequences for making tables"
     )
-    debugParser = ArgumentParser(parents=[parser])
-    debugParser.add_argument('--debug', action='store_true', help="Print logs to standard output (Default: False)")
-    return debugParser
+    parser.add_argument('-h', '--help', action='help', default='==SUPPRESS==', help=('show this help message and exit'))
+    return parser
  
 modulePath=os.path.abspath(os.path.dirname('seqCollection.py'))
 

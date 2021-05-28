@@ -13,7 +13,7 @@ from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from BsToPhiMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Phimass, dataArgsGEN, dataArgsKStar, dataArgsGENoff, MCArgSet
 from BsToPhiMuMuFitter.anaSetup import q2bins, bMassRegions, modulePath 
-from BsToPhiMuMuFitter.python.datainput import genSel, ExtraCuts, ExtraCutsKStar
+from BsToPhiMuMuFitter.python.datainput import genSel, ExtraCuts, ExtraCutsKStar, GetPeakingFraction
 
 from ROOT import TChain, TEfficiency, TH2D, RooArgList, RooDataHist
 #from __main__ import args as Args
@@ -245,6 +245,13 @@ def GetDataReader(self, seq):
                     LatexTableMaker.ccfg[Year][TSeq]['Titles']  = LatexTableMaker.ccfg[Year][TSeq]['Titles']*3
                     LatexTableMaker.ccfg[Year][TSeq]['DbValue'] = ["MINIMIZE", "HESSE", "MINOS", "covQual", "nll"]*3
         return LatexTableMaker
+
+    if seq == 'TotalEffiReader':
+        TotalEffiReader = ObjProvider({
+                                'name': 'TotalEffiReader',
+                                'obj': {'TotalEffiReader': [GetPeakingFraction,]}
+        })
+        return TotalEffiReader
 
 setupEfficiencyBuildProcedure = {}
 setupEfficiencyBuildProcedure['acc'] = {
@@ -561,17 +568,14 @@ def buildAccXRecEffiHist(self):
 
 effiHistReaderOneStep = ObjProvider({
     'name': "effiHistReaderOneStep",
-    'obj': {
-        'effiHistReaderOneStep.h2_accXrec': [buildTotalEffiHist, ],
-    }
+    'obj': {'effiHistReaderOneStep.h2_accXrec': [buildTotalEffiHist, ],}
 })
 
 effiHistReader = ObjProvider({
     'name': "effiHistReader",
-    'obj': {
-        'effiHistReader.h2_accXrec': [buildAccXRecEffiHist, ],
-    }
+    'obj': {'effiHistReader.h2_accXrec': [buildAccXRecEffiHist, ],}
 })
+
 import BsToPhiMuMuFitter.script.latex.makeTables as makeTables
 FinalDataResult = ObjProvider({
     'name': "FinalDataResult",

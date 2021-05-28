@@ -2,20 +2,20 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-import v2Fitter.FlowControl.Logger as Logger
-log = Logger.Logger("runtime_temp.log", 999) #Logger.VerbosityLevels.DEBUG)
-
 import sys, os, pdb, datetime, importlib
 import ROOT
 #ROOT.EnableImplicitMT()
+
+#Supress RooFit related info messages
+ROOT.gEnv.SetValue("RooFit.Banner", 0)
+ROOT.RooMsgService.instance().setGlobalKillBelow(3)
 
 #Verify if PYTHONPATH is set
 if importlib.util.find_spec("BsToPhiMuMuFitter") is None:
     raise ModuleNotFoundError("Please source setup_ROOTEnv.sh script and come back again!")
 
-#Supress RooFit related info messages
-ROOT.gEnv.SetValue("RooFit.Banner", 0)
-ROOT.RooMsgService.instance().setGlobalKillBelow(3)
+import v2Fitter.FlowControl.Logger as Logger
+log = Logger.Logger("runtime_temp.log", 999) #Logger.VerbosityLevels.DEBUG)
 
 from BsToPhiMuMuFitter.python.ArgParser import SetParser, GetBatchTaskParser
 parser=GetBatchTaskParser()
@@ -32,8 +32,10 @@ predefined_sequence['loadMCJ']   = ['sigMCReader_JP']
 predefined_sequence['loadMCP']   = ['sigMCReader_PP']
 predefined_sequence['buildPdfs'] = ['dataReader', 'stdWspaceReader', 'stdPDFBuilder']
 predefined_sequence['buildEff']  = ['effiHistReader']
+predefined_sequence['buildTotEff'] = ['TotalEffiReader']
 
 predefined_sequence['fitEff']    = ['effiHistReader', 'stdWspaceReader', 'effiFitter']
+predefined_sequence['fitEff2']    = ['effiHistReader', 'stdWspaceReader', 'effiFitter2']
 predefined_sequence['fitAccEff'] = ['effiHistReader', 'stdWspaceReader', 'accEffiFitter']
 predefined_sequence['fitRecEff'] = ['effiHistReader', 'stdWspaceReader', 'recEffiFitter']
 predefined_sequence['fitSig2D']  = (['sigMCReader', 'stdWspaceReader'], ['SimultaneousFitter_sig2D'] if args.SimFit else ['sig2DFitter'])
@@ -91,13 +93,14 @@ def Instantiate(self, seq):
     import BsToPhiMuMuFitter.fitCollection  as fitCollection
     from BsToPhiMuMuFitter.plotCollection import GetPlotterObject
     sequence=[]
-    dataSequence=['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader', 'sigMCReader_JP', 
-                'sigMCReader_PP', 'bkgMCReader_JK', 'bkgMCReader_PK', 'sigMCGENcReader', 'StatusTableMaker']
+    dataSequence=['sigMCReader', 'dataReader', 'sigMCGENReader', 'KsigMCReader',
+                'sigMCReader_JP', 'sigMCReader_PP', 'bkgMCReader_JK', 'bkgMCReader_PK', 
+                'sigMCGENcReader', 'StatusTableMaker', 'TotalEffiReader']
     fitSequence=['sig2DFitter', 'sigAFitter', 'bkgCombAFitter', 'effiFitter', 'accEffiFitter', 'recEffiFitter', 'sigMFitter', 
                 'sigMDCBFitter', 'finalFitter_AltM', 'sigAFitterCorrected', 'sig3DFitter', 'bkgM_KStarFitter', 
                 'bkgA_KStarFitter', 'finalFitter_WithKStar', 'finalFitter_AltM_WithKStar', 'finalMFitter', 'sigMFitter_JP',
                 'bkgMFitter_JK', 'sigMFitter_PP', 'bkgMFitter_PK', 'finalMFitter_JP', 'finalMFitter_PP', 'sigPhiMFitter_JP', 
-                'finalPhiMFitter_JP', 'SimulFitter_bkgCombA', 'bkgPeak3DFitter']
+                'finalPhiMFitter_JP', 'SimulFitter_bkgCombA', 'bkgPeak3DFitter', 'effiFitter2']
     for s in seq:
         if s in dataSequence:
             sequence.append(dataCollection.GetDataReader(self, s))
@@ -124,9 +127,9 @@ def Instantiate(self, seq):
         if s is 'SimFitter_Final_WithKStar':
             sequence.append(fitCollection.SimFitter_Final_WithKStar)
         if s is 'sigMCStudier':
-            sequence.append(batchTask_sigMCValidation.GetToyObject(self))
+            sequence.append(sigMCValidation.GetToyObject(self))
         if s is 'mixedToyStudier':
-            sequence.append(batchTask_mixedToyValidation.GetMixedToyObject(self))
+            sequence.append(mixedToyValidation.GetMixedToyObject(self))
         if s in ['bkgCombToyGenerator', 'bkgPeakToyGenerator']:
             import BsToPhiMuMuFitter.toyCollection as toyCollection
             sequence.append(toyCollection.GetToyObject(self, s))
@@ -136,10 +139,42 @@ def Instantiate(self, seq):
         if s is 'GetCompPlots': sequence.append(dataCollection.GetCompPlots)
     return sequence
 
+def SetBatchTaskWrapper(args):
+    from BsToPhiMuMuFitter.anaSetup import modulePath
+    if args.seqKey=='sigMCValidation':
+        import BsToPhiMuMuFitter.script.batchTask_sigMCValidation as sigMCValidation
+        wrappedTask = sigMCValidation.BatchTaskWrapper(
+            "myBatchTask",
+            os.path.join(modulePath, "batchTask_sigMCValidation"),
+            cfg=batchTask_sigMCValidation.setupBatchTask)
+    elif args.seqKey=='mixedToyValidation':
+        wrappedTask = mixedToyValidation.BatchTaskWrapper(
+            "myBatchTask_MixedToy",
+            os.path.join(modulePath, "batchTask_mixedToyValidation"),
+            cfg=mixedToyValidation.setupBatchTask)
+    else:
+        import BsToPhiMuMuFitter.script.batchTask_seqCollection as batchTask_seqCollection
+        wrappedTask = batchTask_seqCollection.BatchTaskWrapper(
+            "BatchTaskseqCollection",
+            os.path.join(modulePath, "batchTask_seqCollection"),
+            cfg=batchTask_seqCollection.setupBatchTask )
+    parser.set_defaults(wrapper=wrappedTask, process=p)
+
+    args = parser.parse_args()
+    if args.Function_name=='postproc':
+        if args.seqKey=='sigMCValidation':
+            args.func = sigMCValidation.func_postproc
+        if args.seqKey=='mixedToyValidation':
+            args.func = mixedToyValidation.func_postproc
+
+    if args.OneStep is False: args.TwoStep = True
+    return args
+     
 if __name__ == '__main__':
     from BsToPhiMuMuFitter.StdProcess import p
     from BsToPhiMuMuFitter.anaSetup import q2bins
     from BsToPhiMuMuFitter.python.datainput import GetInputFiles
+    import BsToPhiMuMuFitter.script.batchTask_mixedToyValidation as mixedToyValidation
     from copy import deepcopy
    
     if args.OneStep is False: args.TwoStep = True
@@ -156,75 +191,45 @@ if __name__ == '__main__':
         p.work_dir="plots_simultaneous"
     if args.seqKey=='sigMCValidation': p.name='sigMCValidationProcess'
 
+    if args.Function_name in ['submit', 'run', 'postproc']:
+        args = SetBatchTaskWrapper(args)
+        p.cfg['args'] = deepcopy(args)
+
     for b in p.cfg['bins']:
         Stime = datetime.datetime.now()
         p.cfg['binKey'] = b
-        try:
-            def runSimSequences():
-                for Year in [2016, 2017, 2018]:
-                    p.cfg['args'].Year=Year
-                    GetInputFiles(p)
-                    sequence=Instantiate(p, predefined_sequence[args.seqKey][0])
-                    p.setSequence(sequence)
-                    p.beginSeq()
-                    p.runSeq()
-                p.cfg['args'].Year=args.Year
-            if args.SimFit and not (args.Function_name in ['submit', 'run', 'postproc']):
-                print ("INFO: Processing simultaneously over three year data")
-                runSimSequences()
+        def runSimSequences():
+            for Year in [2016, 2017, 2018]:
+                p.cfg['args'].Year=Year
+                GetInputFiles(p)
+                sequence=Instantiate(p, predefined_sequence[args.seqKey][0])
+                p.setSequence(sequence)
+                p.beginSeq()
+                p.runSeq()
+            p.cfg['args'].Year=args.Year
+        if args.SimFit and not (args.Function_name in ['submit', 'run', 'postproc']):
+            print ("INFO: Processing simultaneously over three year data")
+            runSimSequences()
+            sequence=Instantiate(p, predefined_sequence[args.seqKey][1])
+            p.setSequence(sequence)
+            p.beginSeq()
+        elif args.Function_name in ['submit', 'run', 'postproc']:
+            print("INFO: Processing {0} year data".format(args.Year))
+            if p.cfg['args'].SimFit:
+                if not args.Function_name=='submit':runSimSequences()
                 sequence=Instantiate(p, predefined_sequence[args.seqKey][1])
-                p.setSequence(sequence)
-                p.beginSeq()
-            elif args.Function_name in ['submit', 'run', 'postproc']:
-                print("INFO: Processing {0} year data".format(args.Year))
-                from BsToPhiMuMuFitter.anaSetup import modulePath
-                if args.seqKey=='sigMCValidation':
-                    import BsToPhiMuMuFitter.script.batchTask_sigMCValidation as batchTask_sigMCValidation
-                    wrappedTask = batchTask_sigMCValidation.BatchTaskWrapper(
-                        "myBatchTask",
-                        os.path.join(modulePath, "batchTask_sigMCValidation"),
-                        cfg=batchTask_sigMCValidation.setupBatchTask)
-                elif args.seqKey=='mixedToyValidation':
-                    import BsToPhiMuMuFitter.script.batchTask_mixedToyValidation as batchTask_mixedToyValidation
-                    wrappedTask = batchTask_mixedToyValidation.BatchTaskWrapper(
-                        "myBatchTask_MixedToy",
-                        os.path.join(modulePath, "batchTask_mixedToyValidation"),
-                        cfg=batchTask_mixedToyValidation.setupBatchTask)
-                else:
-                    import BsToPhiMuMuFitter.script.batchTask_seqCollection as batchTask_seqCollection
-                    wrappedTask = batchTask_seqCollection.BatchTaskWrapper(
-                        "BatchTaskseqCollection",
-                        os.path.join(modulePath, "batchTask_seqCollection"),
-                        cfg=batchTask_seqCollection.setupBatchTask )
-                parser.set_defaults(
-                    wrapper=wrappedTask,
-                    process=p)
-
-                args = parser.parse_args()
-                if args.Function_name=='postproc':
-                    if args.seqKey=='sigMCValidation':
-                        args.func = batchTask_sigMCValidation.func_postproc
-                    if args.seqKey=='mixedToyValidation':
-                        args.func = batchTask_mixedToyValidation.func_postproc
-
-                if args.OneStep is False: args.TwoStep = True
-                p.cfg['args'] = deepcopy(args)
-                if p.cfg['args'].SimFit:
-                    runSimSequences()
-                    sequence=Instantiate(p, predefined_sequence[args.seqKey][1])
-                else:
-                    sequence=Instantiate(p, predefined_sequence[args.seqKey])
-                p.setSequence(sequence)
-                args.func(args) 
-                continue
             else:
-                print("INFO: Processing {0} year data".format(args.Year))
                 sequence=Instantiate(p, predefined_sequence[args.seqKey])
-                p.setSequence(sequence)
-                p.beginSeq()
-            p.runSeq()
-        finally:
-            p.endSeq()
-            for obj in p._sequence: obj.reset()
+            p.setSequence(sequence)
+            args.func(args) 
+            continue
+        else:
+            print("INFO: Processing {0} year data".format(args.Year))
+            sequence=Instantiate(p, predefined_sequence[args.seqKey])
+            p.setSequence(sequence)
+            p.beginSeq()
+        p.runSeq()
+        p.endSeq()
+        for obj in p._sequence: obj.reset()
         Etime = datetime.datetime.now()
         print("Time taken to execute", args.seqKey, "in", b, "bin:", (Etime-Stime).seconds/60, "minutes!")

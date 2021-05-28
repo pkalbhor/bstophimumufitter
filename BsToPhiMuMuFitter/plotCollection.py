@@ -133,8 +133,7 @@ def plotSimpleGEN(self, pltName, dataPlots, pdfPlots, marks, frames='LK'): #Prit
         #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
         if pltName=="plot_sigMCGEN.{0}".format(str(self.process.cfg['args'].Year)):
             path=os.path.join(modulePath, self.process.work_dir, "SignalFits")
-            if not os.path.exists(path):                                                        
-                os.mkdir(path)                                                                 
+            os.makedirs(path, exist_ok=True)
             os.chdir(path)
         #%-%-%-%-%-%-%-%-%-%-%-%-%-%-%-%
         self.canvasPrint(pltName.replace('.', '_') + plotFuncs[frame]['tag'])
@@ -761,6 +760,14 @@ def GetPlotterObject(self):
             'pdf_name': "effi_sigA_rec.{0}".format(Year),
             'label': "_rec"}
     }
+    plotterCfg['plots']['plot_effi']= {
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "plot_effi.{0}".format(Year),
+            'dataPlots': [["effiHistReader.accXrec.{0}".format(Year), plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [["effi_sigA{}.{}".format('_ts' if TwoStep else '', Year), plotterCfg_sigStyle, None, None], ],
+            'marks': {'marks': ['sim']}}
+    }    
     plotterCfg['plots']['plot_sig2D']= {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
         'kwargs': {

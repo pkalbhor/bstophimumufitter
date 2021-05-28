@@ -41,7 +41,7 @@ class Logger(Service):
         self.verbosityLevel = verbosityLevel
         self.SetTimeStamp = True
 
-    def _endSeq(self):
+    def __exit__(self):
         if hasattr(self, "_logfile"):
             self.logDEBUG("Close logger service for", self._logfile.name)
             self._logfile.close()

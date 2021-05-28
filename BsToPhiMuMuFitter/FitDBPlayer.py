@@ -3,11 +3,8 @@
 
 from __future__ import print_function
 
-import os, sys, re
-import shutil
-import shelve
-import math
-
+import os, sys, re, shutil, shelve, math
+from filelock import Timeout, FileLock 
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 from v2Fitter.FlowControl.Service import Service
@@ -59,7 +56,7 @@ class FitDBPlayer(Service):
                     PrintValues(key, value)
                     selective(value)
         try:
-            db = shelve.open(dbfile)
+            db = shelve.open(dbfile, "r")
             print_dict(db)
         finally:
             db.close()
@@ -99,6 +96,9 @@ class FitDBPlayer(Service):
         """Update fit result to a db file"""
         if aliasDict is None:
             aliasDict = {}
+        lock_path = dbfile+".lock"
+        lock = FileLock(lock_path, timeout=100)
+        lock.acquire()
         try:
             db = shelve.open(dbfile, writeback=True)
             if isinstance(args, dict):
@@ -124,6 +124,8 @@ class FitDBPlayer(Service):
                 raise ValueError("Input arguement of type {0} is not supported".format(type(args)))
         finally:
             db.close()
+            lock.release()
+            os.remove(lock_path)
             print("Updated to Database `{0}`.".format(dbfile))
 
     @staticmethod
@@ -166,7 +168,7 @@ class FitDBPlayer(Service):
             aliasDict = {}
 
         try:
-            db = shelve.open(dbfile)
+            db = shelve.open(dbfile, "r")
             gaus = ROOT.TF1("gaus", "exp(-0.5*x**2)", -3, 3)
             def flucturateFromDBImp(iArg):
                 argName = iArg.GetName()
