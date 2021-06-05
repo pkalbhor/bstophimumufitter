@@ -74,7 +74,7 @@ MCArgSet = RooArgSet(VarSet, MCBaseVars, "RooArgSet for Data and MC")
 TriggerBaseKstar = RooArgSet(JpsiTriggers, PsiPTriggers, LMNTTriggers, mtrkqual, ptrkqual, dr0, dr1, Puw8)
 DRVars           = RooArgSet(LMNTTriggersdr0, LMNTTriggersdr1, JpsiTriggersdr0, JpsiTriggersdr1, PsiPTriggersdr0, PsiPTriggersdr1)
 TrigBaseDR      = RooArgSet(TriggerBaseKstar, DRVars, "RooArgSet, trigger, dr, trackQual")
-BaseVars_Kstar  = RooArgSet(BaseSet, TrigBaseDR, "First Set of Vars for Kstar MC")
+BaseVars_Kstar  = RooArgSet(BaseSet, TriggerBaseKstar, "First Set of Vars for Kstar MC")
 dataArgsKStar   = RooArgSet(VarSet, BaseVars_Kstar, "RooArgSet for bd->K*0mumu MC")
 
 genCosThetaK = RooRealVar("genCosThetaK", "cos#theta_{K}", -1., 1.)

@@ -14,31 +14,24 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
-export PYTHONPATH=${PYTHONPATH}:${DIR}
 
+# Set PYTHONPATH
+[[ "$PYTHONPATH" != *"$DIR"* ]] && export PYTHONPATH=${PYTHONPATH}:${DIR}
+
+# Check for required python modules
 argcomplete=$(pip3 list --format=columns | grep filelock | wc -l)
 if [ $argcomplete -eq 0 ]
 then
-# pip3 install argcomplete --user
-pip3 install filelock --user
+    pip3 install filelock --user
 else
-echo " "
+    echo " "
 fi
 
 alias python='python3'
-alias runallsteps="${DIR}/BsToPhiMuMuFitter/bash/RunAllSteps"
-alias createpdfs="${DIR}/BsToPhiMuMuFitter/bash/pdfCollection.sh"
-alias runfitsteps="${DIR}/BsToPhiMuMuFitter/bash/seqCollection.sh"
-alias createplots="${DIR}/BsToPhiMuMuFitter/bash/plotCollection.sh"
 alias TotalClean="${DIR}/BsToPhiMuMuFitter/bash/TotalClean.sh"      #Clean all files created using any command
 alias JunkClean="${DIR}/BsToPhiMuMuFitter/bash/JunkClean.sh"        #Clean old libraries
 
-echo -e ">>>> Help <<<< \nRun \n\e[31mpython3 seqCollection.py -h \e[0m\nfor exploring further options \n" 
-#var=$(python ${DIR}/BsToPhiMuMuFitter/python/ArgCompletion.py)
-#TotList=$(echo "$var" | grep bin1A)
-#dirlist=$(echo "$var" | grep seqCollection.py)
-#binKey=$(echo "$var" | grep bin1A)
-#seqKey=$(echo "$var" | grep fitSig2D)
-#plotList=$(echo "$var" | grep effi)
+# Create/Load libraries
+python3 ${DIR}/BsToPhiMuMuFitter/cpp/__init__.py
+echo -e ">>>>>>>>>>>> Help <<<<<<<<<<<< \nRun \n\e[31mpython3 seqCollection.py -h \e[0m\nfor exploring further options \n" 
 
-#complete -X '!*.py' -W "$TotList" python

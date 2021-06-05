@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 

@@ -3,6 +3,7 @@
 import os
 import ROOT
 from BsToPhiMuMuFitter.anaSetup import modulePath
+ROOT.gEnv.SetValue("RooFit.Banner", 0)
 
 for cls in ["EfficiencyFitter.cc", "StdFitter.cc", "RooBtosllModel.cxx", "ResiduePlotter.cc"]:
     if os.path.exists(modulePath + '/cpp/' + cls.replace('.', '_') + '.so'):

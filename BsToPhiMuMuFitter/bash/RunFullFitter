@@ -120,6 +120,18 @@ while [[ $status -ne 1 ]]; do
 	sleep 60
 done
 
+./seqCollection.py -b all -s fitFinalM -y 2016 submit -s
+./seqCollection.py -b all -s fitFinalM -y 2017 submit -s
+./seqCollection.py -b all -s fitFinalM -y 2018 submit -s
+
+status=5
+while [[ $status -ne 1 ]]; do
+	echo -e "\nChecking status of fitFinalM seqeunce"
+	status=$(condor_q -nobatch | grep "fitFinalM\|$schedd" | wc -l)
+	echo "status: " $status
+	sleep 60
+done
+
 ./seqCollection.py -b all -s fitSig3D --SimFit submit -s
 
 ./seqCollection.py -b all -s mixedToyValidation -y 2016 -t 200 submit -n 15 -s

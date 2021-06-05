@@ -102,7 +102,7 @@ class Plotter(Path):
     frameB_binning_array = array('d', [4.52, 4.60, 4.68] + [4.76 + 0.08*i for i in range(14)] + [5.88, 5.96])
     frameB_binning = ROOT.RooBinning(len(frameB_binning_array)-1, frameB_binning_array)
     frameB_binning_fine_array = array('d', [4.52 + 0.04*i for i in range(38)])
-    frameB_binning_fine = ROOT.RooBinning(100, Bmass.getMin(defaultPlotRegion), Bmass.getMax(defaultPlotRegion)) #(len(frameB_binning_fine_array)-1, frameB_binning_fine_array)
+    frameB_binning_fine = ROOT.RooBinning(20, Bmass.getMin(defaultPlotRegion), Bmass.getMax(defaultPlotRegion)) #(len(frameB_binning_fine_array)-1, frameB_binning_fine_array)
 
     frameK = CosThetaK.frame()
     frameK.SetMinimum(0)
