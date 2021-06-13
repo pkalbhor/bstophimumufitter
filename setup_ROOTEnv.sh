@@ -24,7 +24,7 @@ if [ $argcomplete -eq 0 ]
 then
     pip3 install filelock --user
 else
-    echo " "
+    echo "Loading..."
 fi
 
 alias python='python3'

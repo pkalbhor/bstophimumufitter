@@ -229,7 +229,7 @@ def EffiTable(self):
     print(indent * (baseIndentLevel + 1) + r"\hline")
     binKeyToLine = OrderedDict()
     for binKey in q2bins.keys():
-        if binKey in ['jpsi', 'psi2s', 'peaks', 'abovePsi2sA', 'abovePsi2sB', 'Test1', 'Test2']:
+        if binKey in ['jpsi', 'psi2s', 'peaks', 'abovePsi2sA', 'abovePsi2sB', 'Test1', 'Test2', 'abovePsi2s', 'summary', 'summaryA', 'full']:
             continue
         binKeyToLine[binKey] = [q2bins[binKey]['label'].strip('bin')]
     for binKey, latexLine in binKeyToLine.items():

@@ -91,10 +91,12 @@ Decide the number of entries of this subset.
                 self.currentSubDataEntries = self.getSubDataEntries(iSet, YieldType)
                 if self.proceedFlag==False: break
                 if idx==0:
-                    self.fitter.data = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType, self.process.cfg['args'].Year)
+                    TempData = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType, self.process.cfg['args'].Year)
+                    self.fitter.data = TempData
                 else:
                     TempData = next(self.getSubData(idx)) if Type=='Sim' else self._runToyCreater(YieldType, self.process.cfg['args'].Year)
                     self.fitter.data.append(TempData)
+                self.SaveSubsamples(iSet, TempData, TempData.GetName())
             self.SaveSubsamples(iSet, self.fitter.data, "FinalSubSample_{}".format(self.process.cfg['args'].Year))
             if self.proceedFlag==False: 
                 self.proceedFlag=True
@@ -168,7 +170,6 @@ Decide the number of entries of this subset.
             ofile = ROOT.TFile.Open("{}_subsamples_{}.root".format(self.process.name, index), "UPDATE")
             subdata.Write()
             ofile.Close()
-
 
     @abc.abstractmethod
     def _postSetsLoop(self):

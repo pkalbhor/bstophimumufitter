@@ -40,7 +40,8 @@ class EfficiencyFitter(FitterCore):
     def _preFitSteps(self):
         """Prefit uncorrelated term"""
         args = self.pdf.getParameters(self.data)
-        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
+        dbfile = self.process.dbplayer.odbfile.replace('summaryLowQ2', 'bin1A')
+        if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(dbfile, args)
         self.ToggleConstVar(args, isConst=True)
         
         # Disable xTerm correction and fit to 1-D
