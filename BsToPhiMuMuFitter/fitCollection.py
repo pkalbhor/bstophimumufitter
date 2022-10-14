@@ -274,9 +274,9 @@ def GetFitterObjects(self, seq):
     if seq == 'finalFitter_WithKStar':
         setupFinalFitter_WithKStar = deepcopy(setupTemplateFitter)                         # 3D = nSig(Sig3D) + nBkg(fBkgM*fBkgA) + nBkgPeak(fBkgPeak)
         setupFinalFitter_WithKStar.update({
-            'name': "finalFitter_WithKStar{}.{}".format('_Alt' if AltRange else '_ts' if TwoStep else '', Year),
-            'data': "dataReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''),
-            'pdf': "f_final_WithKStar{}.{}".format('_Alt' if AltRange else '_ts' if TwoStep else '', Year),
+            'name': "finalFitter_WithKStar_ts.{}".format(Year),
+            'data': "dataReader.{}.Fit".format(Year),
+            'pdf': "f_final_WithKStar_ts.{}".format(Year),
             'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombM_c[\d]+', r'bkgCombM_c[\d]_Alt+'],
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
             'FitHesse': True,
@@ -285,20 +285,22 @@ def GetFitterObjects(self, seq):
             'argAliasSaveToDB': False,
         })
         return StdFitter(setupFinalFitter_WithKStar)
-    if seq is 'finalFitter_AltM_WithKStar':
-        setupFinalFitter_AltM_WithKStar = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgM*fBkgA)
-        setupFinalFitter_AltM_WithKStar.update({
-            'name': "finalFitter_AltM_WithKStar{}.{}".format('_Alt' if AltRange else '', Year),
-            'data': "dataReader.{}.{}Fit".format(Year, 'alt' if AltRange else ''),
-            'pdf': "f_final_AltM_WithKStar{}.{}".format('_Alt' if AltRange else '', Year),
+
+    if seq == 'finalFitter_WithKStar_AltA': # Final PDF with non-parametric bkg shape
+        setupFinalFitter_WithKStar = deepcopy(setupTemplateFitter)
+        setupFinalFitter_WithKStar.update({
+            'name': "finalFitter_WithKStar_AltA.{}".format(Year),
+            'data': "dataReader.{}.Fit".format(Year),
+            'pdf': "f_final_WithKStar_AltA.{}".format(Year),
             'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'nBkgComb', r'bkgCombM_c[\d]+', r'bkgCombM_c[\d]_Alt+'],
             'createNLLOpt': [ROOT.RooFit.Extended(True), ],
             'FitHesse': True,
             'FitMinos': [False, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
-            'argAliasInDB': {**ArgAliasGEN},
-            'argAliasSaveToDB': False,
+            'argAliasInDB': {'unboundAfb':'unboundAfb_altBkgCombA', 'unboundFl':'unboundFl_altBkgCombA'},
+            'argAliasFromDB': {**ArgAliasGEN},
+            'argAliasSaveToDB': True,
         })
-        return StdFitter(setupFinalFitter_AltM_WithKStar)
+        return StdFitter(setupFinalFitter_WithKStar)
 
     #For Validation
     if seq is 'sigPhiMFitter_JP': #Phi mass for comparison
@@ -444,6 +446,7 @@ setupSimultaneousFitter.update({
     'data'      : ["sigMCReader.2016.Fit", "sigMCReader.2017.Fit", "sigMCReader.2018.Fit"],
     'pdf'       : ["f_sig2D_ts.2016", "f_sig2D_ts.2017", "f_sig2D_ts.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
+    'argAliasFromDB': {**ArgAliasRECO},
     'argAliasInDB': ArgAliasRECO,
     'LegName'  : 'Simulation',
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
@@ -458,9 +461,10 @@ setupeSig3DFitter.update({
     'pdf'       : ["f_sig3D_ts.2016", "f_sig3D_ts.2017", "f_sig3D_ts.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
     'Years'     : [2016, 2017, 2018],
+    'argAliasFromDB': {**ArgAliasRECO},
     'argAliasInDB': ArgAliasRECO,
     'LegName'  : 'Simulation',
-    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
+    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(0)],],
 })
 SimultaneousFitter_sig3D = SimultaneousFitter(setupeSig3DFitter)
 
@@ -472,7 +476,7 @@ Simul_sigMCValidation_setup.update({
     'pdf'       : ["f_sig3D_ts.2016", "f_sig3D_ts.2017", "f_sig3D_ts.2018"],
     'argPattern': ['unboundAfb', 'unboundFl'],
     'Years'     : [2016, 2017, 2018],
-    'argAliasInDB': ArgAliasRECO,
+    'argAliasFromDB': {**ArgAliasRECO},
     'LegName'   : 'Simulation',
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)],],
 })
@@ -487,6 +491,7 @@ setupSimulFitter_sigGEN.update({
     'argPattern': ['unboundAfb', 'unboundFl'],
     'Years'     : [2016, 2017, 2018],
     'LegName'  : 'Simulation',
+    'argAliasFromDB': {**ArgAliasGEN},
     'argAliasInDB': ArgAliasGEN,
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(1)], ],
 })
@@ -502,13 +507,31 @@ setupSimFinalFitter_WithKStar.update({
     'argPattern': ['unboundAfb', 'unboundFl', 'nBkgComb_2016', 'nBkgComb_2017', 'nBkgComb_2018', 
                     'nSig_2016', 'nSig_2017', 'nSig_2018', 'bkgCombM_c1_2016', 'bkgCombM_c1_2017', 'bkgCombM_c1_2018'],
     'Years'     : [2016, 2017, 2018],
-    'argAliasInDB': {**ArgAliasGEN},
+    'argAliasFromDB': {**ArgAliasGEN},
     'LegName'   : 'Data',
     'argAliasSaveToDB': False,
     'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(0)],],
 })
 SimFitter_Final_WithKStar = SimultaneousFitter(setupSimFinalFitter_WithKStar)
 
+#Final Fit with non-parametric bkg PDF
+setupSimFinalFitter_WithKStar_AltA = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig3D) + nBkg(fBkgM*fBkgA)
+setupSimFinalFitter_WithKStar_AltA.update({
+    'name'      : 'SimultFitterFinal_AltA',
+    'category'  : ['cat16', 'cat17', 'cat18'],
+    'data'      : ["dataReader.2016.Fit", "dataReader.2017.Fit", "dataReader.2018.Fit"],
+    'pdf'       : ["f_final_WithKStar_AltA.2016", "f_final_WithKStar_AltA.2017", "f_final_WithKStar_AltA.2018"],
+    'argPattern': ['unboundAfb', 'unboundFl', 'nBkgComb_2016', 'nBkgComb_2017', 'nBkgComb_2018', 
+                    'nSig_2016', 'nSig_2017', 'nSig_2018', 'bkgCombM_c1_2016', 'bkgCombM_c1_2017', 'bkgCombM_c1_2018'],
+    'Years'     : [2016, 2017, 2018],
+    'argAliasFromDB': {**ArgAliasGEN},
+    'argAliasInDB': {'unboundAfb':'unboundAfb_altBkgCombA', 'unboundFl':'unboundFl_altBkgCombA'},
+    'LegName'   : 'Data',
+    'argAliasSaveToDB': True,
+    'fitToCmds' : [[ROOT.RooFit.Strategy(2), ROOT.RooFit.InitialHesse(1), ROOT.RooFit.Minimizer('Minuit', 'minimize'), ROOT.RooFit.Minos(0)],],
+})
+SimFitter_Final_WithKStar_AltA = SimultaneousFitter(setupSimFinalFitter_WithKStar_AltA)
+     
 # mixToy Validation
 Simul_mixedToyValidation_setup = deepcopy(setupTemplateFitter)                 #3D = nSig(Sig2D*SigMDCB) + nBkg(fBkgM*fBkgA)
 Simul_mixedToyValidation_setup.update({
@@ -518,7 +541,7 @@ Simul_mixedToyValidation_setup.update({
     'pdf'       : ["f_final_WithKStar_ts.2016", "f_final_WithKStar_ts.2017", "f_final_WithKStar_ts.2018"],
     'argPattern': ['unboundAfb', 'unboundFl', 'nBkgComb_2016', 'nBkgComb_2017', 'nBkgComb_2018', 'nSig_2016', 'nSig_2017', 'nSig_2018'], #r'nBkgComb*.', r'nSig*.'], # 'bkgCombM_c1_2016', 'bkgCombM_c1_2017', 'bkgCombM_c1_2018'],
     'Years'     : [2016, 2017, 2018],
-    'argAliasInDB': {**ArgAliasGEN},
+    'argAliasFromDB': {**ArgAliasGEN},
     'LegName'   : 'Data',
     'argAliasSaveToDB': False,
     'fitToCmds' : [[ROOT.RooFit.Strategy(3), ROOT.RooFit.InitialHesse(0), ROOT.RooFit.Minimizer('Minuit2', 'migrad'), ROOT.RooFit.Minos(0)],],

@@ -301,7 +301,7 @@ setupBuildBkgCombM = {
     'objName': "f_bkgCombM",
     'varNames': ["Bmass", "Phimass"],
     'factoryCmd': [
-        "bkgCombM_c1[-0.1,-20,2]",
+        "bkgCombM_c1[-0.1,-10,-0.01]",
         "EXPR::f_bkgCombM('exp(bkgCombM_c1*Bmass)', {Bmass,bkgCombM_c1})",
         "EXPR::f_bkgPhiM('exp(bkgPhiM_p1*Phimass)', {Phimass, bkgPhiM_p1[0.1, -200, 200]})",
         #"EXPR::f_bkgPhiM('bkgPhiM_p1*Phimass+bkgPhiM_p2*pow(Phimass, 2)+bkgPhiM_p3*pow(Phimass,3)+bkgPhiM_p4*pow(Phimass,4)', {Phimass, bkgPhiM_p1[0.0, -20, 20], bkgPhiM_p2[0.0, -20, 20], bkgPhiM_p3[0.0, -20, 20], bkgPhiM_p4[0.0, -20, 20]})",
@@ -331,7 +331,7 @@ def GetAnalyticBkgAList(self):
         f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
         f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Leg6G2_Cbv3_v3'] #['Gaus2_Poly6'] #['Gaus3Poly4_Exp']
         f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Leg36G2_Cbv2_v32']# ['Leg6G2_Cbv5_v0'] 
-        f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Leg6G2_Cbv3_v6']
+        f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Leg6G2_Cbv3_v5']
         f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Cbv6_Cbv3']
         f_analyticBkgCombA_format['abovePsi2s']     = f_analyticBkgCombA_format['Poly6_Poly4']
         f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Leg6G2_Cbv5_v6']
@@ -347,7 +347,7 @@ def GetAnalyticBkgAList(self):
     if Args.Year==2018:
         f_analyticBkgCombA_format['DEFAULT']        = f_analyticBkgCombA_format['Poly6_Poly6']
         f_analyticBkgCombA_format['belowJpsiA']     = f_analyticBkgCombA_format['Cbv4_Cbv5']#['Gaus2Poly4_Poly6'] #['Gaus2Poly4_Poly3']
-        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Leg36G2_Cbv4_v24'] #['Gaus2Poly2_Poly6']
+        f_analyticBkgCombA_format['belowJpsiB']     = f_analyticBkgCombA_format['Cbv6_Cbv4'] #['Gaus2Poly2_Poly6']
         f_analyticBkgCombA_format['belowJpsiC']     = f_analyticBkgCombA_format['Cbv4_Cbv3']
         f_analyticBkgCombA_format['betweenPeaks']   = f_analyticBkgCombA_format['Cbv5_Cbv5']
         f_analyticBkgCombA_format['summaryLowQ2']   = f_analyticBkgCombA_format['Leg6G2_Cbv3_v6']
@@ -417,7 +417,7 @@ f_analyticBkgA_KStar_format['Gaus2_Poly4'] = [ # pdfL: Gaus + Gauss, pdfK: Poly4
 
 f_analyticBkgA_KStar_format['Gaus2_Poly4_DM'] = [ # pdfL: Gaus + Gauss, pdfK: Poly4
     "RooGaussian::Gauss1L(CosThetaL, bkgKStarL_c1[-.5,-.5, .5], bkgKStarL_c2[.02, .0001, 4.])",
-    "RooGaussian::Gauss2L(CosThetaL, bkgKStarL_c3[ .2, .0, .8], bkgKStarL_c4[.02, .0001, 4.])",
+    "RooGaussian::Gauss2L(CosThetaL, bkgKStarL_c3[ .2, .0, 1.8], bkgKStarL_c4[.02, .0001, 4.])",
     "bkgKStarK_c1[-10,10]", "bkgKStarK_c2[-10,10]", "bkgKStarK_c3[-10,10]", "bkgKStarK_c4[-10,10]",
     "EXPR::pdfK('({pdfK})', {args})".format(
         pdfK="1+bkgKStarK_c1*CosThetaK+bkgKStarK_c2*pow(CosThetaK,2)+bkgKStarK_c3*pow(CosThetaK, 3)+bkgKStarK_c4*pow(CosThetaK,4)",
@@ -519,12 +519,12 @@ def GetAnalyticBkgA_KStarList(self):
     if Args.Year==2018:
         f_analyticBkgA_KStar_format['DEFAULT']     = f_analyticBkgA_KStar_format['Gaus2_Poly4']
         f_analyticBkgA_KStar_format['belowJpsiA']  = f_analyticBkgA_KStar_format['G3_Cbv2'] #['G3_Cbv2']
-        f_analyticBkgA_KStar_format['belowJpsiB']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
+        f_analyticBkgA_KStar_format['belowJpsiB']  = f_analyticBkgA_KStar_format['G3_Cbv2']
         f_analyticBkgA_KStar_format['belowJpsiC']  = f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
         f_analyticBkgA_KStar_format['betweenPeaks']= f_analyticBkgA_KStar_format['Poly6_Poly4']
         f_analyticBkgA_KStar_format['abovePsi2s']  = f_analyticBkgA_KStar_format['Poly6_Poly4']
         f_analyticBkgA_KStar_format['summary']     = f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
-        f_analyticBkgA_KStar_format['summaryLowQ2']= f_analyticBkgA_KStar_format['Gaus2_Poly4_DM']
+        f_analyticBkgA_KStar_format['summaryLowQ2']= f_analyticBkgA_KStar_format['Gaus3_Poly4_DM']
         return f_analyticBkgA_KStar_format.get(self.process.cfg['binKey'], f_analyticBkgA_KStar_format['DEFAULT'])
 
 setupBuildAnalyticBkgA_KStar = {
@@ -669,14 +669,14 @@ setupBuildBkgM_KStar = {
 setupSmoothBkg={'factoryCmd': []}
 SmoothBkgCmd={}
 SmoothBkgCmd['DEFAULT']=[1.0, 1.0, 1.0, 1.0]
-SmoothBkgCmd['belowJpsiA']=[1.1, 1.1, 1.4, 1.4]
-SmoothBkgCmd['belowJpsiB']=[1.5, 1.5, 0.9, 0.9]
-SmoothBkgCmd['belowJpsiC']=[1.6, 1.6, 1.6, 1.6]
+SmoothBkgCmd['belowJpsiA']=[1.1, 1.1, 0.8, 0.8]
+SmoothBkgCmd['belowJpsiB']=[1.5, 1.5, 0.7, 0.7]
+SmoothBkgCmd['belowJpsiC']=[1.6, 1.6, .7, .7]
 SmoothBkgCmd['betweenPeaks']=[1.6, 1.6, 36, 1]
 SmoothBkgCmd['abovePsi2sA']=[1.5, 1.5, 1.5, 1.5]
 SmoothBkgCmd['abovePsi2sB']=[1.9, 1.9, 1.4, 1.4]
 SmoothBkgCmd['summary']=[3.1, 3.1, 2.0, 2.0]
-SmoothBkgCmd['summaryLowQ2']=[2., 2., 2., 2.]
+SmoothBkgCmd['summaryLowQ2']=[2., 2., .6, .6]
 def buildSmoothBkgCombA(self, factoryCmd):
     """Build with RooWorkspace.factory. See also RooFactoryWSTool.factory"""
     wspace = self.getWspace()
@@ -723,7 +723,7 @@ def buildBkgComb(self):
 
     variations = [("f_bkgComb", "f_bkgCombM", "f_bkgCombA"),
                   ("f_bkgComb_Alt", "f_bkgCombM", "f_bkgCombA_Alt"),
-                  #("f_bkgCombAltA", "f_bkgCombM", "f_bkgCombAAltA"),
+                  ("f_bkgCombAltA", "f_bkgCombM", "f_bkgCombAAltA"),
                   ("f_bkgCombAltM", "f_bkgCombMAltM", "f_bkgCombA"),
                   ("f_bkg_KStar", "f_bkgM_KStar", "f_bkgA_KStar"),
                   ("f_bkg_KStar_Alt", "f_bkgM_KStar_Alt", "f_bkgA_KStar_Alt"),
@@ -755,8 +755,8 @@ def buildFinal(self):
                   ("f_finalMDCB", "f_sigMDCB", "f_bkgCombM"),
                   ("f_finalMDCB_AltBkgCombM", "f_sigMDCB", "f_bkgCombMAltM"),                   #Mass PDF = nSig(SigMDCB)+nBkg(fBkgAltM)
                   ("f_finalPhiM", "f_sigPhiM3", "f_bkgPhiM")]                                #Phi Mass PDF = nSig(SigM)+nBkg(fBkgM)
-    wspace.factory("nSig[10,1e-2,1e8]")
-    wspace.factory("nBkgComb[100,1e-4,1e8]")
+    wspace.factory("nSig[10,1,1000]")
+    wspace.factory("nBkgComb[100,1,1000]")
     for p, pSig, pBkg in variations:
         f_final = wspace.obj(p)
         if f_final == None:
@@ -770,7 +770,7 @@ def buildFinal(self):
 
     variations2 = [("f_final_WithKStar", "f_sig3D", "f_bkgComb", "f_bkg_KStar"),
                    ("f_final_WithKStar_ts", "f_sig3D_ts", "f_bkgComb", "f_bkg_KStar"),            #Final PDF with 2Step eff
-                   ("f_final_WithKStar_Alt", "f_sig3D_Alt", "f_bkgComb_Alt", "f_bkg_KStar_Alt"),
+                   ("f_final_WithKStar_AltA", "f_sig3D_ts", "f_bkgCombAltA", "f_bkg_KStar"),
                    ("f_finalM", "f_sigM", "f_bkgCombM", "f_bkgM_KStar"),                      #Mass PDF = nSig(SigM)+nBkg(fBkgM)+nBkgP(fBkgP)
                    ("f_final_AltM_WithKStar", "f_sig3DAltM", "f_bkgComb", "f_bkg_KStar"),
                    ("f_finalM_JP", "f_sigM_DCBG_JP", "f_bkgCombM_JP", "f_sigM_DCBG_JK"),                #Mass PDF = nSig(BkgMDCBG)+nBkg(fBkgM)
@@ -852,7 +852,7 @@ def customizePDFBuilder(self):
             ('f_bkgCombA', [buildAnalyticBkgCombA]),
             ('f_bkgM_KStar', [buildBkgM_KStar]),
             ('f_bkgA_KStar', [buildAnalyticBkgA_KStar]),
-            #('f_bkgCombAAltA', [buildSmoothBkg]),
+            ('f_bkgCombAAltA', [buildSmoothBkg]),
             ('f_bkgCombM', [buildBkgCombM]),
             ('f_bkgCombMAltM', [buildBkgCombMAltM]),
             ('f_bkgComb', [buildBkgComb]),  # Include all variations

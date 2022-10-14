@@ -1,42 +1,221 @@
 #!/usr/bin/env python
 # vim: set sts=4 sw=4 fdm=indent fdn=3 et:
 
-from __future__ import print_function
+#!/usr/bin/env python
+# vim: set sts=4 sw=4 fdm=indent fdl=0 fdn=2 et:
 
-import os, sys, math, pdb
+from __future__ import print_function, division
+
+import os
+import sys
+import math
 import types
 import shelve
 import functools
-from copy import deepcopy
+import itertools
+import tempfile, datetime
+from copy import copy, deepcopy
+from collections import OrderedDict
 
 import ROOT
 import BsToPhiMuMuFitter.cpp
-
-from v2Fitter.Fitter.FitterCore import FitterCore
-from v2Fitter.Fitter.AbsToyStudier import AbsToyStudier
-from v2Fitter.Fitter.DataReader import DataReader
-from BsToPhiMuMuFitter.anaSetup import q2bins #, cut_kshortWindow
-from BsToPhiMuMuFitter.StdFitter import StdFitter, unboundFlToFl, unboundAfbToAfb
-from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
-from BsToPhiMuMuFitter.plotCollection import Plotter, plotter
-
+import BsToPhiMuMuFitter.varCollection as varCollection
 import BsToPhiMuMuFitter.dataCollection as dataCollection
 import BsToPhiMuMuFitter.pdfCollection as pdfCollection
 import BsToPhiMuMuFitter.fitCollection as fitCollection
 import BsToPhiMuMuFitter.plotCollection as plotCollection
+from BsToPhiMuMuFitter.StdProcess import createNewProcess
 
-from BsToPhiMuMuFitter.StdProcess import p
+from v2Fitter.Fitter.ObjProvider import ObjProvider
+from v2Fitter.Fitter.FitterCore import FitterCore
+from v2Fitter.Fitter.AbsToyStudier import AbsToyStudier
+from v2Fitter.Fitter.DataReader import DataReader
+from BsToPhiMuMuFitter.anaSetup import modulePath, q2bins, bMassRegions
+from BsToPhiMuMuFitter.StdFitter import StdFitter, unboundFlToFl, unboundAfbToAfb
+from BsToPhiMuMuFitter.EfficiencyFitter import EfficiencyFitter
+from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
+from BsToPhiMuMuFitter.Plotter import Plotter
+from BsToPhiMuMuFitter.seqCollection import Instantiate
+from BsToPhiMuMuFitter.python.datainput import GetInputFiles
 
-from argparse import ArgumentParser
+# Simultaneous Fit: Limited MC size
+# # Determinded by varying efficiency map with FitDBPlayer.fluctuateFromDB.
+def func_randEffi_simultaneous(args):
+    """ Typically less than 5% """
+    p = createNewProcess("systProcess", "plots_simultaneous")
+    p.cfg['args'] = deepcopy(args)
+    p.cfg['sysargs'] = sys.argv
+    GetInputFiles(p)
+    p.cfg['bins'] = p.cfg['allBins'] if args.binKey=="all" else [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
+    p.cfg['binKey'] = p.cfg['bins'][0]
+    
+    finalRandEffiFitter = fitCollection.SimFitter_Final_WithKStar
+    setupFinalRandEffiFitter = finalRandEffiFitter.cfg
+    setupFinalRandEffiFitter.update({
+        'argAliasInDB': {'unboundAfb':'unboundAfb_randEffiSim', 'unboundFl':'unboundFl_randEffiSim'},
+        'argAliasFromDB': {**fitCollection.ArgAliasGEN},
+    })
+
+    def preFitSteps_randEffi(self):
+        self.args = self.minimizer.getParameters(self.dataWithCategories)
+        for pdf, data, Year in zip(self.pdf, self.data, self.Years):
+            args = pdf.getParameters(self.dataWithCategories)
+            odbfile = os.path.join(self.process.cwd, "plots_{0}".format(Year), self.process.dbplayer.odbfile)
+            if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(odbfile, args, aliasDict=self.cfg['argAliasFromDB'])
+
+            # Fluctuate cross-term correction w/o considering the correlation
+            effiArgs = ROOT.RooArgSet()
+            FitterCore.ArgLooper(args, lambda iArg: effiArgs.add(iArg), targetArgs=[r"x\d{1,2}", r"^l\d+\w*", r"^k\d+\w*"])
+            FitDBPlayer.fluctuateFromDB(odbfile, effiArgs, self.cfg['argAliasInDB'])
+
+            self.ToggleConstVar(args, True)
+            # Rename parameter names
+            FitterCore.ArgLooper(args, lambda p: p.SetName(p.GetName()+"_{0}".format(Year)), targetArgs=self.cfg['argPattern'], inverseSel=True) 
+        self.ToggleConstVar(self.minimizer.getParameters(self.dataWithCategories), False, self.cfg['argPattern'])
+
+    finalRandEffiFitter._preFitSteps = types.MethodType(preFitSteps_randEffi, finalRandEffiFitter)
+
+    os.makedirs(os.path.join(modulePath, p.work_dir, "randEffi"), exist_ok=True)
+    foutName = "syst_randEffi_{0}.root".format(args.binKey)
+    class effiStudier(AbsToyStudier):
+        def _preSetsLoop(self):
+            self.hist_afb = ROOT.TH1F("hist_afb", "", 300, -1., 1.)
+            self.hist_afb.GetXaxis().SetTitle("A_{6}")
+            self.hist_fl = ROOT.TH1F("hist_fl", "", 200, 0., 1.)
+            self.hist_fl.GetXaxis().SetTitle("F_{L}")
+
+        def _preRunFitSteps(self, setIndex):
+            pass
+
+        def _postRunFitSteps(self, setIndex):
+            if self.fitter.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['covQual'] == 3:
+                unboundAfb = self.fitter.args.find('unboundAfb').getVal()
+                unboundFl = self.fitter.args.find('unboundFl').getVal()
+                fl = unboundFlToFl(unboundFl)
+                afb = unboundAfbToAfb(unboundAfb, fl)
+                # afb = self.process.sourcemanager.get('afb.{}'.format(args.Year))
+                # fl = self.process.sourcemanager.get('fl.{}'.format(args.Year))
+                self.hist_afb.Fill(afb)
+                self.hist_fl.Fill(fl)
+
+        def _postSetsLoop(self):
+            os.chdir(os.path.join(modulePath, p.work_dir, "randEffi"))
+            fout = ROOT.TFile(foutName, "RECREATE")
+            fout.cd()
+            self.hist_afb.Write()
+            self.hist_fl.Write()
+            fout.Close()
+
+        def getSubDataEntries(self, setIndex, Type, Year=2016):
+            return 1
+
+        def getSubData(self, idx):
+            while True:
+                yield self.data[0]
+
+    setupStudier = deepcopy(effiStudier.templateConfig())
+    setupStudier.update({
+        'name': "effiStudier",
+        'data': ["dataReader.{}.Fit".format(args.Year)],
+        'Type': [(0, 'nSig', 'Sim')],
+        'fitter': finalRandEffiFitter,
+        'nSetOfToys': 200,
+        'Spread': 'Gaus',
+    })
+    studier = effiStudier(setupStudier)
+
+    def runSimSequences():
+        for Year in [2016, 2017, 2018]:
+            p.cfg['args'].Year=Year
+            GetInputFiles(p)
+            sequence=Instantiate(p, ['dataReader', 'stdWspaceReader'])
+            p.setSequence(sequence)
+            p.beginSeq()
+            p.runSeq()
+        p.cfg['args'].Year=args.Year
+    runSimSequences()
+
+    p.setSequence([studier])
+    try:
+        p.beginSeq()
+        if os.path.exists("{0}".format(foutName)):
+            print("{0} exists, skip fitting procedure".format(foutName))
+        else:
+            p.runSeq()
+
+        if not args.isBatchTask:
+            ROOT.gStyle.SetOptStat("r")
+            ROOT.gStyle.SetOptFit(11)
+
+            fin = ROOT.TFile("{0}".format(foutName))
+
+            hist_fl = fin.Get("hist_fl")
+            hist_fl.UseCurrentStyle()
+            gaus_fl = ROOT.TF1("gaus_fl", "gaus(0)", .3, .9)
+            hist_fl.Fit(gaus_fl, "MR")
+
+            hist_afb = fin.Get("hist_afb")
+            hist_afb.UseCurrentStyle()
+            gaus_afb = ROOT.TF1("gaus_afb", "gaus(0)", -0.5, 0.5)
+            hist_afb.Fit(gaus_afb, "MR")
+
+            syst_randEffi = {
+                'syst_randEffi_fl': {
+                    'getError': gaus_fl.GetParameter(2),
+                    'getErrorHi': gaus_fl.GetParameter(2),
+                    'getErrorLo': -gaus_fl.GetParameter(2),
+                },
+                'syst_randEffi_afb': {
+                    'getError': gaus_afb.GetParameter(2),
+                    'getErrorHi': gaus_afb.GetParameter(2),
+                    'getErrorLo': -gaus_afb.GetParameter(2),
+                }
+            }
+            print(syst_randEffi)
+
+            if args.updatePlot:
+                canvas = Plotter.canvas.cd()
+                hist_afb.GetXaxis().SetTitle("A_{FB}")
+                hist_afb.Draw("HIST")
+                hist_afb.GetXaxis().SetRangeUser(-0.5, 0.5)
+                gaus_afb.Draw("SAME")
+                Plotter.latexCMSMark()
+                Plotter.latexQ2(p.cfg['binKey'])
+                Plotter.latexCMSExtra()
+                canvas.Print("syst_randEffi_afb_{0}.pdf".format(args.binKey))
+
+                hist_fl.GetXaxis().SetTitle("F_{L}")
+                hist_fl.Draw("HIST")
+                hist_fl.GetXaxis().SetRangeUser(0.3, 0.9)
+                gaus_fl.Draw("SAME")
+                Plotter.latexCMSMark()
+                Plotter.latexQ2(p.cfg['binKey'])
+                Plotter.latexCMSExtra()
+                canvas.Print("syst_randEffi_fl_{0}.pdf".format(args.binKey))
+            os.chdir(os.path.join(modulePath, p.work_dir))
+            if args.updateDB:
+                FitDBPlayer.UpdateToDB(os.path.join(p.dbplayer.absInputDir, p.dbplayer.odbfile), syst_randEffi)
+    finally:
+        p.endSeq()
+
 
 # Limited MC size
 # # Determinded by varying efficiency map with FitDBPlayer.fluctuateFromDB.
 def func_randEffi(args):
     """ Typically less than 5% """
-    setupFinalRandEffiFitter = deepcopy(fitCollection.setupFinalFitter)
+    p = createNewProcess("systProcess", "plots_{}".format(args.Year))
+    p.cfg['args'] = deepcopy(args)
+    p.cfg['sysargs'] = sys.argv
+    GetInputFiles(p)
+    p.cfg['bins'] = p.cfg['allBins'] if args.binKey=="all" else [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
+    p.cfg['binKey'] = p.cfg['bins'][0]
+    
+    finalRandEffiFitter = fitCollection.GetFitterObjects(p, "finalFitter_WithKStar")
+    setupFinalRandEffiFitter = finalRandEffiFitter.cfg
     setupFinalRandEffiFitter.update({
         'FitMinos': [False, ()],
-        'argAliasInDB': {'afb': 'afb_randEffi', 'fl': 'fl_randEffi'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_randEffi', 'unboundFl': 'unboundFl_randEffi', 'nSig': 'nSig_randEffi', 'nBkgComb': 'nBkgComb_randEffi', 'bkgCombM_c1': 'bkgCombM_c1_randEffi'},
+        'argAliasFromDB': {**fitCollection.ArgAliasGEN},
         'saveToDB': False,
     })
     finalRandEffiFitter = StdFitter(setupFinalRandEffiFitter)
@@ -45,9 +224,9 @@ def func_randEffi(args):
         self.args = self.pdf.getParameters(self.data)
         self._preFitSteps_initFromDB()
 
-        # Fluctuate cross-term correction
+        # Fluctuate cross-term correction w/o considering the correlation
         effiArgs = ROOT.RooArgSet()
-        FitterCore.ArgLooper(self.args, lambda iArg: effiArgs.add(iArg), targetArgs=[r"x\d{1,2}"])
+        FitterCore.ArgLooper(self.args, lambda iArg: effiArgs.add(iArg), targetArgs=[r"x\d{1,2}", r"^l\d+\w*", r"^k\d+\w*"])
         FitDBPlayer.fluctuateFromDB(self.process.dbplayer.odbfile, effiArgs, self.cfg['argAliasInDB'])
 
         self._preFitSteps_vetoSmallFs()
@@ -55,53 +234,57 @@ def func_randEffi(args):
 
     finalRandEffiFitter._preFitSteps = types.MethodType(preFitSteps_randEffi, finalRandEffiFitter)
 
-    foutName = "syst_randEffi_{0}.root".format(q2bins[args.binKey]['label'])
+    os.makedirs(os.path.join(modulePath, p.work_dir, "randEffi"), exist_ok=True)
+    foutName = "syst_randEffi_{0}.root".format(args.binKey)
     class effiStudier(AbsToyStudier):
         def _preSetsLoop(self):
-            self.hist_afb = ROOT.TH1F("hist_afb", "", 300, -0.75, 0.75)
-            self.hist_afb.GetXaxis().SetTitle("A_{{FB}}")
+            self.hist_afb = ROOT.TH1F("hist_afb", "", 300, -1., 1.)
+            self.hist_afb.GetXaxis().SetTitle("A_{6}")
             self.hist_fl = ROOT.TH1F("hist_fl", "", 200, 0., 1.)
-            self.hist_fl.GetXaxis().SetTitle("F_{{L}}")
+            self.hist_fl.GetXaxis().SetTitle("F_{L}")
 
         def _preRunFitSteps(self, setIndex):
             pass
 
         def _postRunFitSteps(self, setIndex):
-            if self.fitter.fitResult["{0}.migrad".format(self.fitter.name)]['status'] == 0:
-                afb = self.process.sourcemanager.get('afb')
-                fl = self.process.sourcemanager.get('fl')
+            if self.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['covQual'] == 3:
+                unboundAfb = self.fitter.args.find('unboundAfb').getVal()
+                unboundFl = self.fitter.args.find('unboundFl').getVal()
+                Fl = unboundFlToFl(unboundFl)
+                Afb = unboundAfbToAfb(unboundAfb, Fl)
+                afb = self.process.sourcemanager.get('afb.{}'.format(args.Year))
+                fl = self.process.sourcemanager.get('fl.{}'.format(args.Year))
                 self.hist_afb.Fill(afb.getVal())
                 self.hist_fl.Fill(fl.getVal())
 
         def _postSetsLoop(self):
+            os.chdir(os.path.join(modulePath, p.work_dir, "randEffi"))
             fout = ROOT.TFile(foutName, "RECREATE")
             fout.cd()
             self.hist_afb.Write()
             self.hist_fl.Write()
             fout.Close()
 
-        def getSubDataEntries(self, setIndex):
+        def getSubDataEntries(self, setIndex, Type, Year=2016):
             return 1
 
-        def getSubData(self):
+        def getSubData(self, idx):
             while True:
-                yield self.data
+                yield self.data[0]
 
     setupStudier = deepcopy(effiStudier.templateConfig())
     setupStudier.update({
         'name': "effiStudier",
-        'data': "dataReader.Fit",
+        'data': ["dataReader.{}.Fit".format(args.Year)],
+        'Type': [(0, 'nSig', 'Sim')],
         'fitter': finalRandEffiFitter,
-        'nSetOfToys': 200,
+        'nSetOfToys': 20 if args.isBatchTask else 300,
     })
     studier = effiStudier(setupStudier)
 
-    p.setSequence([
-        pdfCollection.stdWspaceReader,
-        dataCollection.dataReader,
-        studier,
-    ])
-
+    sequence = Instantiate(p, ['dataReader', 'stdWspaceReader'])
+    sequence.append(studier)
+    p.setSequence(sequence)
     try:
         p.beginSeq()
         if os.path.exists("{0}".format(foutName)):
@@ -109,61 +292,74 @@ def func_randEffi(args):
         else:
             p.runSeq()
 
-        fin = ROOT.TFile("{0}".format(foutName))
+        if not args.isBatchTask:
+            ROOT.gStyle.SetOptStat("r")
+            ROOT.gStyle.SetOptFit(11)
 
-        hist_fl = fin.Get("hist_fl")
-        gaus_fl = ROOT.TF1("gaus_fl", "gaus(0)", 0, 1)
-        hist_fl.Fit(gaus_fl, "WI")
+            fin = ROOT.TFile("{0}".format(foutName))
 
-        hist_afb = fin.Get("hist_afb")
-        gaus_afb = ROOT.TF1("gaus_afb", "gaus(0)", -0.75, 0.75)
-        hist_afb.Fit(gaus_afb, "WI")
+            hist_fl = fin.Get("hist_fl")
+            hist_fl.UseCurrentStyle()
+            gaus_fl = ROOT.TF1("gaus_fl", "gaus(0)", .3, .9)
+            hist_fl.Fit(gaus_fl, "MR")
 
-        syst_randEffi = {
-            'syst_randEffi_fl': {
-                'getError': gaus_fl.GetParameter(2),
-                'getErrorHi': gaus_fl.GetParameter(2),
-                'getErrorLo': -gaus_fl.GetParameter(2),
-            },
-            'syst_randEffi_afb': {
-                'getError': gaus_afb.GetParameter(2),
-                'getErrorHi': gaus_afb.GetParameter(2),
-                'getErrorLo': -gaus_afb.GetParameter(2),
+            hist_afb = fin.Get("hist_afb")
+            hist_afb.UseCurrentStyle()
+            gaus_afb = ROOT.TF1("gaus_afb", "gaus(0)", -0.5, 0.5)
+            hist_afb.Fit(gaus_afb, "MR")
+
+            syst_randEffi = {
+                'syst_randEffi_fl': {
+                    'getError': gaus_fl.GetParameter(2),
+                    'getErrorHi': gaus_fl.GetParameter(2),
+                    'getErrorLo': -gaus_fl.GetParameter(2),
+                },
+                'syst_randEffi_afb': {
+                    'getError': gaus_afb.GetParameter(2),
+                    'getErrorHi': gaus_afb.GetParameter(2),
+                    'getErrorLo': -gaus_afb.GetParameter(2),
+                }
             }
-        }
-        print(syst_randEffi)
+            print(syst_randEffi)
 
-        if args.updatePlot:
-            canvas = Plotter.canvas.cd()
-            hist_afb.Draw("HIST")
-            Plotter.latexCMSMark()
-            Plotter.latexCMSExtra()
-            Plotter.latexCMSSim()
-            canvas.Print("syst_randEffi_afb_{0}.pdf".format(q2bins[args.binKey]['label']))
+            if args.updatePlot:
+                canvas = Plotter.canvas.cd()
+                hist_afb.GetXaxis().SetTitle("A_{FB}")
+                hist_afb.Draw("HIST")
+                hist_afb.GetXaxis().SetRangeUser(-0.5, 0.5)
+                gaus_afb.Draw("SAME")
+                Plotter.latexCMSMark()
+                Plotter.latexQ2(p.cfg['binKey'])
+                Plotter.latexCMSExtra()
+                canvas.Print("syst_randEffi_afb_{0}.pdf".format(args.binKey))
 
-            hist_fl.GetXaxis().SetTitle("F_{{L}}")
-            hist_fl.Draw("HIST")
-            Plotter.latexCMSMark()
-            Plotter.latexCMSExtra()
-            Plotter.latexCMSSim()
-            canvas.Print("syst_randEffi_fl_{0}.pdf".format(q2bins[args.binKey]['label']))
-
-        if args.updateDB:
-            FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_randEffi)
+                hist_fl.GetXaxis().SetTitle("F_{L}")
+                hist_fl.Draw("HIST")
+                hist_fl.GetXaxis().SetRangeUser(0.3, 0.9)
+                gaus_fl.Draw("SAME")
+                Plotter.latexCMSMark()
+                Plotter.latexQ2(p.cfg['binKey'])
+                Plotter.latexCMSExtra()
+                canvas.Print("syst_randEffi_fl_{0}.pdf".format(args.binKey))
+            os.chdir(os.path.join(modulePath, p.work_dir))
+            if args.updateDB:
+                FitDBPlayer.UpdateToDB(os.path.join(p.dbplayer.absInputDir, p.dbplayer.odbfile), syst_randEffi)
     finally:
         p.endSeq()
 
 # Alternate efficiency map
 # # Use uncorrelated efficiency map and compare the difference
-def updateToDB_altShape(args, tag):
-    #pdb.set_trace()
+def updateToDB_altShape(p, tag):
     """ Template db entry maker for syst """
     db = shelve.open(p.dbplayer.odbfile)
     nominal_fl = unboundFlToFl(db['unboundFl']['getVal'])
     nominal_afb = unboundAfbToAfb(db['unboundAfb']['getVal'], nominal_fl)
+    # afb = p.sourcemanager.get('afb').getVal()
+    # fl = p.sourcemanager.get('fl').getVal()
+    fl = unboundFlToFl(db['unboundFl_{}'.format(tag)]['getVal'])
+    afb = unboundAfbToAfb(db['unboundAfb_{}'.format(tag)]['getVal'], fl)
     db.close()
-    afb = p.sourcemanager.get('afb').getVal()
-    fl = p.sourcemanager.get('fl').getVal()
+
     syst_altShape = {}
     syst_altShape['syst_{0}_afb'.format(tag)] = {
         'getError': math.fabs(afb - nominal_afb),
@@ -182,36 +378,66 @@ def updateToDB_altShape(args, tag):
 
 def func_altEffi(args):
     """ Typically less than 1% """
-    setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
-    setupFinalAltEffiFitter.update({
-        'argAliasInDB': {'afb': 'afb_altEffi', 'fl': 'fl_altEffi'},
-        'saveToDB': False,
+    p = createNewProcess("systProcess", "plots_simultaneous")
+    p.cfg['args'] = deepcopy(args)
+    p.cfg['sysargs'] = sys.argv
+    GetInputFiles(p)
+    p.cfg['bins'] = p.cfg['allBins'] if args.binKey=="all" else [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
+    p.cfg['binKey'] = p.cfg['bins'][0]
+    
+    finalAltEffFitter = fitCollection.SimFitter_Final_WithKStar
+    finalAltEffFitter.cfg.update({
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altEffi', 'unboundFl': 'unboundFl_altEffi'},
+        'saveToDB': True,
     })
-    finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
-    def _preFitSteps_altEffi(self):
-        StdFitter._preFitSteps(self)
-        hasXTerm = self.args.find("hasXTerm")
-        hasXTerm.setVal(0)
-    finalAltEffiFitter._preFitSteps = types.MethodType(_preFitSteps_altEffi, finalAltEffiFitter)
 
-    p.setSequence([
-        pdfCollection.stdWspaceReader,
-        dataCollection.dataReader,
-        finalAltEffiFitter,
-    ])
+    def preFitSteps_altEffi(self):
+        self.args = self.minimizer.getParameters(self.dataWithCategories)
+        
+        for pdf, data, Year in zip(self.pdf, self.data, self.Years):
+            args = pdf.getParameters(self.dataWithCategories)
+            odbfile = os.path.join(self.process.cwd, "plots_{0}".format(Year), self.process.dbplayer.odbfile)
+            if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(odbfile, args, aliasDict=self.cfg['argAliasFromDB'])
+
+            args.find("hasXTerm_ts").setVal(0)
+
+            self.ToggleConstVar(args, True)
+            # Rename parameter names
+            FitterCore.ArgLooper(args, lambda p: p.SetName(p.GetName()+"_{0}".format(Year)), targetArgs=self.cfg['argPattern'], inverseSel=True) 
+        self.ToggleConstVar(self.minimizer.getParameters(self.dataWithCategories), False, self.cfg['argPattern'])
+
+    finalAltEffFitter._preFitSteps = types.MethodType(preFitSteps_altEffi, finalAltEffFitter)
+
+    def runSimSequences():
+        for Year in [2016, 2017, 2018]:
+            p.cfg['args'].Year=Year
+            GetInputFiles(p)
+            sequence=Instantiate(p, ['dataReader', 'stdWspaceReader'])
+            p.setSequence(sequence)
+            p.beginSeq()
+            p.runSeq()
+        p.cfg['args'].Year=args.Year
+    runSimSequences()
+    p.setSequence([finalAltEffFitter])
 
     try:
         p.beginSeq()
         p.runSeq()
 
-        updateToDB_altShape(args, "altEffi")
+        updateToDB_altShape(p, "altEffi")
     finally:
         p.endSeq()
 
 # Simulation mismodeling
 # # Quote the difference between fitting results of unfiltered GEN and that of high stat RECO.
-
 def func_simMismodel(args):
+    p = createNewProcess("systProcess", "plots_{}".format('simultaneous' if args.SimFit else args.Year))
+    p.cfg['args'] = deepcopy(args)
+    p.cfg['sysargs'] = sys.argv
+    GetInputFiles(p)
+    p.cfg['bins'] = p.cfg['allBins'] if args.binKey=="all" else [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
+    p.cfg['binKey'] = p.cfg['bins'][0]
+    
     p.setSequence([])
     try:
         p.beginSeq()
@@ -270,43 +496,6 @@ def func_altSigM(args):
     finally:
         p.endSeq()
 
-# Alternate S-P interference
-# # The S-wave is estimated to be around 5%.
-# # However, given low stats, the fitted fraction is usually less than 1%.
-# # Fix the fraction at 5% and compare the difference
-def func_altSP(args):
-    """ Set fs to 5% instead of 0% """
-    setupFinalAltSPFitter = deepcopy(fitCollection.setupFinalFitter)
-    setupFinalAltSPFitter.update({
-        'argAliasInDB': {'afb': 'afb_altSP', 'fl': 'fl_altSP'},
-        'saveToDB': False,
-    })
-    finalAltSPFitter = StdFitter(setupFinalAltSPFitter)
-    def _preFitSteps_vetoSmallFs_altSP(self):
-        """ fs is usually negligible, set the alternative fraction to 0.05 """
-        if "fs" in self.cfg.get('argPattern'):
-            fs = self.args.find("fs")
-            transAs = self.args.find("transAs")
-            fs.setVal(0.05)
-            fs.setConstant(True)
-            transAs.setVal(0)
-            transAs.setConstant(False)
-
-    finalAltSPFitter._preFitSteps_vetoSmallFs = types.MethodType(_preFitSteps_vetoSmallFs_altSP, finalAltSPFitter)
-
-    p.setSequence([
-        pdfCollection.stdWspaceReader,
-        dataCollection.dataReader,
-        finalAltSPFitter,
-    ])
-
-    try:
-        p.beginSeq()
-        p.runSeq()
-
-        updateToDB_altShape(args, "altSP")
-    finally:
-        p.endSeq()
 
 # Alternate bkgCombM shape
 # # versus expo+linear
@@ -337,26 +526,36 @@ def func_altBkgCombM(args):
 # # Smooth function versus analytic function
 def func_altBkgCombA(args):
     """ Typically less than 10% """
-    setupFinalAltBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
+    p = createNewProcess("systProcess", "plots_simultaneous")
+    p.cfg['args'] = deepcopy(args)
+    p.cfg['sysargs'] = sys.argv
+    GetInputFiles(p)
+    p.cfg['bins'] = p.cfg['allBins'] if args.binKey=="all" else [key for key in q2bins.keys() if q2bins[key]['label']==args.binKey]
+    p.cfg['binKey'] = p.cfg['bins'][0]
+    
+    finalAltBkgCombAFitter = fitCollection.SimFitter_Final_WithKStar_AltA
+    setupFinalAltBkgCombAFitter = finalAltBkgCombAFitter.cfg
     setupFinalAltBkgCombAFitter.update({
-        'pdf': "f_finalAltBkgCombA",
-        #'argAliasInDB': {'afb': 'afb_altBkgCombA', 'fl': 'fl_altBkgCombA'},
+        # 'argAliasInDB': {'unboundAfb': 'afb_altBkgCombA', 'unboundFl': 'fl_altBkgCombA'},
         'saveToDB': True,
     })
-    finalAltBkgCombAFitter = StdFitter(setupFinalAltBkgCombAFitter)
 
-    p.setSequence([
-        pdfCollection.stdWspaceReader,
-        dataCollection.dataReader,
-        finalAltBkgCombAFitter,
-        plotCollection.Bkgplotter,
-    ])
+    def runSimSequences():
+        for Year in [2016, 2017, 2018]:
+            p.cfg['args'].Year=Year
+            GetInputFiles(p)
+            sequence=Instantiate(p, ['dataReader', 'stdWspaceReader'])
+            p.setSequence(sequence)
+            p.beginSeq()
+            p.runSeq()
+        p.cfg['args'].Year=args.Year
+    runSimSequences()
+    p.setSequence([finalAltBkgCombAFitter])
 
     try:
         p.beginSeq()
         p.runSeq()
-
-        #updateToDB_altShape(args, "altBkgCombA")
+        updateToDB_altShape(p, "altBkgCombA")
     finally:
         p.endSeq()
 
@@ -436,28 +635,31 @@ def func_makeLatexTable(args):
     for var in ["fl", "afb"]:
         dbKeyToLine = {
             'syst_randEffi': [r"Limited MC size"],
-            'syst_altEffi': [r"Eff.\ mapping"],
             'syst_simMismodel': [r"Simu.\ mismodel"],
-            'syst_altSP': [r"$S$ - $P$ wave interf.\ "],
             'syst_altBkgCombA': [r"Comb.\ Bkg.\ shape"],
+            'syst_altEffi': [r"Eff.\ mapping"],
             'syst_vetoJpsiX': [r"$B$ mass range"],
+            'syst_datamcDev': [r"Data-MC Discrepancy"],
         }
         totalErrorLine = ["Total"]
-        for binKey in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
-            db = shelve.open("{0}/fitResults_{1}.db".format(p.dbplayer.absInputDir, q2bins[binKey]['label']))
+        for binKey in ['belowJpsiA', 'belowJpsiB', 'belowJpsiC', 'betweenPeaks', 'summaryLowQ2']:
+            db = shelve.open("{0}/fitResults_{1}.db".format("plots_simultaneous", q2bins[binKey]['label']))
             totalSystErr = 0.
             for systKey, latexLine in dbKeyToLine.items():
-                err = db["{0}_{1}".format(systKey, var)]['getError']
-                latexLine.append("{0:.03f}".format(err))
+                try:
+                    err = db["{0}_{1}".format(systKey, var)]['getError']
+                except KeyError:
+                    err = 0
+                latexLine.append("{0:.04f}".format(err))
                 totalSystErr += pow(err, 2)
             db.close()
             totalErrorLine.append("{0:.03f}".format(math.sqrt(totalSystErr)))
 
         print("Printing table of syst. unc. for {0}".format(var))
         indent = "  "
-        print(indent * 2 + r"\begin{tabular}{|l|c|c|c|c|}")
+        print(indent * 2 + r"\begin{tabular}{|l|c|c|c|c|c|}")
         print(indent * 3 + r"\hline")
-        print(indent * 3 + r"Syst.\ err.\ $\backslash$ $q^2$ bin & 1 & 3 & 5 & 0 \\")
+        print(indent * 3 + r"Syst.\ err.\ $\backslash$ $q^2$ bin & 1A & 1B & 1C & 3 & LowQ2 \\")
         print(indent * 3 + r"\hline")
         print(indent * 3 + r"\hline")
         print(indent * 3 + r"\multicolumn{5}{|c|}{Uncorrelated systematic uncertainties} \\")
@@ -470,66 +672,19 @@ def func_makeLatexTable(args):
         print(indent * 2 + r"\end{tabular}")
 
 if __name__ == '__main__':
-    parser = ArgumentParser(
-        description="""
-"""
-    )
-    parser.add_argument(
-        '--binKey',
-        dest='binKey',
-        default=p.cfg['binKey'],
-        help="q2 bin",
-    )
-    parser.add_argument(
-        '--updatePlot',
-        dest='updatePlot',
-        action='store_false',
-        help="Want to update plots? (Default: True)",
-    )
-    parser.add_argument(
-        '--updateDB',
-        dest='updateDB',
-        action='store_false',
-        help="Want to update to db file? (Default: True)",
-    )
-    parser.set_defaults(work_dir=p.work_dir)
+    from BsToPhiMuMuFitter.python.ArgParser import SetParser, GetBatchTaskParser
+    parser = GetBatchTaskParser()
+    args   = parser.parse_known_args()[0]
+    if args.OneStep is False: args.TwoStep = True
 
-    subparsers = parser.add_subparsers(help="Functions", dest='Function_name')
+    if args.SimFit and args.Function_name=="systematics":
+        if args.type == "randEffi":       args.func = func_randEffi_simultaneous
+        if args.type == "simMismodel":    args.func = func_simMismodel
+        if args.type == "makeLatexTable": args.func = func_makeLatexTable
+        if args.type == "altBkgCombA":    args.func = func_altBkgCombA
+        if args.type == "altEffi":    args.func = func_altEffi
 
-    subparser_randEffi = subparsers.add_parser('randEffi')
-    subparser_randEffi.set_defaults(func=func_randEffi)
-
-    subparser_altEffi = subparsers.add_parser('altEffi')
-    subparser_altEffi.set_defaults(func=func_altEffi)
-
-    subparser_simMismodel = subparsers.add_parser('simMismodel')
-    subparser_simMismodel.set_defaults(func=func_simMismodel)
-
-    #  subparser_altSigM = subparsers.add_parser('altSigM')
-    #  subparser_altSigM.set_defaults(func=func_altSigM)
-
-    subparser_altSP = subparsers.add_parser('altSP')
-    subparser_altSP.set_defaults(func=func_altSP)
-
-    #  subparser_altBkgCombM = subparsers.add_parser('altBkgCombM')
-    #  subparser_altBkgCombM.set_defaults(func=func_altBkgCombM)
-
-    subparser_altBkgCombA = subparsers.add_parser('altBkgCombA')
-    subparser_altBkgCombA.set_defaults(func=func_altBkgCombA)
-
-    subparser_altBkgCombAOnly = subparsers.add_parser('altBkgCombAOnly')
-    subparser_altBkgCombAOnly.set_defaults(func=func_OnlyaltBkgCombA)
-
-    subparser_vetoJpsiX = subparsers.add_parser('vetoJpsiX')
-    subparser_vetoJpsiX.set_defaults(func=func_vetoJpsiX)
-
-    #  subparser_altFitRange = subparsers.add_parser('altFitRange')
-    #  subparser_altFitRange.set_defaults(func=func_altFitRange)
-
-    subparser_makeLatexTable = subparsers.add_parser('makeLatexTable')
-    subparser_makeLatexTable.set_defaults(func=func_makeLatexTable)
-
-    args = parser.parse_args()
-    p.cfg['binKey'] = args.binKey
+    elif args.Function_name=="systematics":
+        if args.type == "randEffi": args.func = func_randEffi
     args.func(args)
     sys.exit()

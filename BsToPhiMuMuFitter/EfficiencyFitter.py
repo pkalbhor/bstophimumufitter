@@ -40,7 +40,12 @@ class EfficiencyFitter(FitterCore):
     def _preFitSteps(self):
         """Prefit uncorrelated term"""
         args = self.pdf.getParameters(self.data)
-        dbfile = self.process.dbplayer.odbfile.replace('summaryLowQ2', 'bin1A')
+
+        # Try importing initial parameter values from different bins (to achieve convergence)
+        Year = self.process.cfg['args'].Year
+        dbfile = self.process.dbplayer.odbfile
+        if Year!=2018: dbfile = self.process.dbplayer.odbfile.replace('summaryLowQ2', 'bin1A')
+        if Year==2016: dbfile = self.process.dbplayer.odbfile.replace('bin1B', 'bin1A')
         if not self.process.cfg['args'].NoImport: FitDBPlayer.initFromDB(dbfile, args)
         self.ToggleConstVar(args, isConst=True)
         

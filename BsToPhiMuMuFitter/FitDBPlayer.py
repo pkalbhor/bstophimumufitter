@@ -120,6 +120,7 @@ class FitDBPlayer(Service):
                             # In case of no getError for RooNLLVar and so on.
                             pass
                 FitterCore.ArgLooper(args, updateToDBImp)
+
             else:
                 raise ValueError("Input arguement of type {0} is not supported".format(type(args)))
         finally:
@@ -169,7 +170,7 @@ class FitDBPlayer(Service):
 
         try:
             db = shelve.open(dbfile, "r")
-            gaus = ROOT.TF1("gaus", "exp(-0.5*x**2)", -3, 3)
+            gaus = ROOT.TF1("gaus", "exp(-0.5*x**2)", -1, 1)
             def flucturateFromDBImp(iArg):
                 argName = iArg.GetName()
                 aliasName = aliasDict.get(argName, argName)

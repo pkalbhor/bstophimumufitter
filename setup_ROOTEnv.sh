@@ -19,7 +19,7 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 [[ "$PYTHONPATH" != *"$DIR"* ]] && export PYTHONPATH=${PYTHONPATH}:${DIR}
 
 # Check for required python modules
-argcomplete=$(pip3 list --format=columns | grep filelock | wc -l)
+argcomplete=$(python3 -m pip list --format=columns | grep filelock | wc -l)
 if [ $argcomplete -eq 0 ]
 then
     pip3 install filelock --user

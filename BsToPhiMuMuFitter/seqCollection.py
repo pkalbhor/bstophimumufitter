@@ -178,7 +178,7 @@ if __name__ == '__main__':
     from copy import deepcopy
    
     if args.OneStep is False: args.TwoStep = True
-    p.work_dir="plots_{}".format(args.Year)
+    p.work_dir= args.plotsPath+"/plots_{}".format(args.Year)
     p.cfg['args'] = deepcopy(args)
     p.cfg['sysargs'] = sys.argv
     GetInputFiles(p)

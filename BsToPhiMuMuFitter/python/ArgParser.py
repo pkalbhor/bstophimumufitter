@@ -21,6 +21,8 @@ def SetParser(add_help=True):
     Group.add_argument('--SimFitPlots', help='Plotting over 3 year data (Default: False)', action='store_true')
     Group.add_argument('--Toy2', help='Use 2nd option for doing toy study (Default: True)', action='store_false')
     parser.add_argument('--debug', action='store_true', help="Print logs to standard output (Default: False)")
+    parser.add_argument('--isBatchTask', action='store_true', help="Submit as a batch task (Default: False)")
+    parser.add_argument('--pp', dest='plotsPath', type=str, default='/eos/user/p/pkalbhor/www/public/PhimumuAnalysis', help="Provide path where output files will be stored")
     return parser
 
 def GetBatchTaskParser():
@@ -53,6 +55,23 @@ def GetBatchTaskParser():
         nargs="+", default=["effiFitter"],
         help="Sub sequences for making tables"
     )
+    subparser_systematics = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('systematics')
+    subparser_systematics.set_defaults(func=None)
+    subparser_systematics.add_argument(
+        "-type",
+        type=str,
+        help="Specify type of systematics you want to derive"
+        )
+    subparser_systematics.add_argument(
+        "--updatePlot",
+        action='store_true',
+        help='Update/Rewrite existing plots'
+        )
+    subparser_systematics.add_argument(
+        "--updateDB",
+        action='store_true',
+        help='Update/Rewrite existing DB parameters'
+        )
     parser.add_argument('-h', '--help', action='help', default='==SUPPRESS==', help=('show this help message and exit'))
     return parser
  

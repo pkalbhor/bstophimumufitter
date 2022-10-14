@@ -29,7 +29,6 @@ class MixedToyStudier(AbsToyStudier.AbsToyStudier):
         super(MixedToyStudier, self).__init__(cfg)
         self.plotflag = True
         self.DBFlag = True
-        self.proceedFlag = True
         # Define
         ROOT.gROOT.ProcessLine(
         """struct MyTreeContent {

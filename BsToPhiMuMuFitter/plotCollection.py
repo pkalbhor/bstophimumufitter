@@ -404,6 +404,7 @@ def plotPostfitBLK_WithKStar(self, pltName, dataReader, pdfPlots, frames='BLK'):
                 ROOT.RooFit.Range(regionName)).getVal()
             nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName] + nBkgPeakDB * bkgPeakFrac[regionName]
 
+        pdb.set_trace()
         if not regionName in ['SB', 'innerSB', 'outerSB']:
             modified_pdfPlots = [
                 [pdfPlots[0][0],
@@ -806,6 +807,14 @@ def GetPlotterObject(self):
             'pltName': "plot_bkgCombA{}.{}".format('_Alt' if AltRange else '', Year),
             'dataPlots': [["dataReader.{}.{}SB".format(Year, 'alt' if AltRange else ''), plotterCfg_dataStyle, "{0} Data".format(Year)], ],
             'pdfPlots': [["f_bkgCombA{}.{}".format('_Alt' if AltRange else '', Year), plotterCfg_bkgStyle, None, "Analytic Bkg."], ],
+            'marks': None},
+    }
+    plotterCfg['plots']['plot_bkgCombAAltA'] = { #Smooth function 
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "plot_bkgCombAAltA.{}".format(Year),
+            'dataPlots': [["dataReader.{}.SB".format(Year), plotterCfg_dataStyle, "{0} Data".format(Year)], ],
+            'pdfPlots': [["f_bkgCombAAltA.{}".format(Year), plotterCfg_bkgStyle, None, "Smooth function"], ],
             'marks': None},
     }
     plotterCfg['plots']['plot_sigM'] = {

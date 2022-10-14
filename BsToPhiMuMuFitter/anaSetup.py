@@ -111,16 +111,16 @@ def createBmassTemplate(name, lowerBd, upperBd):
     return template
 
 bMassRegions['Full'] = createBmassTemplate("Full", 4.7, 6.0) # Cut off below 4.68
-bMassRegions['Fit']  = createBmassTemplate("Fit",  5.25, 5.65)
-bMassRegions['SR']   = createBmassTemplate("SR",   5.25, 5.45) #Signal Region
-bMassRegions['LSB']  = createBmassTemplate("LSB",  4.9, 5.25) #("LSB", 5.143, 5.223)
-bMassRegions['USB']  = createBmassTemplate("USB",  5.65, 6.0) #("USB", 5.511, 5.591)
-bMassRegions['SB']   = createBmassTemplate("SB",   4.9, 5.95)
-bMassRegions['NSB']   = createBmassTemplate("NSB", 5.20, 5.65)
+bMassRegions['Fit']  = createBmassTemplate("Fit",  5.2, 5.6)
+bMassRegions['SR']   = createBmassTemplate("SR",   5.2, 5.5) # Signal Region
+bMassRegions['LSB']  = createBmassTemplate("LSB",  4.9, 5.2) # ("LSB", 5.143, 5.223)
+bMassRegions['USB']  = createBmassTemplate("USB",  5.6, 5.9) # ("USB", 5.511, 5.591)
+bMassRegions['SB']   = createBmassTemplate("SB",   4.9, 5.9)
+bMassRegions['NSB']   = createBmassTemplate("NSB", 5.2, 5.6)
 bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['cutString'], bMassRegions['NSB']['cutString'])
 
 # systematics
-bMassRegions['altFit'] = createBmassTemplate("altFit", 5.1, 5.60)
+bMassRegions['altFit'] = createBmassTemplate("altFit", 4.9, 5.90)
 bMassRegions['altSR']  = createBmassTemplate("altSR", 5.25, 5.45)
 bMassRegions['altLSB'] = createBmassTemplate("altLSB", 5.1, 5.25)
 bMassRegions['altUSB'] = createBmassTemplate("altUSB", 5.45, 5.60)

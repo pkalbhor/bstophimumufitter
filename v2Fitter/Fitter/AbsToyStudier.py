@@ -21,6 +21,7 @@ A mock of RooFit::RooMCStudy which is useful for low stat analysis.
     def __init__(self, cfg):
         """Init"""
         super(AbsToyStudier, self).__init__(cfg)
+        self.proceedFlag = True
         self.reset()
 
     def reset(self):
@@ -109,7 +110,10 @@ Decide the number of entries of this subset.
                 self.fitter._runFitSteps()
                 self._postRunFitSteps(iSet)
             iSet += 1
-            if (self.treeContent.status==0 and self.treeContent.hesse==0 and self.treeContent.covQual==3) or (self.process.cfg['args'].NoFit): rSet += 1
+            status = self.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['MIGRAD']
+            hesse  = self.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['HESSE']
+            covQual= self.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['covQual']
+            if (status==0 and hesse==0 and covQual==3) or (self.process.cfg['args'].NoFit): rSet += 1
             self.fitter.reset()
             print(">>>> Successful sub-samples:", rSet, "Failed sub-samples:", iSet-rSet)
         print("Failed subsamples: ", iSet-rSet)
@@ -159,7 +163,10 @@ Decide the number of entries of this subset.
             for pdf, data, Year in zip(self.fitter.pdf, self.fitter.data, self.fitter.Years): 
                 FitterCore.ArgLooper(pdf.getParameters(data), lambda p: p.SetName(p.GetName().split("_{0}".format(Year))[0]))
             iSet += 1
-            if (self.treeContent.status==0 and self.treeContent.hesse==0 and self.treeContent.covQual==3) or (self.process.cfg['args'].NoFit): rSet += 1
+            status = self.fitter.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['MIGRAD']
+            hesse  = self.fitter.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['HESSE']
+            covQual= self.fitter.fitter.fitResult['{}.StdFitter'.format(self.fitter.name)]['covQual']
+            if (status==0 and hesse==0 and covQual==3) or (self.process.cfg['args'].NoFit): rSet += 1
             self.fitter.reset()
             print(">>>> Successful sub-samples:", rSet, "Failed sub-samples:", iSet-rSet)
         print("Failed subsamples: ", iSet-rSet)

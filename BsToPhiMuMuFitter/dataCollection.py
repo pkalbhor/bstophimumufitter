@@ -39,7 +39,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
     # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
     self.cfg['dataset'] = []
     for key, val in bMassRegions.items():
-        finalcut = self.process.cfg['cuts'][-1] if not key in ['USB', 'LSB'] else self.process.cfg['cuts'][-1].replace(re.search("Bdt \>(.*?)\)\&\&", self.process.cfg['cuts'][-1]).group(0).strip(), 'Bdt > 0.40)&&')
+        finalcut = self.process.cfg['cuts'][-1] #if not key in ['USB', 'LSB'] else self.process.cfg['cuts'][-1].replace(re.search("BDT \>(.*?)\)\&\&", self.process.cfg['cuts'][-1]).group(0).strip(), 'BDT > 0.0)&&')
         if any([re.match(pat, key) for pat in targetBMassRegion]):
             self.cfg['dataset'].append(
                 (
@@ -106,7 +106,7 @@ def GetDataReader(self, seq):
             'ifile': self.cfg['dataFilePath'],
             'lumi': 35.92 if Year==2016 else 41.53 if Year==2017 else 59.74, })
         dataReader = DataReader(dataReaderCfg)
-        customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^.{0,1}SB$', 'ResVeto', 'antiResVeto'], extraCuts=ExtraCuts) #'^Fit$', '^.{0,1}SB$',
+        customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'altFit', '^.{0,1}SB$', 'ResVeto', 'antiResVeto'], extraCuts=ExtraCuts) #'^Fit$', '^.{0,1}SB$',
         dataReader.customize = types.MethodType(customizeData, dataReader)
         return dataReader
 

@@ -158,8 +158,15 @@ done
 ./seqCollection.py -s mixedToyValidation -y 2018 postproc --forall
 ./seqCollection.py -s mixedToyValidation --SimFit postproc --forall
 
-./seqCollection.py -s createplots -b all -y 2016 --list effi plot_sig3D plot_bkgCombA plot_bkgPeak3D plot_final_WithKStar
-./seqCollection.py -s createplots -b all -y 2017 --list effi plot_sig3D plot_bkgCombA plot_bkgPeak3D plot_final_WithKStar
-./seqCollection.py -s createplots -b all -y 2018 --list effi plot_sig3D plot_bkgCombA plot_bkgPeak3D plot_final_WithKStar	
+./seqCollection.py -s createplots -b all -y 2016 --list plot_effi plot_sig3D plot_bkgCombA plot_bkgPeak3D plot_final_WithKStar
+./seqCollection.py -s createplots -b all -y 2017 --list plot_effi plot_sig3D plot_bkgCombA plot_bkgPeak3D plot_final_WithKStar
+./seqCollection.py -s createplots -b all -y 2018 --list plot_effi plot_sig3D plot_bkgCombA plot_bkgPeak3D plot_final_WithKStar
 ./seqCollection.py -s StatusTable MakeTables -tseq effiFitter sig3DFitter sigAFitter bkgCombAFitter bkgPeak3DFitter finalFitter_WithKStar
 
+# Systematics
+python systCollection.py -b bin1A --SimFit systematics -type randEffi --updateDB --updatePlot
+python systCollection.py -b bin1A --SimFit systematics -type simMismodel --updateDB
+python systCollection.py -b bin1A --SimFit systematics -type altBkgCombA --updateDB
+python systCollection.py -b bin1A --SimFit systematics -type altEffi --updateDB
+
+python systCollection.py -b bin1A --SimFit systematics -type makeLatexTable

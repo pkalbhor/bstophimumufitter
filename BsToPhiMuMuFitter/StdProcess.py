@@ -212,7 +212,14 @@ processCfg = {
     'args': None,
 }
 p = Process("myProcess", "Plots", processCfg)
-#dbplayer = FitDBPlayer(absInputDir=os.path.join(anaSetup.modulePath, "input", "selected"))
+# from BsToPhiMuMuFitter.FitDBPlayer import FitDBPlayer
+# dbplayer = FitDBPlayer(absInputDir=os.path.join(anaSetup.modulePath, "input", "selected"))
+
+def createNewProcess(name = "myProcess", work_dir="testProcess"):
+    p = Process(name, work_dir, processCfg)
+    # p.addService("dbplayer", dbplayer)
+    return p
+
 #p.addService("dbplayer", dbplayer)
 
 # Developers Area

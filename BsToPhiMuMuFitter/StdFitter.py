@@ -26,7 +26,8 @@ class StdFitter(FitterCore):
             'FitMinos': [False, ()],
             'createNLLOpt': [ROOT.RooFit.Extended(1), ],
             'argPattern': [r'^.+$', ],
-            'argAliasInDB': {},
+            'argAliasInDB': {}, # When writes result to DB.
+            'argAliasFromDB': {}, # Overwrite argAliasInDB only when initFromDB, or set to None to skip this variable.
             'saveToDB': True,
             'argAliasSaveToDB': True,
         })
@@ -61,7 +62,7 @@ class StdFitter(FitterCore):
         """Initialize from DB"""
         if not self.process.cfg['args'].NoImport: 
             #FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'], exclude=['nBkgComb', 'nSig', 'nBkgPeak', 'PeakFrac', 'unboundFl', 'unboundAfb'])
-            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
+            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasFromDB'])
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
 
@@ -102,9 +103,11 @@ class StdFitter(FitterCore):
         """Post-processing"""
         #FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
         self.ToggleConstVar(self.args, True)
+        FloatedArgs = ROOT.RooArgSet()
+        FitterCore.ArgLooper(self.args, lambda p: FloatedArgs.add(p), self.cfg['argPattern'])
         if self.cfg['saveToDB']:
-            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, 
-                                   self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, FloatedArgs,
+                                   self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
 
     def _runFitSteps(self):
